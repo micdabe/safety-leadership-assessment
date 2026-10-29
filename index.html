@@ -21,9 +21,8 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
   <!-- ========================================================================
-       SCHEMA DATABASE NETLIFY FORMS (Rilevato in automatico da Netlify Drop)
-       Non rimuovere questo form nascosto: serve a Netlify per creare tutte le
-       colonne del database nella sezione "Forms" della tua Dashboard Netlify.
+       SCHEMA DATABASE NETLIFY FORMS
+       Serve a Netlify per registrare i risultati nella sezione "Forms".
        ======================================================================== -->
   <form name="risultati-safety-leadership" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="hidden" hidden>
     <input type="hidden" name="form-name" value="risultati-safety-leadership" />
@@ -54,44 +53,6 @@
     <input type="text" name="feedback_pt" />
     <textarea name="riepilogo_scelte"></textarea>
   </form>
-
-  <!-- ========================================================================
-       LISTE DI EMERGENZA (Usate solo se non carichi i file .txt su Netlify)
-       In produzione su Netlify, l'app legge automaticamente i file:
-       - aziende.txt
-       - ruoli.txt
-       - cantieri.txt
-       presenti nella stessa cartella trascinata su Netlify Drop.
-       ======================================================================== -->
-  <script id="lista-aziende" type="text/plain">
-General Contractor SpA
-Tech Engineering Srl
-SafeWorks Costruzioni
-Subappalto Elettrico Srl
-Subappalto Meccanico SpA
-Altra Azienda | Other Company
-  </script>
-
-  <script id="lista-ruoli" type="text/plain">
-Project Manager / Direttore di Progetto | Project Manager
-Site Manager / Direttore di Cantiere | Site Manager
-Construction Manager | Construction Manager
-HSE Manager / RSPP | HSE Manager
-HSE Supervisor / ASPP | HSE Supervisor / Officer
-Ingegnere di Progetto / Field Engineer | Project / Field Engineer
-Supervisore / Preposto | Supervisor / Foreman
-Caposquadra | Crew Leader
-Tecnico / Operativo di Campo | Field Technician / Operator
-Altro Ruolo | Other Role
-  </script>
-
-  <script id="lista-cantieri" type="text/plain">
-Cantiere Nord - Lotto 1 | North Site - Lot 1
-Cantiere Sud - Lotto 2 | South Site - Lot 2
-Impianto Industriale Centrale | Central Industrial Plant
-Polo Logistico & Infrastrutture | Logistics & Infrastructure Hub
-Sede Ingegneria / Direzione | Engineering Office / HQ
-  </script>
 
   <!-- Header -->
   <header class="bg-slate-900 text-white shadow-md no-print">
@@ -150,7 +111,7 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
                 Dati del Partecipante
               </h3>
               <span id="listsSourceBadge" class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">
-                Caricamento liste...
+                Lettura file .txt...
               </span>
             </div>
             <span id="lblRequiredNote" class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
@@ -159,7 +120,7 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
           </div>
 
           <div class="grid sm:grid-cols-2 gap-4">
-            <!-- 1. Azienda (Menu a discesa Obbligatorio) -->
+            <!-- 1. Azienda (Da aziende.txt) -->
             <div>
               <label id="lblUserCompany" for="selectUserCompany" class="block text-xs font-bold text-slate-700 mb-1">
                 Azienda *
@@ -170,7 +131,7 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
               </select>
             </div>
 
-            <!-- 2. Ruolo (Menu a discesa Obbligatorio) -->
+            <!-- 2. Ruolo (Da ruoli.txt) -->
             <div>
               <label id="lblUserRole" for="selectUserRole" class="block text-xs font-bold text-slate-700 mb-1">
                 Ruolo / Funzione *
@@ -181,7 +142,7 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
               </select>
             </div>
 
-            <!-- 3. Cantiere / Progetto (Menu a discesa Obbligatorio) -->
+            <!-- 3. Cantiere / Progetto (Da cantieri.txt) -->
             <div>
               <label id="lblUserSite" for="selectUserSite" class="block text-xs font-bold text-slate-700 mb-1">
                 Cantiere / Progetto *
@@ -225,7 +186,7 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
             </div>
 
             <div id="privacyDetailsBox" class="hidden mt-3 pt-2.5 border-t border-slate-200 text-[11px] text-slate-500 leading-relaxed">
-              Il conferimento del nominativo è facoltativo. In assenza del nome, i dati statistici aggregati (Azienda, Ruolo, Cantiere e punteggi nelle 7 aree) vengono raccolti in forma totalmente anonima per finalità di analisi organizzativa e formazione sulla sicurezza. Inserendo il nome, i dati saranno associati all'interessato esclusivamente per attività di feedback e coaching individuale, nel pieno rispetto del Regolamento UE 2016/679 (GDPR).
+              Il conferimento del nominativo è facoltativo. In assenza del nome, i dati statistici aggregati (Azienda, Ruolo, Cantiere e punteggi nelle 7 aree) vengono raccolti in forma totalmente anonima nel database Netlify per finalità di analisi organizzativa e formazione sulla sicurezza. Inserendo il nome, i dati saranno associati all'interessato esclusivamente per attività di feedback e coaching individuale, nel pieno rispetto del Regolamento UE 2016/679 (GDPR).
             </div>
           </div>
 
@@ -337,7 +298,6 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
 
     <!-- 3. SCHERMATA RISULTATI & COACHING -->
     <section id="screen-results" class="hidden space-y-6">
-      <!-- Riepilogo Principale -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
         <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
           <div>
@@ -345,7 +305,6 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
               <span id="resBadge" class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
                 Analisi Completata • 12 Scenari
               </span>
-              <!-- Stato Salvataggio Database Netlify -->
               <span id="syncStatusBadge" class="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold no-print">
                 Database Netlify: In attesa
               </span>
@@ -410,7 +369,7 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
         </div>
       </div>
 
-      <!-- SEZIONE EXECUTIVE COACHING & PIANO D'AZIONE PERSONALIZZATO -->
+      <!-- SEZIONE EXECUTIVE COACHING -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print-break">
         <div class="bg-slate-900 text-white px-6 py-5 md:px-8 flex flex-wrap items-center justify-between gap-4 border-b-4 border-amber-500">
           <div>
@@ -429,7 +388,6 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
         <div class="p-6 md:p-8 space-y-6">
           <div class="grid md:grid-cols-2 gap-6">
 
-            <!-- Card Coaching 1: Area Dominante -->
             <div class="rounded-2xl border-2 border-emerald-200 bg-emerald-50/30 p-5 md:p-6 flex flex-col justify-between space-y-4">
               <div>
                 <div class="flex items-center justify-between gap-2 mb-3">
@@ -451,7 +409,6 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
               </div>
             </div>
 
-            <!-- Card Coaching 2: Area Meno Presidiata -->
             <div class="rounded-2xl border-2 border-amber-200 bg-amber-50/30 p-5 md:p-6 flex flex-col justify-between space-y-4">
               <div>
                 <div class="flex items-center justify-between gap-2 mb-3">
@@ -477,7 +434,6 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
 
           </div>
 
-          <!-- Strategia Ponte -->
           <div class="rounded-2xl bg-slate-900 text-white p-5 md:p-6 border border-slate-800">
             <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
               <span id="bridgeHeader" class="text-xs font-extrabold uppercase tracking-wider text-amber-400">
@@ -489,7 +445,6 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
             <p id="bridgeText" class="text-sm text-slate-300 leading-relaxed">-</p>
           </div>
 
-          <!-- Comportamenti Tralasciati nell'Area Meno Presidiata -->
           <div class="rounded-2xl bg-slate-50 border border-slate-200 p-5 md:p-6">
             <h4 id="skippedTitle" class="font-bold text-slate-900 text-sm md:text-base mb-1">
               📌 Allenamento Mirato: Comportamenti di quest'area che hai lasciato in secondo piano
@@ -558,13 +513,11 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
 
   <script>
     // =========================================================================
-    // CONFIGURAZIONE FILE DI TESTO OSPITATI SU NETLIFY
-    // Quando trascini la cartella su Netlify Drop insieme a questi 3 file .txt,
-    // l'app carica da lì le liste di Aziende, Ruoli e Cantieri.
+    // FILE DI TESTO UNICI PER POPOLARE I MENU A DISCESA (NESSUNA LISTA INTERNA)
     // =========================================================================
-    const NETLIFY_COMPANIES_FILE = "aziende.txt";
-    const NETLIFY_ROLES_FILE = "ruoli.txt";
-    const NETLIFY_SITES_FILE = "cantieri.txt";
+    const COMPANIES_TXT_URL = "./aziende.txt";
+    const ROLES_TXT_URL = "./ruoli.txt";
+    const SITES_TXT_URL = "./cantieri.txt";
     const NETLIFY_FORM_NAME = "risultati-safety-leadership";
 
     // =========================================================================
@@ -583,9 +536,9 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
         wTitle: "Scopri il tuo profilo di Safety Leadership attraverso situazioni reali",
         wDesc: "Questo percorso presenta <strong>12 situazioni realistiche di cantiere e di progetto</strong>. Per ciascun problema ti verranno proposte 7 possibili azioni risolutive. Il tuo compito è scegliere i comportamenti che adotteresti realmente sul campo, indicandoli in ordine di priorità.",
         userFormTitle: "Dati del Partecipante",
-        listsFallbackBadge: "Liste integrate attive",
-        listsLoadingBadge: "Caricamento liste da Netlify...",
-        listsNetlifyBadge: "Liste caricate da Netlify ✓",
+        listsLoadingBadge: "Caricamento file .txt...",
+        listsLoadedBadge: "Liste caricate dai file .txt ✓",
+        listsErrorBadge: (missing) => `File .txt non trovati: ${missing}`,
         lblRequiredNote: "* Campi obbligatori",
         lblUserCompany: "Azienda *",
         phSelectCompany: "-- Seleziona l'azienda --",
@@ -628,7 +581,7 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
         resBadge: "Analisi Completata • 12 Scenari",
         syncSending: "Salvataggio nel database Netlify in corso...",
         syncSuccess: "Risultati salvati nel database Netlify ✓",
-        syncLocalPreview: "Anteprima Locale (Pubblica su Netlify per attivare il salvataggio DB)",
+        syncLocalPreview: "Anteprima Locale (Pubblica su Netlify per salvare nel DB)",
         syncError: "Errore durante il salvataggio su Netlify",
         btnRetrySync: "Riprova salvataggio",
         resMainTitle: "Profilo delle tue Abilità di Safety Leadership",
@@ -710,9 +663,9 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
         wTitle: "Discover your Safety Leadership profile through realistic situations",
         wDesc: "This assessment presents <strong>12 realistic site and project scenarios</strong>. For each situation, you will be presented with 7 possible leadership actions. Your task is to select the behaviors you would genuinely apply in the field, ranking them in order of priority.",
         userFormTitle: "Participant Details",
-        listsFallbackBadge: "Built-in lists active",
-        listsLoadingBadge: "Loading lists from Netlify...",
-        listsNetlifyBadge: "Lists loaded from Netlify ✓",
+        listsLoadingBadge: "Loading .txt files...",
+        listsLoadedBadge: "Lists loaded from .txt files ✓",
+        listsErrorBadge: (missing) => `Missing .txt files: ${missing}`,
         lblRequiredNote: "* Required fields",
         lblUserCompany: "Company *",
         phSelectCompany: "-- Select company --",
@@ -755,7 +708,7 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
         resBadge: "Analysis Complete • 12 Scenarios",
         syncSending: "Saving to Netlify database...",
         syncSuccess: "Results saved in Netlify database ✓",
-        syncLocalPreview: "Local Preview (Deploy on Netlify to enable DB saving)",
+        syncLocalPreview: "Local Preview (Deploy on Netlify to save to DB)",
         syncError: "Error saving to Netlify database",
         btnRetrySync: "Retry saving",
         resMainTitle: "Your Safety Leadership Skills Profile",
@@ -828,12 +781,13 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
     };
 
     // =========================================================================
-    // 2. CARICAMENTO LISTE (AZIENDE, RUOLI, CANTIERI) DAI FILE .TXT SU NETLIFY
+    // 2. CARICAMENTO ESCLUSIVO DAI 3 FILE .TXT (aziende.txt, ruoli.txt, cantieri.txt)
     // =========================================================================
     let parsedCompaniesList = [];
     let parsedRolesList = [];
     let parsedSitesList = [];
-    let listsSourceState = "loading"; // 'loading' | 'netlify' | 'fallback'
+    let listsSourceState = "loading"; // 'loading' | 'loaded' | 'error'
+    let missingFilesList = [];
 
     function parseLineItem(line) {
       const parts = String(line).split("|").map(p => p.trim());
@@ -844,10 +798,18 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
     }
 
     function parsePlainList(rawText) {
-      return rawText
+      if (!rawText) return [];
+      return String(rawText)
         .split(/\r?\n/)
         .map(line => line.trim())
-        .filter(line => line.length > 0 && !line.startsWith("#") && !line.startsWith("//"))
+        // Ignora righe vuote, commenti o pagine di errore HTML 404
+        .filter(line =>
+          line.length > 0 &&
+          !line.startsWith("#") &&
+          !line.startsWith("//") &&
+          !line.toLowerCase().startsWith("<!doctype") &&
+          !line.startsWith("<")
+        )
         .map(parseLineItem);
     }
 
@@ -859,124 +821,62 @@ Sede Ingegneria / Direzione | Engineering Office / HQ
       if (listsSourceState === "loading") {
         badge.className = "text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200";
         badge.textContent = t.listsLoadingBadge;
-      } else if (listsSourceState === "netlify") {
+      } else if (listsSourceState === "loaded") {
         badge.className = "text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200";
-        badge.textContent = t.listsNetlifyBadge;
+        badge.textContent = t.listsLoadedBadge;
       } else {
-        badge.className = "text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded";
-        badge.textContent = t.listsFallbackBadge;
+        badge.className = "text-[11px] font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded border border-red-200";
+        badge.textContent = t.listsErrorBadge(missingFilesList.join(", "));
       }
     }
 
-async function loadDropdownListsFromNetlify() {
-      // 1. Inizializza subito con le liste integrate nell'HTML come fallback
-      parsedCompaniesList = parsePlainList(document.getElementById("lista-aziende")?.textContent || "");
-      parsedRolesList = parsePlainList(document.getElementById("lista-ruoli")?.textContent || "");
-      parsedSitesList = parsePlainList(document.getElementById("lista-cantieri")?.textContent || "");
-      populateDropdowns();
-
-      listsSourceState = "loading";
-      updateListsSourceBadge();
-
-      // 2. Priorità 1: Carica le liste dinamiche da NETLIFY BLOBS
-      try {
-        const resBlobs = await fetch("/.netlify/functions/manage-lists", { cache: "no-store" });
-        if (resBlobs.ok) {
-          const data = await resBlobs.json();
-          if (data && data.status === "success") {
-            if (Array.isArray(data.companies) && data.companies.length > 0) {
-              parsedCompaniesList = data.companies.map(parseLineItem);
-            }
-            if (Array.isArray(data.roles) && data.roles.length > 0) {
-              parsedRolesList = data.roles.map(parseLineItem);
-            }
-            if (Array.isArray(data.sites) && data.sites.length > 0) {
-              parsedSitesList = data.sites.map(parseLineItem);
-            }
-            listsSourceState = "netlify";
-            populateDropdowns();
-            updateListsSourceBadge();
-            return;
-          }
-        }
-      } catch (_) {}
-
-      // 3. Priorità 2 (Fallback): Carica dai file .txt statici se presenti
-      let loadedFromTxt = false;
-      try {
-        const resC = await fetch(NETLIFY_COMPANIES_FILE, { cache: "no-store" });
-        if (resC.ok) {
-          const list = parsePlainList(await resC.text());
-          if (list.length > 0) { parsedCompaniesList = list; loadedFromTxt = true; }
-        }
-      } catch (_) {}
-
-      try {
-        const resR = await fetch(NETLIFY_ROLES_FILE, { cache: "no-store" });
-        if (resR.ok) {
-          const list = parsePlainList(await resR.text());
-          if (list.length > 0) { parsedRolesList = list; loadedFromTxt = true; }
-        }
-      } catch (_) {}
-
-      try {
-        const resS = await fetch(NETLIFY_SITES_FILE, { cache: "no-store" });
-        if (resS.ok) {
-          const list = parsePlainList(await resS.text());
-          if (list.length > 0) { parsedSitesList = list; loadedFromTxt = true; }
-        }
-      } catch (_) {}
-
-      listsSourceState = loadedFromTxt ? "netlify" : "fallback";
-      populateDropdowns();
-      updateListsSourceBadge();
+    async function fetchSingleTxtFile(fileUrl) {
+      const response = await fetch(`${fileUrl}?v=${Date.now()}`, { cache: "no-store" });
+      const contentType = response.headers.get("content-type") || "";
+      if (!response.ok || contentType.includes("text/html")) {
+        throw new Error(`File non trovato: ${fileUrl}`);
+      }
+      const text = await response.text();
+      const parsed = parsePlainList(text);
+      if (parsed.length === 0) {
+        throw new Error(`File vuoto: ${fileUrl}`);
+      }
+      return parsed;
     }
-      // 1. Inizializza subito con le liste integrate nell'HTML come fallback
-      parsedCompaniesList = parsePlainList(document.getElementById("lista-aziende")?.textContent || "");
-      parsedRolesList = parsePlainList(document.getElementById("lista-ruoli")?.textContent || "");
-      parsedSitesList = parsePlainList(document.getElementById("lista-cantieri")?.textContent || "");
-      populateDropdowns();
 
+    async function loadDropdownListsFromTxtOnly() {
+      parsedCompaniesList = [];
+      parsedRolesList = [];
+      parsedSitesList = [];
+      missingFilesList = [];
       listsSourceState = "loading";
       updateListsSourceBadge();
 
-      let loadedFromNetlifyFiles = false;
-
-      // 2. Scarica aziende.txt, ruoli.txt e cantieri.txt direttamente da Netlify
+      // 1. Carica aziende.txt
       try {
-        const resC = await fetch(NETLIFY_COMPANIES_FILE, { cache: "no-store" });
-        if (resC.ok) {
-          const list = parsePlainList(await resC.text());
-          if (list.length > 0) {
-            parsedCompaniesList = list;
-            loadedFromNetlifyFiles = true;
-          }
-        }
-      } catch (_) {}
+        parsedCompaniesList = await fetchSingleTxtFile(COMPANIES_TXT_URL);
+      } catch (e) {
+        console.error(e);
+        missingFilesList.push("aziende.txt");
+      }
 
+      // 2. Carica ruoli.txt
       try {
-        const resR = await fetch(NETLIFY_ROLES_FILE, { cache: "no-store" });
-        if (resR.ok) {
-          const list = parsePlainList(await resR.text());
-          if (list.length > 0) {
-            parsedRolesList = list;
-            loadedFromNetlifyFiles = true;
-          }
-        }
-      } catch (_) {}
+        parsedRolesList = await fetchSingleTxtFile(ROLES_TXT_URL);
+      } catch (e) {
+        console.error(e);
+        missingFilesList.push("ruoli.txt");
+      }
 
+      // 3. Carica cantieri.txt
       try {
-        const resS = await fetch(NETLIFY_SITES_FILE, { cache: "no-store" });
-        if (resS.ok) {
-          const list = parsePlainList(await resS.text());
-          if (list.length > 0) {
-            parsedSitesList = list;
-            loadedFromNetlifyFiles = true;
-          }
-        }
-      } catch (_) {}
+        parsedSitesList = await fetchSingleTxtFile(SITES_TXT_URL);
+      } catch (e) {
+        console.error(e);
+        missingFilesList.push("cantieri.txt");
+      }
 
-      listsSourceState = loadedFromNetlifyFiles ? "netlify" : "fallback";
+      listsSourceState = missingFilesList.length === 0 ? "loaded" : "error";
       populateDropdowns();
       updateListsSourceBadge();
     }
@@ -2237,7 +2137,6 @@ async function loadDropdownListsFromNetlify() {
     async function sendResultsToNetlifyDB() {
       if (!lastComputedResults) return;
 
-      // Se aperto in locale tramite file://, segnala che il salvataggio avverrà una volta pubblicato su Netlify
       if (!window.location.protocol.startsWith("http")) {
         lastSyncState = "local_preview";
         updateSyncBadgeUI();
@@ -2440,9 +2339,9 @@ async function loadDropdownListsFromNetlify() {
         companyIdx: cIdx,
         roleIdx: rIdx,
         siteIdx: sIdx,
-        companyText: parsedCompaniesList[cIdx]?.[currentLang] || "General Contractor SpA",
-        roleText: parsedRolesList[rIdx]?.[currentLang] || "Site Manager",
-        siteText: parsedSitesList[sIdx]?.[currentLang] || "North Site"
+        companyText: parsedCompaniesList[cIdx]?.[currentLang] || "-",
+        roleText: parsedRolesList[rIdx]?.[currentLang] || "-",
+        siteText: parsedSitesList[sIdx]?.[currentLang] || "-"
       };
 
       areaPools = {};
@@ -2689,9 +2588,11 @@ async function loadDropdownListsFromNetlify() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    // Inizializzazione all'avvio
-    applyStaticTranslations();
-    loadDropdownListsFromNetlify();
+    // All'avvio legge solo i 3 file .txt
+    window.addEventListener("DOMContentLoaded", () => {
+      applyStaticTranslations();
+      loadDropdownListsFromTxtOnly();
+    });
   </script>
 </body>
 </html>
