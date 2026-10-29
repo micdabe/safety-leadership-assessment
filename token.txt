@@ -1,0 +1,5 @@
+NETLIFY_API_TOKEN:
+nfp_csAjNsBjbFdkbHgxPtXe6XZnqGdrsRLg4fd1
+
+Git
+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
