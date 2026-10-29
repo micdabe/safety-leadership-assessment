@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safety Leadership — Live Admin & List Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; }
+      .print-break { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-slate-900 text-white shadow-md no-print">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-slate-950 text-lg shadow">
+          SL
+        </div>
+        <div>
+          <h1 id="hdrTitle" class="font-bold text-lg leading-tight">Safety Leadership — Admin & Config</h1>
+          <p id="hdrSub" class="text-xs text-slate-400">Analisi risultati in tempo reale e gestione liste su Netlify Blobs</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Indicatore stato Live & Pulsante Refresh -->
+        <div id="liveControls" class="hidden items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="lastSyncText" class="text-[11px] text-slate-300 font-medium">Live</span>
+          <button onclick="refreshLiveData()" id="btnRefreshNow" class="ml-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] transition">
+            ↻ Aggiorna ora
+          </button>
+          <label class="flex items-center gap-1 text-[11px] text-slate-300 ml-1 cursor-pointer">
+            <input type="checkbox" id="chkAutoRefresh" onchange="toggleAutoRefresh()" class="accent-amber-500" />
+            <span>Auto (60s)</span>
+          </label>
+        </div>
+
+        <button onclick="toggleLanguage()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
+          <span id="langSwitchPrefix">Lingua:</span> <span id="langLabel" class="text-amber-400 font-bold">Italiano 🇮🇹</span>
+        </button>
+        <button id="btnChangeSource" onclick="logoutAndShowLogin()" class="hidden px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
+          Esci / Cambia Sorgente
+        </button>
+        <button id="btnPrintReport" onclick="window.print()" class="hidden px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition">
+          Stampa / PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra di Navigazione Principale Admin -->
+    <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
+      <div class="max-w-7xl mx-auto px-4 flex gap-2 pt-2">
+        <button id="navTabAnalytics" onclick="switchAdminView('analytics')"
+          class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
+          <span>📊</span> <span id="navTabAnalyticsLabel">Analisi Risultati</span>
+        </button>
+        <button id="navTabLists" onclick="switchAdminView('lists')"
+          class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+          <span>🗂️</span> <span id="navTabListsLabel">Gestione Liste (Aziende, Ruoli, Cantieri)</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
+
+    <!-- 1. SCHERMATA DI ACCESSO E CONNESSIONE LIVE A NETLIFY -->
+    <section id="screen-upload" class="max-w-3xl mx-auto space-y-6">
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-900 text-white px-6 py-5 border-b-4 border-amber-500 flex items-center justify-between">
+          <div>
+            <span id="loginBadge" class="inline-block px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold uppercase tracking-wider mb-1">
+              Connessione Diretta Database & Netlify Blobs
+            </span>
+            <h2 id="loginTitle" class="text-xl md:text-2xl font-extrabold">
+              Accedi alla Console di Amministrazione
+            </h2>
+          </div>
+          <div class="text-2xl">🔒</div>
+        </div>
+
+        <div class="p-6 md:p-8">
+          <div class="flex border-b border-slate-200 mb-6 text-xs font-bold">
+            <button id="tabBtnFunc" onclick="switchAuthMode('function')"
+              class="pb-3 px-4 border-b-2 border-amber-500 text-slate-900 transition">
+              1. Tramite Netlify Function (Password Admin)
+            </button>
+            <button id="tabBtnDirect" onclick="switchAuthMode('direct')"
+              class="pb-3 px-4 border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition">
+              2. Connessione Diretta Token API (Per Netlify Drop puro)
+            </button>
+          </div>
+
+          <!-- Modalità A: Tramite Netlify Function -->
+          <div id="authPanelFunction" class="space-y-4">
+            <p id="funcDesc" class="text-xs text-slate-600 leading-relaxed">
+              Inserisci la password configurata nella variabile <code>ADMIN_PASSWORD</code> su Netlify. Potrai visualizzare i grafici in tempo reale, eliminare uno o più test di prova e modificare le liste su <strong>Netlify Blobs</strong>.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input id="inputAdminPassword" type="password" placeholder="Inserisci la Password Admin..."
+                onkeydown="if(event.key==='Enter') connectViaNetlifyFunction()"
+                class="flex-grow px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-amber-500" />
+              <button onclick="connectViaNetlifyFunction()" id="btnConnectFunc"
+                class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm shadow-sm transition shrink-0">
+                Accedi alla Console →
+              </button>
+            </div>
+          </div>
+
+          <!-- Modalità B: Connessione Diretta REST API Netlify -->
+          <div id="authPanelDirect" class="hidden space-y-4">
+            <p id="directDesc" class="text-xs text-slate-600 leading-relaxed">
+              Se usi <strong>Netlify Drop</strong> senza funzioni serverless, inserisci il tuo <strong>Site ID</strong> e il tuo <strong>Personal Access Token</strong>:
+            </p>
+            <div class="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Netlify Site ID (API ID)</label>
+                <input id="inputDirectSiteId" type="text" placeholder="es. 84a9b12c-3456-7890-abcd-..."
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-amber-500" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Netlify Personal Access Token</label>
+                <input id="inputDirectToken" type="password" placeholder="nfp_..."
+                  onkeydown="if(event.key==='Enter') connectViaDirectAPI()"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-amber-500" />
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                <input id="chkRememberDirect" type="checkbox" checked class="accent-amber-600" />
+                <span id="lblRememberCreds">Ricorda credenziali in questo browser</span>
+              </label>
+              <button onclick="connectViaDirectAPI()" id="btnConnectDirect"
+                class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition">
+                Connetti alle API di Netlify →
+              </button>
+            </div>
+          </div>
+
+          <p id="uploadError" class="hidden mt-4 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-3.5"></p>
+        </div>
+      </div>
+
+      <!-- Card Secondaria: CSV Manuale o Dataset Demo -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 id="altTitle" class="font-bold text-slate-800 text-sm">Modalità Offline: Carica CSV o Apri Demo</h3>
+            <p id="altSub" class="text-xs text-slate-500">Esplora subito sia i grafici sia la selezione multipla e la scheda "Gestione Liste" con dati dimostrativi.</p>
+          </div>
+          <div class="flex flex-wrap gap-2.5">
+            <button onclick="document.getElementById('csvFileInput').click()" id="btnBrowseCSV"
+              class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
+              Sfoglia file CSV...
+            </button>
+            <input id="csvFileInput" type="file" accept=".csv,text/csv" class="hidden" onchange="handleFileSelect(event)" />
+            <button id="btnLoadDemo" onclick="loadDemoDataset()"
+              class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+              Apri Console Demo (25 Test + Gestione Liste) →
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 2. SCHEDA A: ANALISI RISULTATI (ANALYTICS) -->
+    <section id="screen-dashboard" class="hidden space-y-6">
+
+      <!-- Barra Filtri Interattivi -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 no-print">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div class="flex items-center gap-2">
+            <h2 id="fltTitle" class="text-sm font-extrabold uppercase tracking-wider text-slate-800">
+              Filtri di Analisi
+            </h2>
+            <span id="activeRecordsBadge" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
+              0 test selezionati
+            </span>
+          </div>
+          <button id="btnResetFilters" onclick="resetFilters()" class="text-xs font-bold text-amber-700 hover:underline">
+            Azzera filtri
+          </button>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label id="lblFilterCompany" class="block text-xs font-bold text-slate-600 mb-1">Azienda</label>
+            <select id="filterCompany" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutte le Aziende</option>
+            </select>
+          </div>
+          <div>
+            <label id="lblFilterSite" class="block text-xs font-bold text-slate-600 mb-1">Cantiere / Progetto</label>
+            <select id="filterSite" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti i Cantieri</option>
+            </select>
+          </div>
+          <div>
+            <label id="lblFilterRole" class="block text-xs font-bold text-slate-600 mb-1">Ruolo / Funzione</label>
+            <select id="filterRole" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti i Ruoli</option>
+            </select>
+          </div>
+          <div>
+            <label id="lblFilterSearch" class="block text-xs font-bold text-slate-600 mb-1">Cerca Partecipante</label>
+            <input id="filterSearch" type="text" oninput="applyFilters()" placeholder="Nome o Anonimo..."
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 KPI Cards -->
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 print-break">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+          <div id="kpi1Title" class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Test Analizzati</div>
+          <div id="kpi1Value" class="text-2xl font-extrabold text-slate-900">0</div>
+          <div id="kpi1Sub" class="text-xs text-slate-500 mt-1">-</div>
+        </div>
+
+        <div class="bg-emerald-50 p-5 rounded-2xl shadow-sm border border-emerald-200">
+          <div id="kpi2Title" class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">Punto di Forza Medio (#1)</div>
+          <div id="kpi2Value" class="text-2xl font-extrabold text-slate-900">-</div>
+          <div id="kpi2Sub" class="text-xs text-emerald-800 mt-1">-</div>
+        </div>
+
+        <div class="bg-amber-50 p-5 rounded-2xl shadow-sm border border-amber-200">
+          <div id="kpi3Title" class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">Gap Formativo Medio (#7)</div>
+          <div id="kpi3Value" class="text-2xl font-extrabold text-slate-900">-</div>
+          <div id="kpi3Sub" class="text-xs text-amber-900 mt-1">-</div>
+        </div>
+
+        <div class="bg-blue-50 p-5 rounded-2xl shadow-sm border border-blue-200">
+          <div id="kpi4Title" class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">Seconda Leva Media (#2)</div>
+          <div id="kpi4Value" class="text-2xl font-extrabold text-slate-900">-</div>
+          <div id="kpi4Sub" class="text-xs text-blue-800 mt-1">-</div>
+        </div>
+      </div>
+
+      <!-- Riga Grafici Principali -->
+      <div class="grid lg:grid-cols-2 gap-6 print-break">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 id="chart1Title" class="font-bold text-slate-900 text-base mb-1">
+            Profilo Medio delle 7 Aree (Selezione vs Globale)
+          </h3>
+          <p id="chart1Sub" class="text-xs text-slate-500 mb-4">
+            Confronta la media del gruppo filtrato con la media generale e il target bilanciato (14.3%)
+          </p>
+          <div class="relative h-80 flex items-center justify-center">
+            <canvas id="aggRadarChart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 id="chart2Title" class="font-bold text-slate-900 text-base mb-1">
+            Distribuzione Punti di Forza (#1) vs Bisogni Formativi (#7)
+          </h3>
+          <p id="chart2Sub" class="text-xs text-slate-500 mb-4">
+            Numero di partecipanti per i quali ciascuna area risulta la #1 (Dominante) o la #7 (Meno Presidiata)
+          </p>
+          <div class="relative h-80 flex items-center justify-center">
+            <canvas id="domWeakBarChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- MATRICE HEATMAP DI CONFRONTO -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div>
+            <h3 id="heatmapTitle" class="font-bold text-slate-900 text-lg">
+              Matrice Comparativa (Heatmap) per Gruppo
+            </h3>
+            <p id="heatmapSub" class="text-xs text-slate-500 mt-0.5">
+              Confronta le percentuali medie delle 7 aree raggruppate per Cantiere, Azienda o Ruolo.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 no-print">
+            <span id="lblGroupBy" class="text-xs font-bold text-slate-600">Raggruppa per:</span>
+            <select id="selectGroupBy" onchange="renderGroupComparison()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:outline-none focus:border-amber-500">
+              <option value="cantiere" id="optGroupSite">Cantiere / Progetto</option>
+              <option value="azienda" id="optGroupCompany">Azienda</option>
+              <option value="ruolo" id="optGroupRole">Ruolo / Funzione</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="relative h-72 mb-6">
+          <canvas id="groupComparisonChart"></canvas>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b-2 border-slate-200 uppercase text-slate-500 bg-slate-50">
+                <th id="thGroupCol" class="py-3 px-3">Gruppo</th>
+                <th id="thGroupCount" class="py-3 px-2 text-center">N. Test</th>
+                <th class="py-3 px-2 text-center">Vision</th>
+                <th class="py-3 px-2 text-center">Focus</th>
+                <th class="py-3 px-2 text-center">Influence</th>
+                <th class="py-3 px-2 text-center">Credibility</th>
+                <th class="py-3 px-2 text-center">Team</th>
+                <th class="py-3 px-2 text-center">Comm.</th>
+                <th class="py-3 px-2 text-center">Feedback</th>
+                <th id="thGroupGap" class="py-3 px-3">Priorità Formativa (Gap)</th>
+              </tr>
+            </thead>
+            <tbody id="heatmapTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TABELLA ELENCO PARTECIPANTI CON CASELLE DI SPUNTA ED ELIMINAZIONE MULTIPLA -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 id="partTableTitle" class="font-bold text-slate-900 text-lg">
+              Dettaglio Singoli Test Completati
+            </h3>
+            <p id="partTableSub" class="text-xs text-slate-500">
+              Seleziona più righe con le caselle di spunta per eliminarle in blocco, oppure clicca su una riga per aprire la scheda grafica individuale.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5 no-print">
+            <!-- Pulsante Elimina Selezionati (Compare quando almeno 1 casella è spuntata) -->
+            <button id="btnDeleteSelected" onclick="deleteSelectedSubmissions()"
+              class="hidden px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-1.5">
+              <span>🗑️</span> <span id="btnDeleteSelectedLabel">Elimina selezionati (0)</span>
+            </button>
+
+            <button id="btnExportFilteredCSV" onclick="exportFilteredCSV()"
+              class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+              Esporta Vista Filtrata (CSV)
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner feedback eliminazione -->
+        <div id="deleteFeedbackBanner" class="hidden mb-4 rounded-xl p-3 text-xs font-bold border no-print"></div>
+
+        <div class="overflow-x-auto max-h-96 overflow-y-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="sticky top-0 bg-slate-100 text-slate-600 uppercase z-10">
+              <tr>
+                <th class="py-3 px-3 w-10 text-center no-print">
+                  <input id="chkSelectAllRows" type="checkbox" onchange="toggleSelectAllFiltered(this.checked)"
+                    title="Seleziona / Deseleziona tutti i test visibili"
+                    class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
+                </th>
+                <th id="thPDate" class="py-3 px-3">Data</th>
+                <th id="thPName" class="py-3 px-3">Partecipante</th>
+                <th id="thPComp" class="py-3 px-3">Azienda</th>
+                <th id="thPRole" class="py-3 px-3">Ruolo</th>
+                <th id="thPSite" class="py-3 px-3">Cantiere</th>
+                <th id="thPDom" class="py-3 px-3">Area #1 (Forte)</th>
+                <th id="thPLow" class="py-3 px-3">Area #7 (Gap)</th>
+                <th id="thPAction" class="py-3 px-3 text-right no-print">Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="participantsTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 3. SCHEDA B: GESTIONE LISTE (AZIENDE, RUOLI, CANTIERI SU NETLIFY BLOBS) -->
+    <section id="screen-lists" class="hidden space-y-6 no-print">
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2.5 mb-1">
+            <span id="blobsStatusBadge" class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+              Netlify Blobs
+            </span>
+            <span id="unsavedChangesBadge" class="hidden px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold animate-pulse">
+              Modifiche non salvate *
+            </span>
+          </div>
+          <h2 id="lstMainTitle" class="text-xl md:text-2xl font-extrabold text-slate-900">
+            Gestione Menu a Discesa (Aziende, Ruoli, Cantieri)
+          </h2>
+          <p id="lstMainSub" class="text-xs md:text-sm text-slate-500 mt-0.5">
+            Aggiungi o rimuovi le voci dei menu a discesa. Per il supporto bilingue puoi inserire sia il testo in Italiano sia la traduzione in Inglese.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button onclick="loadListsFromBlobs()" id="btnReloadBlobs"
+            class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
+            ↻ Ricarica Liste
+          </button>
+          <button onclick="downloadAllTxtBackups()" id="btnDownloadTxt"
+            class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
+            ⬇ Scarica .txt Backup
+          </button>
+          <button onclick="saveListsToBlobs()" id="btnSaveBlobs"
+            class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs md:text-sm shadow-sm transition">
+            💾 Salva su Netlify Blobs
+          </button>
+        </div>
+      </div>
+
+      <div id="blobsFeedbackBanner" class="hidden rounded-xl p-4 text-xs font-bold border"></div>
+
+      <!-- 3 Colonne: Aziende | Ruoli | Cantieri -->
+      <div class="grid lg:grid-cols-3 gap-6">
+
+        <!-- COLONNA 1: AZIENDE -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
+          <div>
+            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+              <div>
+                <h3 id="colCompTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">1. Aziende</h3>
+                <p class="text-[11px] text-slate-400">Menu a discesa obbligatorio</p>
+              </div>
+              <span id="countCompaniesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
+            </div>
+
+            <div id="listContainer-companies" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
+          </div>
+
+          <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
+            <div class="text-xs font-bold text-slate-700" id="addCompLabel">Aggiungi nuova Azienda:</div>
+            <input id="newCompIT" type="text" placeholder="Nome Azienda (es. Rossi SpA)"
+              onkeydown="if(event.key==='Enter') addListItem('companies')"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
+            <input id="newCompEN" type="text" placeholder="Traduzione EN opzionale (es. Rossi Corp)"
+              onkeydown="if(event.key==='Enter') addListItem('companies')"
+              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-amber-500" />
+            <button onclick="addListItem('companies')" id="btnAddComp"
+              class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
+              + Aggiungi Azienda
+            </button>
+          </div>
+        </div>
+
+        <!-- COLONNA 2: RUOLI / FUNZIONI -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
+          <div>
+            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+              <div>
+                <h3 id="colRoleTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">2. Ruoli / Funzioni</h3>
+                <p class="text-[11px] text-slate-400">Menu a discesa obbligatorio</p>
+              </div>
+              <span id="countRolesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
+            </div>
+
+            <div id="listContainer-roles" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
+          </div>
+
+          <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
+            <div class="text-xs font-bold text-slate-700" id="addRoleLabel">Aggiungi nuovo Ruolo:</div>
+            <input id="newRoleIT" type="text" placeholder="Ruolo IT (es. Preposto)"
+              onkeydown="if(event.key==='Enter') addListItem('roles')"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
+            <input id="newRoleEN" type="text" placeholder="Ruolo EN opzionale (es. Supervisor)"
+              onkeydown="if(event.key==='Enter') addListItem('roles')"
+              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-amber-500" />
+            <button onclick="addListItem('roles')" id="btnAddRole"
+              class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
+              + Aggiungi Ruolo
+            </button>
+          </div>
+        </div>
+
+        <!-- COLONNA 3: CANTIERI / PROGETTI -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
+          <div>
+            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+              <div>
+                <h3 id="colSiteTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">3. Cantieri / Progetti</h3>
+                <p class="text-[11px] text-slate-400">Menu a discesa obbligatorio</p>
+              </div>
+              <span id="countSitesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
+            </div>
+
+            <div id="listContainer-sites" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
+          </div>
+
+          <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
+            <div class="text-xs font-bold text-slate-700" id="addSiteLabel">Aggiungi nuovo Cantiere:</div>
+            <input id="newSiteIT" type="text" placeholder="Cantiere IT (es. Lotto Nord)"
+              onkeydown="if(event.key==='Enter') addListItem('sites')"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
+            <input id="newSiteEN" type="text" placeholder="Cantiere EN opzionale (es. North Lot)"
+              onkeydown="if(event.key==='Enter') addListItem('sites')"
+              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-amber-500" />
+            <button onclick="addListItem('sites')" id="btnAddSite"
+              class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
+              + Aggiungi Cantiere
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODALE ISPEZIONE SINGOLO PARTECIPANTE -->
+  <div id="participantModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 md:p-8 border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+        <div>
+          <span id="modalCompanyBadge" class="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 text-xs font-bold">Azienda</span>
+          <h3 id="modalPersonName" class="text-xl font-extrabold text-slate-900 mt-1">Nome Partecipante</h3>
+          <p id="modalPersonMeta" class="text-xs text-slate-500 mt-0.5">Ruolo • Cantiere • Data</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnModalDelete" onclick="deleteCurrentModalParticipant()"
+            class="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs border border-red-200 transition">
+            🗑️ Elimina Test
+          </button>
+          <button onclick="closeParticipantModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-6 my-5 items-center">
+        <div class="h-60 flex items-center justify-center">
+          <canvas id="modalRadarChart"></canvas>
+        </div>
+        <div id="modalAreaBreakdown" class="space-y-2 text-xs"></div>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 text-xs text-slate-600">
+        <strong class="text-slate-800">Log Scelte (12 Scenari):</strong>
+        <p id="modalChoicesLog" class="font-mono text-[11px] text-slate-500 mt-1 break-all">-</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. CONFIGURAZIONE AREE E LISTE DI DEFAULT
+    // =========================================================================
+    const AREA_KEYS = [
+      { id: "VISION", name: "Vision", csvPct: "vision_pct", color: "#2563eb" },
+      { id: "FOCUS", name: "Focus", csvPct: "focus_pct", color: "#d97706" },
+      { id: "INFLUENCE", name: "Influence", csvPct: "influence_pct", color: "#7c3aed" },
+      { id: "CREDIBILITY", name: "Credibility", csvPct: "credibility_pct", color: "#059669" },
+      { id: "TEAM", name: "Team", csvPct: "team_pct", color: "#0891b2" },
+      { id: "COMMUNICATION", name: "Communication", csvPct: "communication_pct", color: "#db2777" },
+      { id: "FEEDBACK", name: "Feedback", csvPct: "feedback_pct", color: "#4f46e5" }
+    ];
+
+    const DEFAULT_BLOBS_LISTS = {
+      companies: [
+        "General Contractor SpA",
+        "Tech Engineering Srl",
+        "SafeWorks Costruzioni",
+        "Subappalto Elettrico Srl",
+        "Subappalto Meccanico SpA",
+        "Altra Azienda | Other Company"
+      ],
+      roles: [
+        "Project Manager / Direttore di Progetto | Project Manager",
+        "Site Manager / Direttore di Cantiere | Site Manager",
+        "Construction Manager | Construction Manager",
+        "HSE Manager / RSPP | HSE Manager",
+        "HSE Supervisor / ASPP | HSE Supervisor / Officer",
+        "Ingegnere di Progetto / Field Engineer | Project / Field Engineer",
+        "Supervisore / Preposto | Supervisor / Foreman",
+        "Caposquadra | Crew Leader",
+        "Tecnico / Operativo di Campo | Field Technician / Operator",
+        "Altro Ruolo | Other Role"
+      ],
+      sites: [
+        "Cantiere Nord - Lotto 1 | North Site - Lot 1",
+        "Cantiere Sud - Lotto 2 | South Site - Lot 2",
+        "Impianto Industriale Centrale | Central Industrial Plant",
+        "Polo Logistico & Infrastrutture | Logistics & Infrastructure Hub",
+        "Sede Ingegneria / Direzione | Engineering Office / HQ"
+      ]
+    };
+
+    const UI_TEXT = {
+      it: {
+        hdrTitle: "Safety Leadership — Admin & Config",
+        hdrSub: "Analisi risultati in tempo reale e gestione liste su Netlify Blobs",
+        langSwitchPrefix: "Lingua:",
+        langLabel: "Italiano 🇮🇹",
+        btnChangeSource: "Esci / Cambia Sorgente",
+        btnPrintReport: "Stampa / PDF",
+        btnRefreshNow: "↻ Aggiorna ora",
+        navTabAnalyticsLabel: "Analisi Risultati",
+        navTabListsLabel: "Gestione Liste (Aziende, Ruoli, Cantieri)",
+        loginBadge: "Connessione Diretta Database & Netlify Blobs",
+        loginTitle: "Accedi alla Console di Amministrazione",
+        tabBtnFunc: "1. Tramite Netlify Function (Password Admin)",
+        tabBtnDirect: "2. Connessione Diretta Token API (Per Netlify Drop puro)",
+        funcDesc: "Inserisci la password configurata nella variabile <code>ADMIN_PASSWORD</code> su Netlify. Potrai visualizzare i grafici in tempo reale, eliminare uno o più test di prova e modificare le liste su <strong>Netlify Blobs</strong>.",
+        btnConnectFunc: "Accedi alla Console →",
+        directDesc: "Se usi <strong>Netlify Drop</strong> senza funzioni serverless, inserisci il tuo <strong>Site ID</strong> e il tuo <strong>Personal Access Token</strong>:",
+        lblRememberCreds: "Ricorda credenziali in questo browser",
+        btnConnectDirect: "Connetti alle API di Netlify →",
+        altTitle: "Modalità Offline: Carica CSV o Apri Demo",
+        altSub: "Esplora subito sia i grafici sia la selezione multipla e la scheda 'Gestione Liste' con dati dimostrativi.",
+        btnBrowseCSV: "Sfoglia file CSV...",
+        btnLoadDemo: "Apri Console Demo (25 Test + Gestione Liste) →",
+        fltTitle: "Filtri di Analisi",
+        activeRecords: (n, tot) => `${n} di ${tot} test selezionati`,
+        btnResetFilters: "Azzera filtri",
+        lblFilterCompany: "Azienda",
+        allCompanies: "Tutte le Aziende",
+        lblFilterSite: "Cantiere / Progetto",
+        allSites: "Tutti i Cantieri",
+        lblFilterRole: "Ruolo / Funzione",
+        allRoles: "Tutti i Ruoli",
+        lblFilterSearch: "Cerca Partecipante",
+        phSearch: "Nome o Anonimo...",
+        kpi1Title: "Test Analizzati",
+        kpi1Sub: (anon, named) => `${named} nominativi • ${anon} anonimi`,
+        kpi2Title: "Area Media Dominante (#1)",
+        kpi2Sub: (val) => `Media del gruppo: ${val}% (Target 14.3%)`,
+        kpi3Title: "Gap Formativo Medio (#7)",
+        kpi3Sub: (val) => `Media più bassa: ${val}% (Priorità coaching)`,
+        kpi4Title: "Seconda Leva Media (#2)",
+        kpi4Sub: (val) => `Media del gruppo: ${val}%`,
+        chart1Title: "Profilo Medio delle 7 Aree (Selezione vs Globale)",
+        chart1Sub: "Confronta la media del gruppo filtrato con la media generale e il target bilanciato (14.3%)",
+        dsFilteredAvg: "Media Gruppo Filtrato (%)",
+        dsGlobalAvg: "Media Globale (%)",
+        dsIdealTarget: "Target Equilibrato (14.3%)",
+        chart2Title: "Distribuzione Punti di Forza (#1) vs Bisogni Formativi (#7)",
+        chart2Sub: "Numero di partecipanti per i quali ciascuna area risulta la #1 (Dominante) o la #7 (Meno Presidiata)",
+        dsCountTop1: "N° volte Area Dominante (#1)",
+        dsCountLow7: "N° volte Area Meno Presidiata (#7)",
+        heatmapTitle: "Matrice Comparativa (Heatmap) per Gruppo",
+        heatmapSub: "Confronta le percentuali medie delle 7 aree raggruppate per Cantiere, Azienda o Ruolo.",
+        lblGroupBy: "Raggruppa per:",
+        optGroupSite: "Cantiere / Progetto",
+        optGroupCompany: "Azienda",
+        optGroupRole: "Ruolo / Funzione",
+        thGroupCol: "Gruppo",
+        thGroupCount: "N. Test",
+        thGroupGap: "Area da Potenziare (Media più bassa)",
+        partTableTitle: "Dettaglio Singoli Test Completati",
+        partTableSub: "Seleziona più righe con le caselle di spunta per eliminarle in blocco, oppure clicca su una riga per aprire la scheda grafica individuale.",
+        btnExportFilteredCSV: "Esporta Vista Filtrata (CSV)",
+        btnDeleteSelectedFormat: (n) => `Elimina selezionati (${n})`,
+        btnDeletingBulk: "Eliminazione in corso...",
+        thPDate: "Data",
+        thPName: "Partecipante",
+        thPComp: "Azienda",
+        thPRole: "Ruolo",
+        thPSite: "Cantiere",
+        thPDom: "Area #1 (Forte)",
+        thPLow: "Area #7 (Gap)",
+        thPAction: "Azioni",
+        btnDeleteRow: "🗑️ Elimina",
+        btnDeletingRow: "Eliminazione...",
+        btnModalDelete: "🗑️ Elimina Test",
+        confirmDeleteMsg: (name, date) => `Vuoi davvero eliminare definitivamente il test di "${name}" del ${date}?`,
+        confirmBulkDeleteMsg: (n) => `Vuoi davvero eliminare definitivamente i ${n} test selezionati? L'operazione non può essere annullata.`,
+        deleteSuccessMsg: (name) => `✓ Test di "${name}" eliminato con successo. Tutti i grafici sono stati aggiornati.`,
+        bulkDeleteSuccessMsg: (n) => `✓ ${n} test eliminati con successo. Tutti i grafici e le medie sono stati aggiornati.`,
+        lstMainTitle: "Gestione Menu a Discesa (Aziende, Ruoli, Cantieri)",
+        lstMainSub: "Aggiungi o rimuovi le voci dei menu a discesa. Per il supporto bilingue puoi inserire sia il testo in Italiano sia la traduzione in Inglese.",
+        btnReloadBlobs: "↻ Ricarica Liste",
+        btnDownloadTxt: "⬇ Scarica .txt Backup",
+        btnSaveBlobs: "💾 Salva su Netlify Blobs",
+        unsavedChanges: "Modifiche non salvate *",
+        colCompTitle: "1. Aziende",
+        colRoleTitle: "2. Ruoli / Funzioni",
+        colSiteTitle: "3. Cantieri / Progetti",
+        addCompLabel: "Aggiungi nuova Azienda:",
+        addRoleLabel: "Aggiungi nuovo Ruolo:",
+        addSiteLabel: "Aggiungi nuovo Cantiere:",
+        btnAddComp: "+ Aggiungi Azienda",
+        btnAddRole: "+ Aggiungi Ruolo",
+        btnAddSite: "+ Aggiungi Cantiere",
+        blobsSavedOk: "✓ Liste salvate con successo su Netlify Blobs! I menu a discesa di index.html sono ora aggiornati.",
+        blobsSavedLocal: "✓ Liste salvate nella memoria locale del browser (Modalità Demo/Offline). Usa 'Scarica .txt Backup' o pubblica la funzione manage-lists.js per salvare su Netlify Blobs."
+      },
+      en: {
+        hdrTitle: "Safety Leadership — Admin & Config",
+        hdrSub: "Real-time results analytics and list management on Netlify Blobs",
+        langSwitchPrefix: "Language:",
+        langLabel: "English 🇬🇧",
+        btnChangeSource: "Logout / Change Source",
+        btnPrintReport: "Print / PDF",
+        btnRefreshNow: "↻ Refresh now",
+        navTabAnalyticsLabel: "Results Analytics",
+        navTabListsLabel: "Manage Lists (Companies, Roles, Sites)",
+        loginBadge: "Direct Database & Netlify Blobs Connection",
+        loginTitle: "Sign In to Admin Console",
+        tabBtnFunc: "1. Via Netlify Function (Admin Password)",
+        tabBtnDirect: "2. Direct API Token (For pure Netlify Drop)",
+        funcDesc: "Enter the password configured in <code>ADMIN_PASSWORD</code> on Netlify. You will be able to view live charts, bulk-delete test runs, and edit lists on <strong>Netlify Blobs</strong>.",
+        btnConnectFunc: "Sign In to Console →",
+        directDesc: "If using <strong>Netlify Drop</strong> without serverless functions, enter your <strong>Site ID</strong> and <strong>Personal Access Token</strong>:",
+        lblRememberCreds: "Remember credentials in this browser",
+        btnConnectDirect: "Connect to Netlify API →",
+        altTitle: "Offline Mode: Upload CSV or Open Demo",
+        altSub: "Explore the analytics charts, multi-select deletion, and the 'Manage Lists' tab with sample data.",
+        btnBrowseCSV: "Browse CSV file...",
+        btnLoadDemo: "Open Demo Console (25 Tests + List Manager) →",
+        fltTitle: "Analysis Filters",
+        activeRecords: (n, tot) => `${n} of ${tot} assessments selected`,
+        btnResetFilters: "Reset filters",
+        lblFilterCompany: "Company",
+        allCompanies: "All Companies",
+        lblFilterSite: "Site / Project",
+        allSites: "All Sites",
+        lblFilterRole: "Role / Job Title",
+        allRoles: "All Roles",
+        lblFilterSearch: "Search Participant",
+        phSearch: "Name or Anonymous...",
+        kpi1Title: "Analyzed Assessments",
+        kpi1Sub: (anon, named) => `${named} named • ${anon} anonymous`,
+        kpi2Title: "Avg Dominant Area (#1)",
+        kpi2Sub: (val) => `Group average: ${val}% (Target 14.3%)`,
+        kpi3Title: "Avg Training Gap (#7)",
+        kpi3Sub: (val) => `Lowest average: ${val}% (Coaching focus)`,
+        kpi4Title: "Second Avg Lever (#2)",
+        kpi4Sub: (val) => `Group average: ${val}%`,
+        chart1Title: "Average Profile Across the 7 Areas (Selection vs Global)",
+        chart1Sub: "Compares the filtered group average against the overall average and the balanced target (14.3%)",
+        dsFilteredAvg: "Filtered Group Avg (%)",
+        dsGlobalAvg: "Overall Avg (%)",
+        dsIdealTarget: "Balanced Target (14.3%)",
+        chart2Title: "Distribution of Primary Strengths (#1) vs Training Gaps (#7)",
+        chart2Sub: "Number of participants for whom each area ranked #1 (Dominant) or #7 (Least Covered)",
+        dsCountTop1: "# of times Dominant Area (#1)",
+        dsCountLow7: "# of times Least Covered (#7)",
+        heatmapTitle: "Comparative Group Matrix (Heatmap)",
+        heatmapSub: "Compare average percentages across the 7 areas grouped by Site, Company, or Role.",
+        lblGroupBy: "Group by:",
+        optGroupSite: "Site / Project",
+        optGroupCompany: "Company",
+        optGroupRole: "Role / Job Title",
+        thGroupCol: "Group",
+        thGroupCount: "Count",
+        thGroupGap: "Training Need (Lowest Avg)",
+        partTableTitle: "Individual Completed Assessments",
+        partTableSub: "Check multiple rows to bulk-delete them with one click, or click any row to inspect the individual radar chart.",
+        btnExportFilteredCSV: "Export Filtered View (CSV)",
+        btnDeleteSelectedFormat: (n) => `Delete selected (${n})`,
+        btnDeletingBulk: "Deleting...",
+        thPDate: "Date",
+        thPName: "Participant",
+        thPComp: "Company",
+        thPRole: "Role",
+        thPSite: "Site",
+        thPDom: "Area #1 (Top)",
+        thPLow: "Area #7 (Gap)",
+        thPAction: "Actions",
+        btnDeleteRow: "🗑️ Delete",
+        btnDeletingRow: "Deleting...",
+        btnModalDelete: "🗑️ Delete Test",
+        confirmDeleteMsg: (name, date) => `Are you sure you want to permanently delete the assessment by "${name}" (${date})?`,
+        confirmBulkDeleteMsg: (n) => `Are you sure you want to permanently delete the ${n} selected assessments? This action cannot be undone.`,
+        deleteSuccessMsg: (name) => `✓ Assessment by "${name}" deleted. All charts have been recalculated.`,
+        bulkDeleteSuccessMsg: (n) => `✓ ${n} assessments deleted successfully. All charts and averages have been updated.`,
+        lstMainTitle: "Dropdown List Manager (Companies, Roles, Sites)",
+        lstMainSub: "Add or remove dropdown items. For bilingual support, you can provide both the Italian label and the English translation.",
+        btnReloadBlobs: "↻ Reload Lists",
+        btnDownloadTxt: "⬇ Download .txt Backup",
+        btnSaveBlobs: "💾 Save to Netlify Blobs",
+        unsavedChanges: "Unsaved changes *",
+        colCompTitle: "1. Companies",
+        colRoleTitle: "2. Roles / Job Titles",
+        colSiteTitle: "3. Sites / Projects",
+        addCompLabel: "Add new Company:",
+        addRoleLabel: "Add new Role:",
+        addSiteLabel: "Add new Site:",
+        btnAddComp: "+ Add Company",
+        btnAddRole: "+ Add Role",
+        btnAddSite: "+ Add Site",
+        blobsSavedOk: "✓ Lists saved to Netlify Blobs! Dropdowns in index.html are now updated.",
+        blobsSavedLocal: "✓ Lists saved to browser storage (Demo/Offline mode). Deploy manage-lists.js to save directly to Netlify Blobs."
+      }
+    };
+
+    let currentLang = "it";
+    let currentAdminView = "analytics";
+    let activeConnectionMode = null; // 'function' | 'direct' | 'csv' | 'demo'
+    let savedAdminPassword = "";
+    let autoRefreshTimer = null;
+
+    let allRecords = [];
+    let filteredRecords = [];
+    let selectedRecordIds = new Set(); // Insieme degli ID selezionati con le checkbox
+    let currentModalRecordId = null;
+
+    let editableLists = {
+      companies: [...DEFAULT_BLOBS_LISTS.companies],
+      roles: [...DEFAULT_BLOBS_LISTS.roles],
+      sites: [...DEFAULT_BLOBS_LISTS.sites]
+    };
+    let hasUnsavedListChanges = false;
+
+    let aggRadarInstance = null;
+    let domWeakBarInstance = null;
+    let groupCompChartInstance = null;
+    let modalRadarInstance = null;
+
+    // =========================================================================
+    // 2. NAVIGAZIONE SCHEDE ADMIN
+    // =========================================================================
+    function switchAdminView(viewName) {
+      currentAdminView = viewName;
+      const tabA = document.getElementById("navTabAnalytics");
+      const tabL = document.getElementById("navTabLists");
+      const secA = document.getElementById("screen-dashboard");
+      const secL = document.getElementById("screen-lists");
+
+      if (viewName === "analytics") {
+        tabA.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2";
+        tabL.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2";
+        secL.classList.add("hidden");
+        secA.classList.remove("hidden");
+      } else {
+        tabL.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2";
+        tabA.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2";
+        secA.classList.add("hidden");
+        secL.classList.remove("hidden");
+        renderEditableListsUI();
+      }
+    }
+
+    // =========================================================================
+    // 3. SELEZIONE MULTIPLA (CHECKBOX) ED ELIMINAZIONE SINGOLA / IN BLOCCO
+    // =========================================================================
+    function toggleRowSelection(recordId, isChecked) {
+      if (isChecked) {
+        selectedRecordIds.add(recordId);
+      } else {
+        selectedRecordIds.delete(recordId);
+      }
+      updateBulkSelectionUI();
+    }
+
+    function toggleSelectAllFiltered(isChecked) {
+      filteredRecords.forEach(r => {
+        if (isChecked) {
+          selectedRecordIds.add(r.id);
+        } else {
+          selectedRecordIds.delete(r.id);
+        }
+      });
+      renderParticipantsTable();
+      updateBulkSelectionUI();
+    }
+
+    function updateBulkSelectionUI() {
+      const t = UI_TEXT[currentLang];
+      // Mantiene solo gli ID che esistono ancora in allRecords
+      const validIds = new Set(allRecords.map(r => r.id));
+      for (const id of selectedRecordIds) {
+        if (!validIds.has(id)) selectedRecordIds.delete(id);
+      }
+
+      const count = selectedRecordIds.size;
+      const bulkBtn = document.getElementById("btnDeleteSelected");
+      const bulkLbl = document.getElementById("btnDeleteSelectedLabel");
+
+      if (count > 0) {
+        bulkLbl.textContent = t.btnDeleteSelectedFormat(count);
+        bulkBtn.classList.remove("hidden");
+      } else {
+        bulkBtn.classList.add("hidden");
+      }
+
+      // Sincronizza lo stato della checkbox d'intestazione "Seleziona tutti"
+      const selectAllChk = document.getElementById("chkSelectAllRows");
+      if (selectAllChk) {
+        if (filteredRecords.length === 0) {
+          selectAllChk.checked = false;
+          selectAllChk.indeterminate = false;
+        } else {
+          const selectedInFiltered = filteredRecords.filter(r => selectedRecordIds.has(r.id)).length;
+          selectAllChk.checked = selectedInFiltered === filteredRecords.length;
+          selectAllChk.indeterminate = selectedInFiltered > 0 && selectedInFiltered < filteredRecords.length;
+        }
+      }
+    }
+
+    // Eliminazione in blocco di tutti i test spuntati
+    async function deleteSelectedSubmissions() {
+      const idsArray = Array.from(selectedRecordIds);
+      if (idsArray.length === 0) return;
+
+      const t = UI_TEXT[currentLang];
+      const confirmed = window.confirm(t.confirmBulkDeleteMsg(idsArray.length));
+      if (!confirmed) return;
+
+      const bulkBtn = document.getElementById("btnDeleteSelected");
+      const bulkLbl = document.getElementById("btnDeleteSelectedLabel");
+      bulkBtn.disabled = true;
+      bulkLbl.textContent = t.btnDeletingBulk;
+
+      const banner = document.getElementById("deleteFeedbackBanner");
+      banner.classList.add("hidden");
+
+      try {
+        // 1. Modalità Netlify Function (invia l'array completo di ID in un'unica chiamata DELETE)
+        if (activeConnectionMode === "function") {
+          const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
+          const res = await fetch("/.netlify/functions/get-results", {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              "x-admin-password": pwd
+            },
+            body: JSON.stringify({ ids: idsArray })
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Errore HTTP ${res.status}`);
+          }
+        }
+        // 2. Modalità Connessione Diretta Token API
+        else if (activeConnectionMode === "direct") {
+          const token = document.getElementById("inputDirectToken").value.trim();
+          await Promise.all(idsArray.map(async (subId) => {
+            const res = await fetch(`https://api.netlify.com/api/v1/submissions/${encodeURIComponent(subId)}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok && res.status !== 204) {
+              throw new Error(`Impossibile eliminare ID ${subId} (HTTP ${res.status})`);
+            }
+          }));
+        }
+
+        // 3. Rimuove tutti i record eliminati dall'array locale e ricalcola i grafici
+        const deletedSet = new Set(idsArray);
+        allRecords = allRecords.filter(r => !deletedSet.has(r.id));
+        selectedRecordIds.clear();
+
+        if (currentModalRecordId && deletedSet.has(currentModalRecordId)) {
+          closeParticipantModal();
+        }
+
+        populateFilterDropdowns(true);
+        applyFilters();
+
+        banner.className = "mb-4 rounded-xl p-3 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800 no-print";
+        banner.textContent = t.bulkDeleteSuccessMsg(idsArray.length);
+        banner.classList.remove("hidden");
+
+      } catch (err) {
+        banner.className = "mb-4 rounded-xl p-3 text-xs font-bold border bg-red-50 border-red-200 text-red-700 no-print";
+        banner.textContent = "Errore durante l'eliminazione multipla: " + err.message;
+        banner.classList.remove("hidden");
+      } finally {
+        bulkBtn.disabled = false;
+        updateBulkSelectionUI();
+      }
+    }
+
+    // Eliminazione di una singola riga tramite il pulsante sulla destra o dal modale
+    async function deleteSubmissionById(recordId, event) {
+      if (event) event.stopPropagation();
+
+      const targetRec = allRecords.find(r => r.id === recordId);
+      if (!targetRec) return;
+
+      const t = UI_TEXT[currentLang];
+      const confirmed = window.confirm(t.confirmDeleteMsg(targetRec.name, targetRec.date));
+      if (!confirmed) return;
+
+      const btnEl = document.getElementById(`delBtn-${recordId}`);
+      if (btnEl) {
+        btnEl.textContent = t.btnDeletingRow;
+        btnEl.disabled = true;
+      }
+
+      const banner = document.getElementById("deleteFeedbackBanner");
+      banner.classList.add("hidden");
+
+      try {
+        if (activeConnectionMode === "function") {
+          const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
+          const res = await fetch(`/.netlify/functions/get-results?id=${encodeURIComponent(recordId)}`, {
+            method: "DELETE",
+            headers: { "x-admin-password": pwd }
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Errore HTTP ${res.status}`);
+          }
+        } else if (activeConnectionMode === "direct") {
+          const token = document.getElementById("inputDirectToken").value.trim();
+          const res = await fetch(`https://api.netlify.com/api/v1/submissions/${encodeURIComponent(recordId)}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          if (!res.ok && res.status !== 204) {
+            throw new Error(`Impossibile eliminare da API Netlify (HTTP ${res.status})`);
+          }
+        }
+
+        allRecords = allRecords.filter(r => r.id !== recordId);
+        selectedRecordIds.delete(recordId);
+
+        if (currentModalRecordId === recordId) {
+          closeParticipantModal();
+        }
+
+        populateFilterDropdowns(true);
+        applyFilters();
+
+        banner.className = "mb-4 rounded-xl p-3 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800 no-print";
+        banner.textContent = t.deleteSuccessMsg(targetRec.name);
+        banner.classList.remove("hidden");
+
+      } catch (err) {
+        banner.className = "mb-4 rounded-xl p-3 text-xs font-bold border bg-red-50 border-red-200 text-red-700 no-print";
+        banner.textContent = "Errore durante l'eliminazione: " + err.message;
+        banner.classList.remove("hidden");
+        if (btnEl) {
+          btnEl.textContent = t.btnDeleteRow;
+          btnEl.disabled = false;
+        }
+      }
+    }
+
+    function deleteCurrentModalParticipant() {
+      if (!currentModalRecordId) return;
+      deleteSubmissionById(currentModalRecordId, null);
+    }
+
+    // =========================================================================
+    // 4. GESTIONE LISTE CON NETLIFY BLOBS
+    // =========================================================================
+    async function loadListsFromBlobs() {
+      const badge = document.getElementById("blobsStatusBadge");
+      document.getElementById("blobsFeedbackBanner").classList.add("hidden");
+
+      try {
+        const res = await fetch("/.netlify/functions/manage-lists", { cache: "no-store" });
+        const contentType = res.headers.get("content-type") || "";
+        if (res.ok && contentType.includes("application/json")) {
+          const data = await res.json();
+          if (data && data.status === "success") {
+            editableLists.companies = Array.isArray(data.companies) ? data.companies : [...DEFAULT_BLOBS_LISTS.companies];
+            editableLists.roles = Array.isArray(data.roles) ? data.roles : [...DEFAULT_BLOBS_LISTS.roles];
+            editableLists.sites = Array.isArray(data.sites) ? data.sites : [...DEFAULT_BLOBS_LISTS.sites];
+            badge.className = "px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold";
+            badge.textContent = data.source === "netlify-blobs" ? "Netlify Blobs Sync ✓" : "Netlify Blobs (Default)";
+            hasUnsavedListChanges = false;
+            updateUnsavedBadge();
+            renderEditableListsUI();
+            return;
+          }
+        }
+      } catch (_) {}
+
+      const savedLocal = localStorage.getItem("sl_admin_blobs_backup");
+      if (savedLocal) {
+        try {
+          const parsed = JSON.parse(savedLocal);
+          if (parsed.companies) editableLists = parsed;
+        } catch (_) {}
+      }
+      badge.className = "px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 text-xs font-bold";
+      badge.textContent = "Storage Locale / Demo";
+      hasUnsavedListChanges = false;
+      updateUnsavedBadge();
+      renderEditableListsUI();
+    }
+
+    function renderEditableListsUI() {
+      ["companies", "roles", "sites"].forEach(category => {
+        const container = document.getElementById(`listContainer-${category}`);
+        const list = editableLists[category] || [];
+
+        const countBadgeId =
+          category === "companies" ? "countCompaniesBadge" :
+          category === "roles" ? "countRolesBadge" : "countSitesBadge";
+        document.getElementById(countBadgeId).textContent = list.length;
+
+        if (list.length === 0) {
+          container.innerHTML = `<p class="text-xs text-slate-400 italic py-4 text-center">Nessuna voce presente</p>`;
+          return;
+        }
+
+        container.innerHTML = list.map((item, idx) => {
+          const parts = String(item).split("|").map(p => p.trim());
+          const itLabel = parts[0];
+          const enLabel = parts[1] || "";
+
+          return `
+            <div class="py-2.5 px-2 flex items-center justify-between gap-2 hover:bg-slate-50 rounded-lg group">
+              <div class="text-xs leading-snug">
+                <div class="font-bold text-slate-800">${itLabel}</div>
+                ${enLabel && enLabel !== itLabel ? `<div class="text-[11px] text-slate-400">🇬🇧 ${enLabel}</div>` : ""}
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button onclick="moveListItem('${category}', ${idx}, -1)" title="Sposta su"
+                  class="w-6 h-6 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 text-xs font-bold ${idx === 0 ? 'invisible' : ''}">
+                  ↑
+                </button>
+                <button onclick="moveListItem('${category}', ${idx}, 1)" title="Sposta giù"
+                  class="w-6 h-6 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 text-xs font-bold ${idx === list.length - 1 ? 'invisible' : ''}">
+                  ↓
+                </button>
+                <button onclick="removeListItem('${category}', ${idx})" title="Rimuovi voce"
+                  class="w-6 h-6 rounded bg-red-50 hover:bg-red-100 text-red-600 text-xs font-extrabold transition">
+                  ✕
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      });
+    }
+
+    function addListItem(category) {
+      const prefix = category === "companies" ? "newComp" : category === "roles" ? "newRole" : "newSite";
+      const inputIT = document.getElementById(`${prefix}IT`);
+      const inputEN = document.getElementById(`${prefix}EN`);
+
+      const valIT = inputIT.value.trim();
+      const valEN = inputEN.value.trim();
+
+      if (!valIT) {
+        inputIT.focus();
+        return;
+      }
+
+      const formattedEntry = valEN && valEN !== valIT ? `${valIT} | ${valEN}` : valIT;
+      editableLists[category].push(formattedEntry);
+
+      inputIT.value = "";
+      inputEN.value = "";
+      hasUnsavedListChanges = true;
+      updateUnsavedBadge();
+      renderEditableListsUI();
+    }
+
+    function removeListItem(category, index) {
+      editableLists[category].splice(index, 1);
+      hasUnsavedListChanges = true;
+      updateUnsavedBadge();
+      renderEditableListsUI();
+    }
+
+    function moveListItem(category, index, direction) {
+      const list = editableLists[category];
+      const targetIdx = index + direction;
+      if (targetIdx < 0 || targetIdx >= list.length) return;
+      const temp = list[index];
+      list[index] = list[targetIdx];
+      list[targetIdx] = temp;
+      hasUnsavedListChanges = true;
+      updateUnsavedBadge();
+      renderEditableListsUI();
+    }
+
+    function updateUnsavedBadge() {
+      const badge = document.getElementById("unsavedChangesBadge");
+      if (hasUnsavedListChanges) {
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+    }
+
+    async function saveListsToBlobs() {
+      const t = UI_TEXT[currentLang];
+      const banner = document.getElementById("blobsFeedbackBanner");
+      const btn = document.getElementById("btnSaveBlobs");
+      const origText = btn.textContent;
+
+      btn.textContent = "Salvataggio...";
+      btn.disabled = true;
+      banner.classList.add("hidden");
+
+      localStorage.setItem("sl_admin_blobs_backup", JSON.stringify(editableLists));
+
+      try {
+        const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
+        const res = await fetch("/.netlify/functions/manage-lists", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": pwd
+          },
+          body: JSON.stringify(editableLists)
+        });
+
+        const contentType = res.headers.get("content-type") || "";
+        if (res.ok && contentType.includes("application/json")) {
+          hasUnsavedListChanges = false;
+          updateUnsavedBadge();
+          banner.className = "rounded-xl p-4 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
+          banner.textContent = t.blobsSavedOk;
+          banner.classList.remove("hidden");
+          document.getElementById("blobsStatusBadge").textContent = "Netlify Blobs Sync ✓";
+        } else if (res.status === 401) {
+          throw new Error("Password Admin mancante o errata per salvare su Netlify Blobs.");
+        } else {
+          hasUnsavedListChanges = false;
+          updateUnsavedBadge();
+          banner.className = "rounded-xl p-4 text-xs font-bold border bg-amber-50 border-amber-200 text-amber-900";
+          banner.textContent = t.blobsSavedLocal;
+          banner.classList.remove("hidden");
+        }
+      } catch (err) {
+        banner.className = "rounded-xl p-4 text-xs font-bold border bg-amber-50 border-amber-200 text-amber-900";
+        banner.textContent = err.message || t.blobsSavedLocal;
+        banner.classList.remove("hidden");
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    }
+
+    function downloadAllTxtBackups() {
+      const files = [
+        { name: "aziende.txt", content: editableLists.companies.join("\n") },
+        { name: "ruoli.txt", content: editableLists.roles.join("\n") },
+        { name: "cantieri.txt", content: editableLists.sites.join("\n") }
+      ];
+      files.forEach(f => {
+        const blob = new Blob([f.content], { type: "text/plain;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = f.name;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    // =========================================================================
+    // 5. CONNESSIONE LIVE AI RISULTATI
+    // =========================================================================
+    function switchAuthMode(mode) {
+      document.getElementById("uploadError").classList.add("hidden");
+      const btnF = document.getElementById("tabBtnFunc");
+      const btnD = document.getElementById("tabBtnDirect");
+      const panelF = document.getElementById("authPanelFunction");
+      const panelD = document.getElementById("authPanelDirect");
+
+      if (mode === "function") {
+        btnF.className = "pb-3 px-4 border-b-2 border-amber-500 text-slate-900 transition";
+        btnD.className = "pb-3 px-4 border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition";
+        panelF.classList.remove("hidden");
+        panelD.classList.add("hidden");
+      } else {
+        btnD.className = "pb-3 px-4 border-b-2 border-amber-500 text-slate-900 transition";
+        btnF.className = "pb-3 px-4 border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition";
+        panelD.classList.remove("hidden");
+        panelF.classList.add("hidden");
+      }
+    }
+
+    function showError(msg) {
+      const errEl = document.getElementById("uploadError");
+      errEl.textContent = msg;
+      errEl.classList.remove("hidden");
+    }
+
+    async function connectViaNetlifyFunction(isBackgroundRefresh = false) {
+      const pwd = isBackgroundRefresh
+        ? savedAdminPassword
+        : document.getElementById("inputAdminPassword").value.trim();
+
+      if (!pwd) {
+        showError("Inserisci la Password Admin.");
+        return;
+      }
+
+      const btn = document.getElementById("btnConnectFunc");
+      const origText = btn.textContent;
+      if (!isBackgroundRefresh) {
+        btn.textContent = "Connessione in corso...";
+        btn.disabled = true;
+        document.getElementById("uploadError").classList.add("hidden");
+      }
+
+      try {
+        const res = await fetch("/.netlify/functions/get-results", {
+          method: "GET",
+          headers: { "x-admin-password": pwd }
+        });
+
+        const contentType = res.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+          throw new Error(
+            "La Netlify Function non è attiva su questo deploy. Usa la scheda '2. Connessione Diretta Token API' oppure apri la Console Demo."
+          );
+        }
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `Errore HTTP ${res.status}`);
+        }
+
+        savedAdminPassword = pwd;
+        activeConnectionMode = "function";
+        allRecords = normalizeNetlifyRows(data.rows || []);
+        updateLastSyncTimestamp();
+        await loadListsFromBlobs();
+        initDashboardWithData(isBackgroundRefresh);
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    }
+
+    async function connectViaDirectAPI(isBackgroundRefresh = false) {
+      const siteId = document.getElementById("inputDirectSiteId").value.trim();
+      const token = document.getElementById("inputDirectToken").value.trim();
+
+      if (!siteId || !token) {
+        showError("Inserisci sia il Netlify Site ID sia il Personal Access Token.");
+        return;
+      }
+
+      if (document.getElementById("chkRememberDirect").checked) {
+        localStorage.setItem("sl_netlify_site_id", siteId);
+        localStorage.setItem("sl_netlify_token", token);
+      } else {
+        localStorage.removeItem("sl_netlify_site_id");
+        localStorage.removeItem("sl_netlify_token");
+      }
+
+      const btn = document.getElementById("btnConnectDirect");
+      const origText = btn.textContent;
+      if (!isBackgroundRefresh) {
+        btn.textContent = "Scaricamento dati da Netlify...";
+        btn.disabled = true;
+        document.getElementById("uploadError").classList.add("hidden");
+      }
+
+      try {
+        let allSubs = [];
+        let page = 1;
+        let keepGoing = true;
+
+        while (keepGoing && page <= 10) {
+          const url = `https://api.netlify.com/api/v1/sites/${encodeURIComponent(siteId)}/submissions?per_page=100&page=${page}`;
+          const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          if (!res.ok) {
+            throw new Error(`Impossibile leggere dal Site ID specificato (HTTP ${res.status}).`);
+          }
+
+          const batch = await res.json();
+          allSubs = allSubs.concat(batch);
+          if (batch.length < 100) keepGoing = false;
+          else page++;
+        }
+
+        const rawRows = allSubs
+          .filter(s => (!s.form_name || s.form_name === "risultati-safety-leadership") && s.data)
+          .map(s => ({ submission_id: s.id, created_at: s.created_at, ...s.data }));
+
+        activeConnectionMode = "direct";
+        allRecords = normalizeNetlifyRows(rawRows);
+        updateLastSyncTimestamp();
+        await loadListsFromBlobs();
+        initDashboardWithData(isBackgroundRefresh);
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    }
+
+    function refreshLiveData() {
+      if (activeConnectionMode === "function") connectViaNetlifyFunction(true);
+      else if (activeConnectionMode === "direct") connectViaDirectAPI(true);
+    }
+
+    function toggleAutoRefresh() {
+      const checked = document.getElementById("chkAutoRefresh").checked;
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      if (checked) {
+        autoRefreshTimer = setInterval(() => refreshLiveData(), 60000);
+      }
+    }
+
+    function updateLastSyncTimestamp() {
+      const now = new Date().toLocaleTimeString("it-IT");
+      document.getElementById("lastSyncText").textContent = `Sync: ${now}`;
+      const liveCtrl = document.getElementById("liveControls");
+      liveCtrl.classList.remove("hidden");
+      liveCtrl.classList.add("flex");
+    }
+
+    function handleFileSelect(event) {
+      if (event.target.files && event.target.files.length > 0) {
+        const file = event.target.files[0];
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: async function(results) {
+            const parsed = normalizeNetlifyRows(results.data);
+            if (parsed.length === 0) {
+              showError("Il file CSV selezionato non contiene righe valide.");
+              return;
+            }
+            activeConnectionMode = "csv";
+            allRecords = parsed;
+            selectedRecordIds.clear();
+            await loadListsFromBlobs();
+            initDashboardWithData(false);
+          }
+        });
+      }
+    }
+
+    function parseNumericPct(val) {
+      if (val === undefined || val === null) return 0;
+      const cleaned = String(val).replace("%", "").replace(",", ".").trim();
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    }
+
+    function normalizeNetlifyRows(rawRows) {
+      const valid = [];
+      rawRows.forEach((row, index) => {
+        const norm = {};
+        Object.keys(row).forEach(k => {
+          norm[k.toLowerCase().trim()] = row[k];
+        });
+
+        const pcts = {};
+        let sumPct = 0;
+        AREA_KEYS.forEach(a => {
+          const v = parseNumericPct(norm[a.csvPct]);
+          pcts[a.id] = v;
+          sumPct += v;
+        });
+
+        if (sumPct === 0) return;
+
+        const sortedAreas = [...AREA_KEYS].sort((a, b) => pcts[b.id] - pcts[a.id]);
+        const topAreaObj = sortedAreas[0];
+        const lowAreaObj = sortedAreas[sortedAreas.length - 1];
+
+        let dateFormatted = norm["data_ora"] || norm["created_at"] || "-";
+        if (dateFormatted.includes("T") && dateFormatted.includes("Z")) {
+          try { dateFormatted = new Date(dateFormatted).toLocaleString("it-IT"); } catch (_) {}
+        }
+
+        const recordId = norm["submission_id"] || norm["id"] || `local_${index}_${Date.now()}`;
+
+        valid.push({
+          id: String(recordId),
+          date: dateFormatted,
+          name: norm["partecipante"] || "Anonimo",
+          privacy: norm["consenso_privacy"] || "-",
+          company: norm["azienda"] || "Non specificata",
+          role: norm["ruolo"] || "Non specificato",
+          site: norm["cantiere"] || "Non specificato",
+          lang: norm["lingua"] || "IT",
+          pct: pcts,
+          top1Id: topAreaObj.id,
+          top1Name: topAreaObj.name,
+          top1Val: pcts[topAreaObj.id],
+          low7Id: lowAreaObj.id,
+          low7Name: lowAreaObj.name,
+          low7Val: pcts[lowAreaObj.id],
+          choicesLog: norm["riepilogo_scelte"] || "-"
+        });
+      });
+      return valid;
+    }
+
+    // =========================================================================
+    // 6. DATASET DEMO E RENDERING ANALYTICS
+    // =========================================================================
+    async function loadDemoDataset() {
+      const companies = [
+        "General Contractor SpA",
+        "Tech Engineering Srl",
+        "SafeWorks Costruzioni",
+        "Subappalto Elettrico Srl",
+        "Subappalto Meccanico SpA"
+      ];
+      const sites = [
+        "Cantiere Nord - Lotto 1",
+        "Cantiere Sud - Lotto 2",
+        "Impianto Industriale Centrale",
+        "Polo Logistico & Infrastrutture"
+      ];
+      const roles = [
+        "Site Manager / Direttore di Cantiere",
+        "HSE Manager / RSPP",
+        "Supervisore / Preposto",
+        "Caposquadra",
+        "Ingegnere di Progetto / Field Engineer"
+      ];
+      const names = [
+        "Marco Bianchi (Test Prova #1)", "Anonimo (Test Prova #2)", "Luca Verdi", "Anonimo", "Alessandro Neri",
+        "Giulia Rusconi", "Anonimo", "Matteo Ferri", "Davide Galli", "Anonimo",
+        "Roberto Costa", "Elena Fontana", "Anonimo", "Stefano Moretti", "Anonimo",
+        "Paolo Barbieri", "Andrea Colombo", "Anonimo", "Simone Rinaldi", "Nicola Serra",
+        "Anonimo", "Federico Longo", "Lorenzo Marini", "Anonimo", "Valerio Conti"
+      ];
+
+      const demoRows = [];
+      for (let i = 0; i < 25; i++) {
+        const comp = companies[i % companies.length];
+        const site = sites[i % sites.length];
+        const role = roles[i % roles.length];
+        const name = names[i];
+
+        const raw = {
+          VISION: 10 + ((i * 3) % 9) + (role.includes("Manager") ? 4 : 0),
+          FOCUS: 12 + ((i * 5) % 10) + (site.includes("Nord") ? 3 : 0),
+          INFLUENCE: 9 + ((i * 7) % 8),
+          CREDIBILITY: 13 + ((i * 2) % 9) + (role.includes("HSE") ? 4 : 0),
+          TEAM: 10 + ((i * 4) % 9),
+          COMMUNICATION: 9 + ((i * 6) % 8),
+          FEEDBACK: 8 + ((i * 3) % 7) - (comp.includes("Subappalto") ? 2 : 0)
+        };
+        const tot = Object.values(raw).reduce((a, b) => a + b, 0);
+
+        demoRows.push({
+          submission_id: `demo_sub_${i + 1}`,
+          data_ora: `${10 + (i % 18)}/10/2026, ${9 + (i % 8)}:${15 + (i % 40)}`,
+          partecipante: name,
+          consenso_privacy: name.startsWith("Anonimo") ? "Anonimo (Non richiesto)" : "Accettato (GDPR)",
+          azienda: comp,
+          ruolo: role,
+          cantiere: site,
+          lingua: i % 4 === 0 ? "EN" : "IT",
+          vision_pct: ((raw.VISION / tot) * 100).toFixed(1) + "%",
+          focus_pct: ((raw.FOCUS / tot) * 100).toFixed(1) + "%",
+          influence_pct: ((raw.INFLUENCE / tot) * 100).toFixed(1) + "%",
+          credibility_pct: ((raw.CREDIBILITY / tot) * 100).toFixed(1) + "%",
+          team_pct: ((raw.TEAM / tot) * 100).toFixed(1) + "%",
+          communication_pct: ((raw.COMMUNICATION / tot) * 100).toFixed(1) + "%",
+          feedback_pct: ((raw.FEEDBACK / tot) * 100).toFixed(1) + "%",
+          riepilogo_scelte: "S1:CREDIBILITY(#1,w=1,+1.00) | S2:FOCUS(#1,w=1,+1.00) | S3:VISION(#2,w=0.65,+0.55)"
+        });
+      }
+
+      activeConnectionMode = "demo";
+      allRecords = normalizeNetlifyRows(demoRows);
+      selectedRecordIds.clear();
+      await loadListsFromBlobs();
+      initDashboardWithData(false);
+    }
+
+    function initDashboardWithData(preserveFilters = false) {
+      document.getElementById("screen-upload").classList.add("hidden");
+      document.getElementById("adminNavTabs").classList.remove("hidden");
+      document.getElementById("btnChangeSource").classList.remove("hidden");
+      document.getElementById("btnPrintReport").classList.remove("hidden");
+
+      switchAdminView(currentAdminView);
+      populateFilterDropdowns(preserveFilters);
+      applyFilters();
+    }
+
+    function logoutAndShowLogin() {
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      selectedRecordIds.clear();
+      document.getElementById("chkAutoRefresh").checked = false;
+      document.getElementById("liveControls").classList.add("hidden");
+      document.getElementById("adminNavTabs").classList.add("hidden");
+      document.getElementById("screen-dashboard").classList.add("hidden");
+      document.getElementById("screen-lists").classList.add("hidden");
+      document.getElementById("btnChangeSource").classList.add("hidden");
+      document.getElementById("btnPrintReport").classList.add("hidden");
+      document.getElementById("screen-upload").classList.remove("hidden");
+    }
+
+    function populateFilterDropdowns(preserve = false) {
+      const t = UI_TEXT[currentLang];
+      const companies = [...new Set(allRecords.map(r => r.company))].sort();
+      const sites = [...new Set(allRecords.map(r => r.site))].sort();
+      const roles = [...new Set(allRecords.map(r => r.role))].sort();
+
+      const selC = document.getElementById("filterCompany");
+      const selS = document.getElementById("filterSite");
+      const selR = document.getElementById("filterRole");
+
+      const prevC = preserve ? selC.value : "ALL";
+      const prevS = preserve ? selS.value : "ALL";
+      const prevR = preserve ? selR.value : "ALL";
+
+      selC.innerHTML = `<option value="ALL">${t.allCompanies}</option>` +
+        companies.map(c => `<option value="${c}">${c}</option>`).join("");
+      selS.innerHTML = `<option value="ALL">${t.allSites}</option>` +
+        sites.map(s => `<option value="${s}">${s}</option>`).join("");
+      selR.innerHTML = `<option value="ALL">${t.allRoles}</option>` +
+        roles.map(r => `<option value="${r}">${r}</option>`).join("");
+
+      if (companies.includes(prevC)) selC.value = prevC;
+      if (sites.includes(prevS)) selS.value = prevS;
+      if (roles.includes(prevR)) selR.value = prevR;
+    }
+
+    function resetFilters() {
+      document.getElementById("filterCompany").value = "ALL";
+      document.getElementById("filterSite").value = "ALL";
+      document.getElementById("filterRole").value = "ALL";
+      document.getElementById("filterSearch").value = "";
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const cVal = document.getElementById("filterCompany").value;
+      const sVal = document.getElementById("filterSite").value;
+      const rVal = document.getElementById("filterRole").value;
+      const qVal = document.getElementById("filterSearch").value.trim().toLowerCase();
+
+      filteredRecords = allRecords.filter(rec => {
+        if (cVal !== "ALL" && rec.company !== cVal) return false;
+        if (sVal !== "ALL" && rec.site !== sVal) return false;
+        if (rVal !== "ALL" && rec.role !== rVal) return false;
+        if (qVal && !rec.name.toLowerCase().includes(qVal)) return false;
+        return true;
+      });
+
+      renderAllAnalytics();
+    }
+
+    function computeGroupAverages(records) {
+      const avg = {};
+      AREA_KEYS.forEach(a => avg[a.id] = 0);
+      if (records.length === 0) return avg;
+
+      records.forEach(r => {
+        AREA_KEYS.forEach(a => {
+          avg[a.id] += r.pct[a.id];
+        });
+      });
+
+      AREA_KEYS.forEach(a => {
+        avg[a.id] = avg[a.id] / records.length;
+      });
+      return avg;
+    }
+
+    function renderAllAnalytics() {
+      const t = UI_TEXT[currentLang];
+      document.getElementById("activeRecordsBadge").textContent =
+        t.activeRecords(filteredRecords.length, allRecords.length);
+
+      const globalAvg = computeGroupAverages(allRecords);
+      const filteredAvg = computeGroupAverages(filteredRecords);
+
+      const sortedAvgAreas = [...AREA_KEYS].sort((a, b) => filteredAvg[b.id] - filteredAvg[a.id]);
+      const top1Area = sortedAvgAreas[0];
+      const top2Area = sortedAvgAreas[1];
+      const low7Area = sortedAvgAreas[sortedAvgAreas.length - 1];
+
+      const anonCount = filteredRecords.filter(r =>
+        r.name.toLowerCase().startsWith("anonimo") || r.name.toLowerCase().startsWith("anonymous")
+      ).length;
+      const namedCount = filteredRecords.length - anonCount;
+
+      document.getElementById("kpi1Value").textContent = filteredRecords.length;
+      document.getElementById("kpi1Sub").textContent = t.kpi1Sub(anonCount, namedCount);
+
+      if (filteredRecords.length > 0) {
+        document.getElementById("kpi2Value").textContent = top1Area.name;
+        document.getElementById("kpi2Sub").textContent = t.kpi2Sub(filteredAvg[top1Area.id].toFixed(1));
+
+        document.getElementById("kpi3Value").textContent = low7Area.name;
+        document.getElementById("kpi3Sub").textContent = t.kpi3Sub(filteredAvg[low7Area.id].toFixed(1));
+
+        document.getElementById("kpi4Value").textContent = top2Area.name;
+        document.getElementById("kpi4Sub").textContent = t.kpi4Sub(filteredAvg[top2Area.id].toFixed(1));
+      } else {
+        ["kpi2Value", "kpi2Sub", "kpi3Value", "kpi3Sub", "kpi4Value", "kpi4Sub"].forEach(id => {
+          document.getElementById(id).textContent = "-";
+        });
+      }
+
+      const radarCtx = document.getElementById("aggRadarChart").getContext("2d");
+      if (aggRadarInstance) aggRadarInstance.destroy();
+      aggRadarInstance = new Chart(radarCtx, {
+        type: "radar",
+        data: {
+          labels: AREA_KEYS.map(a => a.name),
+          datasets: [
+            {
+              label: t.dsFilteredAvg,
+              data: AREA_KEYS.map(a => Number(filteredAvg[a.id].toFixed(1))),
+              backgroundColor: "rgba(245, 158, 11, 0.25)",
+              borderColor: "#d97706",
+              pointBackgroundColor: "#0f172a",
+              borderWidth: 2.5
+            },
+            {
+              label: t.dsGlobalAvg,
+              data: AREA_KEYS.map(a => Number(globalAvg[a.id].toFixed(1))),
+              backgroundColor: "rgba(37, 99, 235, 0.08)",
+              borderColor: "#2563eb",
+              borderWidth: 1.5
+            },
+            {
+              label: t.dsIdealTarget,
+              data: AREA_KEYS.map(() => 14.3),
+              backgroundColor: "transparent",
+              borderColor: "#94a3b8",
+              borderDash: [5, 5],
+              pointRadius: 0,
+              borderWidth: 1.5
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { r: { beginAtZero: true, suggestedMax: 22 } }
+        }
+      });
+
+      const domCounts = {};
+      const lowCounts = {};
+      AREA_KEYS.forEach(a => { domCounts[a.id] = 0; lowCounts[a.id] = 0; });
+      filteredRecords.forEach(r => {
+        domCounts[r.top1Id] = (domCounts[r.top1Id] || 0) + 1;
+        lowCounts[r.low7Id] = (lowCounts[r.low7Id] || 0) + 1;
+      });
+
+      const barCtx = document.getElementById("domWeakBarChart").getContext("2d");
+      if (domWeakBarInstance) domWeakBarInstance.destroy();
+      domWeakBarInstance = new Chart(barCtx, {
+        type: "bar",
+        data: {
+          labels: AREA_KEYS.map(a => a.name),
+          datasets: [
+            {
+              label: t.dsCountTop1,
+              data: AREA_KEYS.map(a => domCounts[a.id]),
+              backgroundColor: "#10b981",
+              borderRadius: 6
+            },
+            {
+              label: t.dsCountLow7,
+              data: AREA_KEYS.map(a => lowCounts[a.id]),
+              backgroundColor: "#f59e0b",
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+
+      renderGroupComparison();
+      renderParticipantsTable();
+      updateBulkSelectionUI();
+    }
+
+    function renderGroupComparison() {
+      const groupField = document.getElementById("selectGroupBy").value;
+      const propMap = { cantiere: "site", azienda: "company", ruolo: "role" };
+      const recKey = propMap[groupField];
+
+      const groupsMap = {};
+      filteredRecords.forEach(r => {
+        const gName = r[recKey] || "-";
+        if (!groupsMap[gName]) groupsMap[gName] = [];
+        groupsMap[gName].push(r);
+      });
+
+      const groupNames = Object.keys(groupsMap).sort();
+      const groupStats = groupNames.map(gName => {
+        const recs = groupsMap[gName];
+        const avg = computeGroupAverages(recs);
+        const sorted = [...AREA_KEYS].sort((a, b) => avg[a.id] - avg[b.id]);
+        return {
+          groupName: gName,
+          count: recs.length,
+          avg: avg,
+          lowestArea: sorted[0].name,
+          lowestVal: avg[sorted[0].id]
+        };
+      });
+
+      const ctx = document.getElementById("groupComparisonChart").getContext("2d");
+      if (groupCompChartInstance) groupCompChartInstance.destroy();
+      groupCompChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: groupStats.map(g => g.groupName),
+          datasets: AREA_KEYS.map(area => ({
+            label: area.name,
+            data: groupStats.map(g => Number(g.avg[area.id].toFixed(1))),
+            backgroundColor: area.color
+          }))
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: "%" } }
+          }
+        }
+      });
+
+      const tbody = document.getElementById("heatmapTableBody");
+      tbody.innerHTML = groupStats.map(g => {
+        const cellsHTML = AREA_KEYS.map(a => {
+          const val = g.avg[a.id];
+          let bgClass = "bg-slate-50 text-slate-700";
+          if (val >= 16.0) bgClass = "bg-emerald-100 text-emerald-900 font-extrabold";
+          else if (val <= 12.5) bgClass = "bg-amber-100 text-amber-900 font-extrabold";
+          return `<td class="py-2.5 px-2 text-center"><span class="inline-block px-2 py-1 rounded ${bgClass}">${val.toFixed(1)}%</span></td>`;
+        }).join("");
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-3 font-bold text-slate-900">${g.groupName}</td>
+            <td class="py-3 px-2 text-center font-semibold text-slate-600">${g.count}</td>
+            ${cellsHTML}
+            <td class="py-3 px-3">
+              <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-[11px]">
+                ${g.lowestArea} (${g.lowestVal.toFixed(1)}%)
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderParticipantsTable() {
+      const t = UI_TEXT[currentLang];
+      const tbody = document.getElementById("participantsTableBody");
+      tbody.innerHTML = filteredRecords.map((r, idx) => {
+        const isChecked = selectedRecordIds.has(r.id);
+        return `
+          <tr onclick="openParticipantModal(${idx})"
+            class="cursor-pointer transition ${isChecked ? 'bg-amber-50/80 hover:bg-amber-100/70' : 'hover:bg-amber-50/50'}">
+            <td class="py-2.5 px-3 text-center no-print" onclick="event.stopPropagation()">
+              <input type="checkbox" ${isChecked ? "checked" : ""}
+                onchange="toggleRowSelection('${r.id}', this.checked)"
+                class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
+            </td>
+            <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${r.date}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-900">${r.name}</td>
+            <td class="py-2.5 px-3 text-slate-700">${r.company}</td>
+            <td class="py-2.5 px-3 text-slate-700">${r.role}</td>
+            <td class="py-2.5 px-3 text-slate-700">${r.site}</td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                ${r.top1Name} (${r.top1Val.toFixed(1)}%)
+              </span>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
+                ${r.low7Name} (${r.low7Val.toFixed(1)}%)
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-right no-print">
+              <button id="delBtn-${r.id}" onclick="deleteSubmissionById('${r.id}', event)"
+                class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200 transition">
+                ${t.btnDeleteRow}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function openParticipantModal(filteredIdx) {
+      const r = filteredRecords[filteredIdx];
+      if (!r) return;
+
+      currentModalRecordId = r.id;
+      document.getElementById("modalCompanyBadge").textContent = r.company;
+      document.getElementById("modalPersonName").textContent = r.name;
+      document.getElementById("modalPersonMeta").textContent = `${r.role} • ${r.site} • ${r.date}`;
+      document.getElementById("modalChoicesLog").textContent = r.choicesLog;
+
+      const sorted = [...AREA_KEYS].sort((a, b) => r.pct[b.id] - r.pct[a.id]);
+      document.getElementById("modalAreaBreakdown").innerHTML = sorted.map((a, i) => `
+        <div class="flex items-center justify-between p-2 rounded-lg ${i === 0 ? 'bg-emerald-50 border border-emerald-200' : i === 6 ? 'bg-amber-50 border border-amber-200' : 'bg-slate-50'}">
+          <span class="font-bold text-slate-800">#${i + 1} ${a.name}</span>
+          <span class="font-extrabold text-slate-900">${r.pct[a.id].toFixed(1)}%</span>
+        </div>
+      `).join("");
+
+      const modal = document.getElementById("participantModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+
+      const ctx = document.getElementById("modalRadarChart").getContext("2d");
+      if (modalRadarInstance) modalRadarInstance.destroy();
+      modalRadarInstance = new Chart(ctx, {
+        type: "radar",
+        data: {
+          labels: AREA_KEYS.map(a => a.name),
+          datasets: [{
+            label: r.name,
+            data: AREA_KEYS.map(a => Number(r.pct[a.id].toFixed(1))),
+            backgroundColor: "rgba(245, 158, 11, 0.25)",
+            borderColor: "#d97706",
+            pointBackgroundColor: "#0f172a",
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { r: { beginAtZero: true, suggestedMax: 25 } }
+        }
+      });
+    }
+
+    function closeParticipantModal() {
+      currentModalRecordId = null;
+      const modal = document.getElementById("participantModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function exportFilteredCSV() {
+      if (filteredRecords.length === 0) return;
+      const rows = filteredRecords.map(r => ({
+        ID: r.id,
+        Data: r.date,
+        Partecipante: r.name,
+        Azienda: r.company,
+        Ruolo: r.role,
+        Cantiere: r.site,
+        Area_Dominante_1: `${r.top1Name} (${r.top1Val.toFixed(1)}%)`,
+        Area_Gap_7: `${r.low7Name} (${r.low7Val.toFixed(1)}%)`,
+        Vision_Pct: r.pct.VISION.toFixed(1),
+        Focus_Pct: r.pct.FOCUS.toFixed(1),
+        Influence_Pct: r.pct.INFLUENCE.toFixed(1),
+        Credibility_Pct: r.pct.CREDIBILITY.toFixed(1),
+        Team_Pct: r.pct.TEAM.toFixed(1),
+        Communication_Pct: r.pct.COMMUNICATION.toFixed(1),
+        Feedback_Pct: r.pct.FEEDBACK.toFixed(1)
+      }));
+
+      const csvContent = Papa.unparse(rows);
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "report-safety-leadership-filtrato.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === "it" ? "en" : "it";
+      applyTranslations();
+      if (allRecords.length > 0) {
+        populateFilterDropdowns(true);
+        renderAllAnalytics();
+      }
+    }
+
+    function applyTranslations() {
+      const t = UI_TEXT[currentLang];
+      document.documentElement.lang = currentLang;
+
+      const ids = [
+        "hdrTitle", "hdrSub", "langSwitchPrefix", "langLabel", "btnChangeSource", "btnPrintReport",
+        "btnRefreshNow", "navTabAnalyticsLabel", "navTabListsLabel",
+        "loginBadge", "loginTitle", "tabBtnFunc", "tabBtnDirect",
+        "btnConnectFunc", "lblRememberCreds", "btnConnectDirect", "altTitle", "altSub",
+        "btnBrowseCSV", "btnLoadDemo", "fltTitle", "btnResetFilters",
+        "lblFilterCompany", "lblFilterSite", "lblFilterRole", "lblFilterSearch",
+        "kpi1Title", "kpi2Title", "kpi3Title", "kpi4Title",
+        "chart1Title", "chart1Sub", "chart2Title", "chart2Sub",
+        "heatmapTitle", "heatmapSub", "lblGroupBy", "optGroupSite", "optGroupCompany", "optGroupRole",
+        "thGroupCol", "thGroupCount", "thGroupGap",
+        "partTableTitle", "partTableSub", "btnExportFilteredCSV",
+        "thPDate", "thPName", "thPComp", "thPRole", "thPSite", "thPDom", "thPLow", "thPAction",
+        "btnModalDelete",
+        "lstMainTitle", "lstMainSub", "btnReloadBlobs", "btnDownloadTxt", "btnSaveBlobs",
+        "colCompTitle", "colRoleTitle", "colSiteTitle",
+        "addCompLabel", "addRoleLabel", "addSiteLabel",
+        "btnAddComp", "btnAddRole", "btnAddSite"
+      ];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && t[id]) el.textContent = t[id];
+      });
+      document.getElementById("funcDesc").innerHTML = t.funcDesc;
+      document.getElementById("directDesc").innerHTML = t.directDesc;
+      document.getElementById("filterSearch").placeholder = t.phSearch;
+      document.getElementById("unsavedChangesBadge").textContent = t.unsavedChanges;
+      updateBulkSelectionUI();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      applyTranslations();
+      const savedSite = localStorage.getItem("sl_netlify_site_id");
+      const savedTok = localStorage.getItem("sl_netlify_token");
+      if (savedSite) document.getElementById("inputDirectSiteId").value = savedSite;
+      if (savedTok) document.getElementById("inputDirectToken").value = savedTok;
+    });
+  </script>
+</body>
+</html>

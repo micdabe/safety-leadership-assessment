@@ -1,0 +1,2697 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safety Leadership Situational Assessment</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .option-card { transition: all 0.18s ease-in-out; }
+    .option-card:hover { transform: translateY(-1px); }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; }
+      .print-break { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- ========================================================================
+       SCHEMA DATABASE NETLIFY FORMS (Rilevato in automatico da Netlify Drop)
+       Non rimuovere questo form nascosto: serve a Netlify per creare tutte le
+       colonne del database nella sezione "Forms" della tua Dashboard Netlify.
+       ======================================================================== -->
+  <form name="risultati-safety-leadership" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="hidden" hidden>
+    <input type="hidden" name="form-name" value="risultati-safety-leadership" />
+    <input type="text" name="bot-field" />
+    <input type="text" name="data_ora" />
+    <input type="text" name="partecipante" />
+    <input type="text" name="consenso_privacy" />
+    <input type="text" name="azienda" />
+    <input type="text" name="ruolo" />
+    <input type="text" name="cantiere" />
+    <input type="text" name="lingua" />
+    <input type="text" name="area_dominante_1" />
+    <input type="text" name="area_codominante_2" />
+    <input type="text" name="area_meno_presidiata_7" />
+    <input type="text" name="vision_pct" />
+    <input type="text" name="focus_pct" />
+    <input type="text" name="influence_pct" />
+    <input type="text" name="credibility_pct" />
+    <input type="text" name="team_pct" />
+    <input type="text" name="communication_pct" />
+    <input type="text" name="feedback_pct" />
+    <input type="text" name="vision_pt" />
+    <input type="text" name="focus_pt" />
+    <input type="text" name="influence_pt" />
+    <input type="text" name="credibility_pt" />
+    <input type="text" name="team_pt" />
+    <input type="text" name="communication_pt" />
+    <input type="text" name="feedback_pt" />
+    <textarea name="riepilogo_scelte"></textarea>
+  </form>
+
+  <!-- ========================================================================
+       LISTE DI EMERGENZA (Usate solo se non carichi i file .txt su Netlify)
+       In produzione su Netlify, l'app legge automaticamente i file:
+       - aziende.txt
+       - ruoli.txt
+       - cantieri.txt
+       presenti nella stessa cartella trascinata su Netlify Drop.
+       ======================================================================== -->
+  <script id="lista-aziende" type="text/plain">
+General Contractor SpA
+Tech Engineering Srl
+SafeWorks Costruzioni
+Subappalto Elettrico Srl
+Subappalto Meccanico SpA
+Altra Azienda | Other Company
+  </script>
+
+  <script id="lista-ruoli" type="text/plain">
+Project Manager / Direttore di Progetto | Project Manager
+Site Manager / Direttore di Cantiere | Site Manager
+Construction Manager | Construction Manager
+HSE Manager / RSPP | HSE Manager
+HSE Supervisor / ASPP | HSE Supervisor / Officer
+Ingegnere di Progetto / Field Engineer | Project / Field Engineer
+Supervisore / Preposto | Supervisor / Foreman
+Caposquadra | Crew Leader
+Tecnico / Operativo di Campo | Field Technician / Operator
+Altro Ruolo | Other Role
+  </script>
+
+  <script id="lista-cantieri" type="text/plain">
+Cantiere Nord - Lotto 1 | North Site - Lot 1
+Cantiere Sud - Lotto 2 | South Site - Lot 2
+Impianto Industriale Centrale | Central Industrial Plant
+Polo Logistico & Infrastrutture | Logistics & Infrastructure Hub
+Sede Ingegneria / Direzione | Engineering Office / HQ
+  </script>
+
+  <!-- Header -->
+  <header class="bg-slate-900 text-white shadow-md no-print">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-slate-950 text-lg shadow">
+          SL
+        </div>
+        <div>
+          <h1 id="hdrTitle" class="font-bold text-lg leading-tight">Safety Leadership Assessment</h1>
+          <p id="hdrSub" class="text-xs text-slate-400">Valutazione situazionale delle 7 aree di leadership</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button onclick="toggleLanguage()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
+          <span id="langSwitchPrefix">Lingua:</span> <span id="langLabel" class="text-amber-400 font-bold">Italiano 🇮🇹</span>
+        </button>
+        <button id="btnResetHdr" onclick="resetApp()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
+          Ricomincia
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8">
+
+    <!-- 1. SCHERMATA INIZIALE -->
+    <section id="screen-welcome" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-10">
+      <div class="max-w-3xl mx-auto">
+        <div class="flex flex-wrap gap-2 mb-4">
+          <span id="wBadge1" class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">
+            12 Scenari Operativi
+          </span>
+          <span id="wBadge2" class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+            7 Aree di Competenza
+          </span>
+          <span id="wBadge3" class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold">
+            Report & Executive Coaching
+          </span>
+        </div>
+
+        <h2 id="wTitle" class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-4">
+          Scopri il tuo profilo di Safety Leadership attraverso situazioni reali
+        </h2>
+        <p id="wDesc" class="text-slate-600 mb-6 leading-relaxed text-sm md:text-base">
+          Questo percorso presenta <strong>12 situazioni realistiche di cantiere e di progetto</strong>. Per ciascun problema ti verranno proposte 7 possibili azioni risolutive. Il tuo compito è scegliere i comportamenti che adotteresti realmente sul campo, indicandoli in ordine di priorità.
+        </p>
+
+        <!-- Modulo Dati Partecipante -->
+        <div class="bg-white border-2 border-slate-200 rounded-2xl p-5 md:p-6 mb-6 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2.5">
+              <h3 id="userFormTitle" class="text-sm font-extrabold uppercase tracking-wider text-slate-800">
+                Dati del Partecipante
+              </h3>
+              <span id="listsSourceBadge" class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">
+                Caricamento liste...
+              </span>
+            </div>
+            <span id="lblRequiredNote" class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
+              * Campi obbligatori
+            </span>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <!-- 1. Azienda (Menu a discesa Obbligatorio) -->
+            <div>
+              <label id="lblUserCompany" for="selectUserCompany" class="block text-xs font-bold text-slate-700 mb-1">
+                Azienda *
+              </label>
+              <select id="selectUserCompany" onchange="clearFormError()"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-amber-500">
+                <option value="">-- Seleziona l'azienda --</option>
+              </select>
+            </div>
+
+            <!-- 2. Ruolo (Menu a discesa Obbligatorio) -->
+            <div>
+              <label id="lblUserRole" for="selectUserRole" class="block text-xs font-bold text-slate-700 mb-1">
+                Ruolo / Funzione *
+              </label>
+              <select id="selectUserRole" onchange="clearFormError()"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-amber-500">
+                <option value="">-- Seleziona il tuo ruolo --</option>
+              </select>
+            </div>
+
+            <!-- 3. Cantiere / Progetto (Menu a discesa Obbligatorio) -->
+            <div>
+              <label id="lblUserSite" for="selectUserSite" class="block text-xs font-bold text-slate-700 mb-1">
+                Cantiere / Progetto *
+              </label>
+              <select id="selectUserSite" onchange="clearFormError()"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-amber-500">
+                <option value="">-- Seleziona il cantiere / progetto --</option>
+              </select>
+            </div>
+
+            <!-- 4. Nome e Cognome (Opzionale) -->
+            <div>
+              <label id="lblUserName" for="inputUserName" class="block text-xs font-bold text-slate-500 mb-1">
+                Nome e Cognome (Opzionale)
+              </label>
+              <input id="inputUserName" type="text" placeholder="Lascia vuoto per test anonimo"
+                oninput="handleNameInput()"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50/60 focus:bg-white focus:outline-none focus:border-amber-500" />
+            </div>
+          </div>
+
+          <!-- Casella Privacy (Diventa OBBLIGATORIA se l'utente scrive il Nome) -->
+          <div id="privacyContainer" class="mt-4 p-3.5 rounded-xl border border-slate-200 bg-slate-50 transition-all">
+            <div class="flex items-start gap-3">
+              <input id="checkboxPrivacy" type="checkbox" onchange="clearFormError()"
+                class="mt-0.5 w-4 h-4 accent-amber-600 rounded cursor-pointer shrink-0" />
+              <div class="text-xs leading-relaxed text-slate-600">
+                <label for="checkboxPrivacy" class="cursor-pointer font-medium text-slate-800" id="lblPrivacyText">
+                  Acconsento al trattamento del mio nominativo ai sensi del GDPR (Reg. UE 2016/679) per la generazione e archiviazione del report di valutazione.
+                </label>
+                <span id="privacyRequiredBadge" class="hidden ml-1 px-2 py-0.5 rounded bg-amber-200 text-amber-950 font-extrabold text-[10px] uppercase">
+                  Obbligatorio se inserisci il nome *
+                </span>
+                <span id="privacyOptionalBadge" class="ml-1 px-2 py-0.5 rounded bg-slate-200 text-slate-600 font-semibold text-[10px]">
+                  Non richiesto per test anonimo
+                </span>
+                <button type="button" onclick="togglePrivacyDetails()" id="btnPrivacyInfo" class="ml-1 text-amber-700 hover:underline font-semibold">
+                  [Leggi informativa]
+                </button>
+              </div>
+            </div>
+
+            <div id="privacyDetailsBox" class="hidden mt-3 pt-2.5 border-t border-slate-200 text-[11px] text-slate-500 leading-relaxed">
+              Il conferimento del nominativo è facoltativo. In assenza del nome, i dati statistici aggregati (Azienda, Ruolo, Cantiere e punteggi nelle 7 aree) vengono raccolti in forma totalmente anonima per finalità di analisi organizzativa e formazione sulla sicurezza. Inserendo il nome, i dati saranno associati all'interessato esclusivamente per attività di feedback e coaching individuale, nel pieno rispetto del Regolamento UE 2016/679 (GDPR).
+            </div>
+          </div>
+
+          <p id="userFormError" class="hidden mt-3.5 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-3.5 py-2">
+            Compila tutti i campi obbligatori.
+          </p>
+        </div>
+
+        <!-- Istruzioni semplici per l'utente -->
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 md:p-6 mb-8">
+          <h3 id="wHowTitle" class="text-sm font-extrabold uppercase tracking-wider text-slate-700 mb-4">
+            Come funziona il test
+          </h3>
+          <div class="grid sm:grid-cols-3 gap-4 text-xs md:text-sm">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div class="w-7 h-7 rounded-lg bg-slate-900 text-amber-400 font-extrabold flex items-center justify-center mb-2.5">1</div>
+              <div id="wStep1Title" class="font-bold text-slate-900 mb-1">Analizza lo Scenario</div>
+              <p id="wStep1Desc" class="text-xs text-slate-600 leading-relaxed">
+                Leggi il contesto operativo e la criticità di sicurezza descritta in ciascuno dei 12 round.
+              </p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-extrabold flex items-center justify-center mb-2.5">2</div>
+              <div id="wStep2Title" class="font-bold text-slate-900 mb-1">Scegli da 1 a 3 Azioni</div>
+              <p id="wStep2Desc" class="text-xs text-slate-600 leading-relaxed">
+                Seleziona fino a 3 comportamenti in ordine di importanza: 1ª scelta (azione prioritaria), 2ª scelta e 3ª scelta.
+              </p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-extrabold flex items-center justify-center mb-2.5">3</div>
+              <div id="wStep3Title" class="font-bold text-slate-900 mb-1">Ottieni il tuo Report</div>
+              <p id="wStep3Desc" class="text-xs text-slate-600 leading-relaxed">
+                Al termine visualizzerai la distribuzione delle tue abilità nelle 7 aree e i consigli di coaching personalizzati.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <button id="btnStart" onclick="startAssessment()" class="px-7 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition">
+            Inizia il Test →
+          </button>
+          <button id="btnDemo" onclick="simulateDemo()" class="px-5 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition">
+            Visualizza Report Demo
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. SCHERMATA SCENARIO (QUIZ) -->
+    <section id="screen-quiz" class="hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-5">
+        <div class="flex items-center justify-between text-xs font-semibold text-slate-600 mb-2">
+          <span id="progressText">Scenario 1 di 12</span>
+          <span id="progressPctText" class="text-slate-500 font-bold">8%</span>
+        </div>
+        <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full bg-amber-500 transition-all duration-300" style="width: 8%"></div>
+        </div>
+      </div>
+
+      <!-- Box Situazione / Problema -->
+      <div class="bg-slate-900 text-white rounded-2xl shadow-md p-6 md:p-8 mb-6 border-l-8 border-amber-500">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <span id="scenarioTag" class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider">
+            Scenario #1
+          </span>
+          <span id="scenarioContext" class="text-xs text-slate-400 font-medium">
+            Contesto
+          </span>
+        </div>
+        <h3 id="scenarioTitle" class="text-xl md:text-2xl font-extrabold text-white mb-2">
+          Titolo dello Scenario
+        </h3>
+        <p id="scenarioDescription" class="text-slate-200 text-sm md:text-base leading-relaxed">
+          Descrizione dettagliata...
+        </p>
+      </div>
+
+      <!-- Opzioni (7 Comportamenti Risolutivi) -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
+          <div>
+            <h4 class="font-bold text-slate-900 text-base md:text-lg" id="selectionPromptTitle">
+              Quali comportamenti metti in campo per gestire questa situazione?
+            </h4>
+            <p class="text-xs text-slate-500 mt-0.5" id="selectionPromptSub">
+              Seleziona da 1 a 3 comportamenti in ordine di priorità (clicca per selezionare o deselezionare).
+            </p>
+          </div>
+          <div id="selectionCounterBadge" class="px-3.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold shrink-0">
+            Scelti: 0 / 3
+          </div>
+        </div>
+
+        <div id="optionsContainer" class="space-y-3.5"></div>
+
+        <p id="validationWarning" class="hidden mt-4 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          Seleziona almeno un comportamento prima di proseguire.
+        </p>
+
+        <div class="flex items-center justify-end mt-8 pt-5 border-t border-slate-100">
+          <button id="btnConfirmRound" onclick="confirmRound()" class="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow transition">
+            Conferma e Prosegui →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. SCHERMATA RISULTATI & COACHING -->
+    <section id="screen-results" class="hidden space-y-6">
+      <!-- Riepilogo Principale -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+              <span id="resBadge" class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                Analisi Completata • 12 Scenari
+              </span>
+              <!-- Stato Salvataggio Database Netlify -->
+              <span id="syncStatusBadge" class="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold no-print">
+                Database Netlify: In attesa
+              </span>
+              <button id="btnRetrySync" onclick="sendResultsToNetlifyDB()" class="hidden px-2.5 py-1 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold no-print transition">
+                Riprova salvataggio
+              </button>
+            </div>
+            <h2 id="resMainTitle" class="text-2xl md:text-3xl font-extrabold text-slate-900">
+              Profilo delle tue Abilità di Safety Leadership
+            </h2>
+            <p id="resParticipantInfo" class="text-xs font-bold text-slate-600 mt-1.5 bg-slate-100 inline-block px-3 py-1 rounded-lg"></p>
+            <p id="resMainSub" class="text-sm text-slate-600 mt-2">
+              Distribuzione percentuale delle tue competenze nelle 7 aree in base alle priorità espresse negli scenari.
+            </p>
+          </div>
+          <div class="flex gap-2 no-print">
+            <button id="btnPrint" onclick="window.print()" class="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition">
+              Stampa / PDF
+            </button>
+            <button id="btnNewTest" onclick="resetApp()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-xs font-bold text-slate-950 transition">
+              Nuovo Test
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 Card KPI -->
+        <div class="grid md:grid-cols-3 gap-4 mt-6">
+          <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+            <div id="kpiTop1Label" class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">Area Dominante (#1)</div>
+            <div class="text-xl font-extrabold text-slate-900" id="kpiTop1Name">-</div>
+            <div class="text-xs text-slate-600 mt-1" id="kpiTop1Stats">-</div>
+          </div>
+          <div class="p-4 rounded-xl bg-blue-50 border border-blue-200">
+            <div id="kpiTop2Label" class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">Area Co-Dominante (#2)</div>
+            <div class="text-xl font-extrabold text-slate-900" id="kpiTop2Name">-</div>
+            <div class="text-xs text-slate-600 mt-1" id="kpiTop2Stats">-</div>
+          </div>
+          <div class="p-4 rounded-xl bg-amber-50 border border-amber-200">
+            <div id="kpiLowLabel" class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">Area Meno Presidiata (#7)</div>
+            <div class="text-xl font-extrabold text-slate-900" id="kpiLowName">-</div>
+            <div class="text-xs text-slate-600 mt-1" id="kpiLowStats">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grafici -->
+      <div class="grid md:grid-cols-2 gap-6 print-break">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 id="chartRadarTitle" class="font-bold text-slate-900 text-base mb-1">Mappa Radar della Distribuzione</h3>
+          <p id="chartRadarSub" class="text-xs text-slate-500 mb-4">Confronto tra la tua distribuzione (%) e un profilo bilanciato (14.3% per area)</p>
+          <div class="relative h-72 flex items-center justify-center">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 id="chartBarTitle" class="font-bold text-slate-900 text-base mb-1">Scomposizione Punti: Scelte Dirette vs Ripescate</h3>
+          <p id="chartBarSub" class="text-xs text-slate-500 mb-4">Mostra quanto del punteggio di ogni area deriva da scelte immediate o da comportamenti riproposti</p>
+          <div class="relative h-72 flex items-center justify-center">
+            <canvas id="stackedBarChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEZIONE EXECUTIVE COACHING & PIANO D'AZIONE PERSONALIZZATO -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print-break">
+        <div class="bg-slate-900 text-white px-6 py-5 md:px-8 flex flex-wrap items-center justify-between gap-4 border-b-4 border-amber-500">
+          <div>
+            <span id="coachBadge" class="inline-block px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider mb-1">
+              Executive Safety Coaching
+            </span>
+            <h3 id="coachMainTitle" class="text-xl md:text-2xl font-extrabold">
+              Analisi Comportamentale e Piano d'Azione Personalizzato
+            </h3>
+          </div>
+          <div class="text-xs text-slate-300 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700">
+            <span id="coachFocusPrefix">Focus calibrato su:</span> <strong id="coachingHeaderBadge" class="text-amber-400">-</strong>
+          </div>
+        </div>
+
+        <div class="p-6 md:p-8 space-y-6">
+          <div class="grid md:grid-cols-2 gap-6">
+
+            <!-- Card Coaching 1: Area Dominante -->
+            <div class="rounded-2xl border-2 border-emerald-200 bg-emerald-50/30 p-5 md:p-6 flex flex-col justify-between space-y-4">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-3">
+                  <span id="coachDomTag" class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold uppercase tracking-wide">
+                    Leva Principale • Area Dominante
+                  </span>
+                  <span id="coachDomPct" class="text-sm font-extrabold text-emerald-700">0%</span>
+                </div>
+                <h4 id="coachDomTitle" class="text-lg md:text-xl font-extrabold text-slate-900 mb-1">-</h4>
+                <p id="coachDomArchetype" class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-3">-</p>
+                <p id="coachDomStrength" class="text-sm text-slate-700 leading-relaxed mb-4">-</p>
+              </div>
+
+              <div class="bg-white rounded-xl p-4 border border-emerald-200/80 shadow-sm">
+                <div id="coachDomShadowTitle" class="text-xs font-extrabold uppercase tracking-wider text-amber-700 mb-1">
+                  ⚠️ Attenzione all'Effetto Ombra (Rischio da Eccesso)
+                </div>
+                <p id="coachDomShadow" class="text-xs text-slate-600 leading-relaxed">-</p>
+              </div>
+            </div>
+
+            <!-- Card Coaching 2: Area Meno Presidiata -->
+            <div class="rounded-2xl border-2 border-amber-200 bg-amber-50/30 p-5 md:p-6 flex flex-col justify-between space-y-4">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-3">
+                  <span id="coachWeakTag" class="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold uppercase tracking-wide">
+                    Area di Sviluppo • Meno Presidiata
+                  </span>
+                  <span id="coachWeakPct" class="text-sm font-extrabold text-amber-800">0%</span>
+                </div>
+                <h4 id="coachWeakTitle" class="text-lg md:text-xl font-extrabold text-slate-900 mb-1">-</h4>
+                <p id="coachWeakRiskLabel" class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-2">
+                  Impatto operativo se trascurata:
+                </p>
+                <p id="coachWeakRisk" class="text-sm text-slate-700 leading-relaxed mb-4">-</p>
+              </div>
+
+              <div class="bg-white rounded-xl p-4 border border-amber-200/80 shadow-sm">
+                <div id="coachWeakActionsTitle" class="text-xs font-extrabold uppercase tracking-wider text-slate-800 mb-2.5">
+                  🎯 3 Azioni Pratiche di Coaching (Quick Wins in Campo)
+                </div>
+                <ul id="coachWeakActions" class="space-y-2 text-xs text-slate-700"></ul>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Strategia Ponte -->
+          <div class="rounded-2xl bg-slate-900 text-white p-5 md:p-6 border border-slate-800">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <span id="bridgeHeader" class="text-xs font-extrabold uppercase tracking-wider text-amber-400">
+                🔗 Strategia Ponte Personalizzata (Sinergia di Leadership)
+              </span>
+              <span id="bridgeTag" class="text-xs text-slate-400 font-semibold">-</span>
+            </div>
+            <h4 id="bridgeTitle" class="text-base md:text-lg font-bold text-white mb-2">-</h4>
+            <p id="bridgeText" class="text-sm text-slate-300 leading-relaxed">-</p>
+          </div>
+
+          <!-- Comportamenti Tralasciati nell'Area Meno Presidiata -->
+          <div class="rounded-2xl bg-slate-50 border border-slate-200 p-5 md:p-6">
+            <h4 id="skippedTitle" class="font-bold text-slate-900 text-sm md:text-base mb-1">
+              📌 Allenamento Mirato: Comportamenti di quest'area che hai lasciato in secondo piano
+            </h4>
+            <p id="skippedSub" class="text-xs text-slate-500 mb-3">
+              Questi comportamenti specifici dell'area meno presidiata sono comparsi negli scenari ma non sono stati scelti. Scegline uno da mettere in pratica nella prossima settimana:
+            </p>
+            <div id="skippedBehaviorsList" class="grid sm:grid-cols-2 gap-3 mt-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTA METODOLOGICA -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="px-2.5 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider" id="methBadge">
+            Nota Metodologica
+          </span>
+        </div>
+        <h3 id="methTitle" class="font-bold text-slate-900 text-lg mb-2">
+          Come è stato calcolato il tuo punteggio (Ponderazione Adattiva e Ripescaggio)
+        </h3>
+        <p id="methDesc" class="text-xs md:text-sm text-slate-600 leading-relaxed mb-4">
+          Per garantire una valutazione autentica e priva di condizionamenti durante il test, il motore di calcolo ha applicato dietro le quinte una <strong>doppia ponderazione</strong>: ogni comportamento non selezionato in uno scenario non è andato perso, ma è stato reinserito in coda e riproposto negli scenari successivi con un peso progressivamente minore.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div id="methBox1Title" class="font-bold text-slate-900 mb-1.5">1. Peso dell'Ordine di Priorità (Scelta 1ª, 2ª, 3ª)</div>
+            <ul id="methBox1List" class="space-y-1 text-slate-600"></ul>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div id="methBox2Title" class="font-bold text-slate-900 mb-1.5">2. Peso di Comparsa (Immediato vs Ripescato)</div>
+            <ul id="methBox2List" class="space-y-1 text-slate-600"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabella Analitica -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
+        <h3 id="tblMainTitle" class="font-bold text-slate-900 text-lg mb-4">Dettaglio Analitico delle 7 Aree</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 text-xs uppercase text-slate-500">
+                <th id="thArea" class="py-3 pr-4">Area di Competenza</th>
+                <th id="thFirst" class="py-3 px-3">Scelte alla 1ª Comparsa (1.0x)</th>
+                <th id="thCarry" class="py-3 px-3">Scelte Ripescate (0.65x / 0.35x)</th>
+                <th id="thScore" class="py-3 px-3">Punteggio Ponderato</th>
+                <th id="thDist" class="py-3 pl-4">Distribuzione Finale (100%)</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Registro Storico delle Scelte Effettuate -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
+        <h3 id="logMainTitle" class="font-bold text-slate-900 text-lg mb-1">Riepilogo Comportamenti Scelti nei 12 Scenari</h3>
+        <p id="logMainSub" class="text-xs text-slate-500 mb-4">Elenco cronologico delle soluzioni che hai adottato, con l'indicazione della priorità e dell'eventuale ripescaggio.</p>
+        <div id="decisionLogContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // CONFIGURAZIONE FILE DI TESTO OSPITATI SU NETLIFY
+    // Quando trascini la cartella su Netlify Drop insieme a questi 3 file .txt,
+    // l'app carica da lì le liste di Aziende, Ruoli e Cantieri.
+    // =========================================================================
+    const NETLIFY_COMPANIES_FILE = "aziende.txt";
+    const NETLIFY_ROLES_FILE = "ruoli.txt";
+    const NETLIFY_SITES_FILE = "cantieri.txt";
+    const NETLIFY_FORM_NAME = "risultati-safety-leadership";
+
+    // =========================================================================
+    // 1. DIZIONARIO INTERFACCIA BILINGUE (IT / EN)
+    // =========================================================================
+    const UI_TEXT = {
+      it: {
+        hdrTitle: "Safety Leadership Assessment",
+        hdrSub: "Valutazione situazionale delle 7 aree di leadership",
+        langSwitchPrefix: "Lingua:",
+        langLabel: "Italiano 🇮🇹",
+        btnResetHdr: "Ricomincia",
+        wBadge1: "12 Scenari Operativi",
+        wBadge2: "7 Aree di Competenza",
+        wBadge3: "Report & Executive Coaching",
+        wTitle: "Scopri il tuo profilo di Safety Leadership attraverso situazioni reali",
+        wDesc: "Questo percorso presenta <strong>12 situazioni realistiche di cantiere e di progetto</strong>. Per ciascun problema ti verranno proposte 7 possibili azioni risolutive. Il tuo compito è scegliere i comportamenti che adotteresti realmente sul campo, indicandoli in ordine di priorità.",
+        userFormTitle: "Dati del Partecipante",
+        listsFallbackBadge: "Liste integrate attive",
+        listsLoadingBadge: "Caricamento liste da Netlify...",
+        listsNetlifyBadge: "Liste caricate da Netlify ✓",
+        lblRequiredNote: "* Campi obbligatori",
+        lblUserCompany: "Azienda *",
+        phSelectCompany: "-- Seleziona l'azienda --",
+        lblUserRole: "Ruolo / Funzione *",
+        phSelectRole: "-- Seleziona il tuo ruolo --",
+        lblUserSite: "Cantiere / Progetto *",
+        phSelectSite: "-- Seleziona il cantiere / progetto --",
+        lblUserName: "Nome e Cognome (Opzionale)",
+        phUserName: "Lascia vuoto per test anonimo",
+        anonymousLabel: "Anonimo",
+        lblPrivacyText: "Acconsento al trattamento del mio nominativo ai sensi del GDPR (Reg. UE 2016/679) per la generazione e archiviazione del report di valutazione.",
+        privacyRequiredBadge: "Obbligatorio se inserisci il nome *",
+        privacyOptionalBadge: "Non richiesto per test anonimo",
+        btnPrivacyInfoOpen: "[Leggi informativa]",
+        btnPrivacyInfoClose: "[Chiudi informativa]",
+        privacyDetailsText: "Il conferimento del nominativo è facoltativo. In assenza del nome, i dati statistici aggregati (Azienda, Ruolo, Cantiere e punteggi nelle 7 aree) vengono raccolti in forma totalmente anonima nel database Netlify per finalità di analisi organizzativa e formazione sulla sicurezza. Inserendo il nome, i dati saranno associati all'interessato esclusivamente per attività di feedback e coaching individuale, nel pieno rispetto del Regolamento UE 2016/679 (GDPR).",
+        errMissingDropdowns: "Seleziona tutti i campi obbligatori: Azienda, Ruolo e Cantiere / Progetto.",
+        errMissingPrivacy: "Hai inserito il tuo Nome: per proseguire è obbligatorio spuntare la casella di accettazione dei termini di Privacy (oppure cancella il nome per procedere in forma anonima).",
+        privacyAcceptedLog: "Accettato (GDPR)",
+        privacyAnonymousLog: "Anonimo (Non richiesto)",
+        wHowTitle: "Come funziona il test",
+        wStep1Title: "Analizza lo Scenario",
+        wStep1Desc: "Leggi il contesto operativo e la criticità di sicurezza descritta in ciascuno dei 12 round.",
+        wStep2Title: "Scegli da 1 a 3 Azioni",
+        wStep2Desc: "Seleziona fino a 3 comportamenti in ordine di importanza: 1ª scelta (azione prioritaria), 2ª scelta e 3ª scelta.",
+        wStep3Title: "Ottieni il tuo Report",
+        wStep3Desc: "Al termine visualizzerai la distribuzione delle tue abilità nelle 7 aree e i consigli di coaching personalizzati.",
+        btnStart: "Inizia il Test →",
+        btnDemo: "Visualizza Report Demo",
+        scenarioWord: "Scenario",
+        ofWord: "di",
+        contextPrefix: "Contesto:",
+        selectionPromptTitle: "Quali comportamenti metti in campo per gestire questa situazione?",
+        selectionPromptSub: "Seleziona da 1 a 3 comportamenti in ordine di priorità (clicca per selezionare o deselezionare).",
+        chosenCounter: (n) => `Scelti: ${n} / 3`,
+        choiceBadge: (rank) => `${rank}ª Scelta`,
+        validationWarning: "Seleziona almeno un comportamento (massimo 3) prima di proseguire.",
+        btnNextRound: "Conferma e Prosegui →",
+        btnFinishRound: "Conferma e Genera il Report Finale ✓",
+        resBadge: "Analisi Completata • 12 Scenari",
+        syncSending: "Salvataggio nel database Netlify in corso...",
+        syncSuccess: "Risultati salvati nel database Netlify ✓",
+        syncLocalPreview: "Anteprima Locale (Pubblica su Netlify per attivare il salvataggio DB)",
+        syncError: "Errore durante il salvataggio su Netlify",
+        btnRetrySync: "Riprova salvataggio",
+        resMainTitle: "Profilo delle tue Abilità di Safety Leadership",
+        resMainSub: "Distribuzione percentuale delle tue competenze nelle 7 aree in base alle priorità espresse negli scenari.",
+        participantSummary: (name, company, role, site) =>
+          `Azienda: ${company} • Ruolo: ${role} • Cantiere/Progetto: ${site} • Partecipante: ${name}`,
+        btnPrint: "Stampa / PDF",
+        btnNewTest: "Nuovo Test",
+        kpiTop1Label: "Area Dominante (#1)",
+        kpiTop2Label: "Area Co-Dominante (#2)",
+        kpiLowLabel: "Area Meno Presidiata (#7)",
+        kpiStatsFormat: (pts, c1, c2) => `${pts} pt ponderati (${c1} dirette, ${c2} ripescate)`,
+        chartRadarTitle: "Mappa Radar della Distribuzione",
+        chartRadarSub: "Confronto tra la tua distribuzione (%) e un profilo bilanciato (14.3% per area)",
+        chartRadarDataset1: "La tua Distribuzione (%)",
+        chartRadarDataset2: "Equilibrio Ideale (14.3%)",
+        chartBarTitle: "Scomposizione Punti: Scelte Dirette vs Ripescate",
+        chartBarSub: "Mostra quanto del punteggio di ogni area deriva da scelte immediate o da comportamenti riproposti",
+        chartBarDataset1: "Scelte alla 1ª Comparsa",
+        chartBarDataset2: "Scelte su Ripescaggio",
+        coachBadge: "Executive Safety Coaching",
+        coachMainTitle: "Analisi Comportamentale e Piano d'Azione Personalizzato",
+        coachFocusPrefix: "Focus calibrato su:",
+        coachDomTag: "Leva Principale • Area Dominante",
+        coachWeakTag: "Area di Sviluppo • Meno Presidiata",
+        profileShareWord: "del profilo",
+        coachDomTitlePrefix: "1. Valorizza la tua forza in",
+        coachArchetypePrefix: "Archetipo:",
+        coachDomShadowTitle: "⚠️ Attenzione all'Effetto Ombra (Rischio da Eccesso)",
+        coachWeakTitlePrefix: "2. Potenzia il presidio su",
+        coachWeakRiskLabel: "Impatto operativo se trascurata:",
+        coachWeakActionsTitle: "🎯 3 Azioni Pratiche di Coaching (Quick Wins in Campo)",
+        bridgeHeader: "🔗 Strategia Ponte Personalizzata (Sinergia di Leadership)",
+        bridgeSynergyPrefix: "Sinergia",
+        bridgeTitleFormat: (top, low) => `Come usare la tua leadership in ${top} per far crescere ${low}`,
+        bridgeTextFormat: (bFrom, second, low, bTo, top) =>
+          `${bFrom} (supportata anche dalla tua seconda area forte, <strong>${second}</strong>) per colmare il divario in <strong>${low}</strong>, ${bTo} Non devi snaturare il tuo stile: usa la credibilità e la sicurezza che hai già in <em>${top}</em> per introdurre gradualmente una sola abitudine settimanale legata a <em>${low}</em>.`,
+        skippedTitle: "📌 Allenamento Mirato: Comportamenti di quest'area che hai lasciato in secondo piano",
+        skippedSub: "Questi comportamenti specifici dell'area meno presidiata sono comparsi negli scenari ma non sono stati scelti. Scegline uno da mettere in pratica nella prossima settimana:",
+        skippedCardBadge: "Obiettivo Comportamentale",
+        skippedCountLabel: (n) => `Tralasciato ${n}x negli scenari`,
+        methBadge: "Nota Metodologica",
+        methTitle: "Come è stato calcolato il tuo punteggio (Ponderazione Adattiva e Ripescaggio)",
+        methDesc: "Per garantire una valutazione autentica e priva di condizionamenti durante il test, il motore di calcolo ha applicato dietro le quinte una <strong>doppia ponderazione</strong>: ogni comportamento non selezionato in uno scenario non è andato perso, ma è stato reinserito in coda e riproposto negli scenari successivi con un peso progressivamente minore.",
+        methBox1Title: "1. Peso dell'Ordine di Priorità (Scelta 1ª, 2ª, 3ª)",
+        methBox1List: `
+          <li>• <strong>1ª Scelta (Priorità Alta):</strong> 100% del valore del comportamento</li>
+          <li>• <strong>2ª Scelta (Priorità Media):</strong> 85% del valore del comportamento</li>
+          <li>• <strong>3ª Scelta (Priorità Complementare):</strong> 70% del valore del comportamento</li>
+        `,
+        methBox2Title: "2. Peso di Comparsa (Immediato vs Ripescato)",
+        methBox2List: `
+          <li>• <strong>Scelto alla 1ª Comparsa:</strong> coefficiente pieno <strong>1.00x (100%)</strong></li>
+          <li>• <strong>Scelto al 1° Ripescaggio (2ª comparsa):</strong> coefficiente ridotto <strong>0.65x (65%)</strong></li>
+          <li>• <strong>Scelto dal 2° Ripescaggio in poi (3ª+ comparsa):</strong> coefficiente <strong>0.35x (35%)</strong></li>
+        `,
+        tblMainTitle: "Dettaglio Analitico delle 7 Aree",
+        thArea: "Area di Competenza",
+        thFirst: "Scelte 1ª Comparsa (1.0x)",
+        thCarry: "Scelte Ripescate (0.65x / 0.35x)",
+        thScore: "Punteggio Ponderato",
+        thDist: "Distribuzione Finale (100%)",
+        tblChoicesWord: "scelte",
+        tblCarryWord: "ripescate",
+        logMainTitle: "Riepilogo Comportamenti Scelti nei 12 Scenari",
+        logMainSub: "Elenco cronologico delle soluzioni che hai adottato, con l'indicazione della priorità e dell'eventuale ripescaggio.",
+        logFirstApp: "1ª Comparsa (Peso 1.0x)",
+        logCarryApp: (n, w) => `Ripescato ${n}x (Peso ${w}x)`
+      },
+      en: {
+        hdrTitle: "Safety Leadership Assessment",
+        hdrSub: "Situational assessment across the 7 leadership areas",
+        langSwitchPrefix: "Language:",
+        langLabel: "English 🇬🇧",
+        btnResetHdr: "Restart",
+        wBadge1: "12 Operational Scenarios",
+        wBadge2: "7 Leadership Areas",
+        wBadge3: "Report & Executive Coaching",
+        wTitle: "Discover your Safety Leadership profile through realistic situations",
+        wDesc: "This assessment presents <strong>12 realistic site and project scenarios</strong>. For each situation, you will be presented with 7 possible leadership actions. Your task is to select the behaviors you would genuinely apply in the field, ranking them in order of priority.",
+        userFormTitle: "Participant Details",
+        listsFallbackBadge: "Built-in lists active",
+        listsLoadingBadge: "Loading lists from Netlify...",
+        listsNetlifyBadge: "Lists loaded from Netlify ✓",
+        lblRequiredNote: "* Required fields",
+        lblUserCompany: "Company *",
+        phSelectCompany: "-- Select company --",
+        lblUserRole: "Role / Job Title *",
+        phSelectRole: "-- Select your role --",
+        lblUserSite: "Site / Project *",
+        phSelectSite: "-- Select site / project --",
+        lblUserName: "Full Name (Optional)",
+        phUserName: "Leave blank for anonymous assessment",
+        anonymousLabel: "Anonymous",
+        lblPrivacyText: "I consent to the processing of my personal name under the GDPR (EU Reg. 2016/679) for generating and archiving my assessment report.",
+        privacyRequiredBadge: "Required when name is entered *",
+        privacyOptionalBadge: "Not required for anonymous test",
+        btnPrivacyInfoOpen: "[Read privacy notice]",
+        btnPrivacyInfoClose: "[Hide privacy notice]",
+        privacyDetailsText: "Providing your name is optional. If left blank, aggregated statistical data (Company, Role, Site, and scores across the 7 areas) are collected anonymously in the Netlify database for organizational safety analysis and training. If you enter your name, your data will be linked to your profile solely for individual feedback and coaching, in full compliance with EU Regulation 2016/679 (GDPR).",
+        errMissingDropdowns: "Please select all required dropdown fields: Company, Role, and Site / Project.",
+        errMissingPrivacy: "You entered your Name: you must check the Privacy Terms acceptance box to proceed (or clear the Name field to take the test anonymously).",
+        privacyAcceptedLog: "Accepted (GDPR)",
+        privacyAnonymousLog: "Anonymous (Not required)",
+        wHowTitle: "How the assessment works",
+        wStep1Title: "Analyze the Scenario",
+        wStep1Desc: "Read the operational context and the safety challenge described in each of the 12 rounds.",
+        wStep2Title: "Select 1 to 3 Actions",
+        wStep2Desc: "Choose up to 3 behaviors in order of importance: 1st choice (primary action), 2nd choice, and 3rd choice.",
+        wStep3Title: "Get Your Report",
+        wStep3Desc: "At the end, you will see your skill distribution across the 7 areas and tailored executive coaching advice.",
+        btnStart: "Start Assessment →",
+        btnDemo: "View Demo Report",
+        scenarioWord: "Scenario",
+        ofWord: "of",
+        contextPrefix: "Context:",
+        selectionPromptTitle: "Which behaviors do you deploy to handle this situation?",
+        selectionPromptSub: "Select from 1 to 3 behaviors in order of priority (click to select or deselect).",
+        chosenCounter: (n) => `Selected: ${n} / 3`,
+        choiceBadge: (rank) => rank === 1 ? "1st Choice" : rank === 2 ? "2nd Choice" : "3rd Choice",
+        validationWarning: "Please select at least one behavior (up to 3) before proceeding.",
+        btnNextRound: "Confirm & Continue →",
+        btnFinishRound: "Confirm & Generate Final Report ✓",
+        resBadge: "Analysis Complete • 12 Scenarios",
+        syncSending: "Saving to Netlify database...",
+        syncSuccess: "Results saved in Netlify database ✓",
+        syncLocalPreview: "Local Preview (Deploy on Netlify to enable DB saving)",
+        syncError: "Error saving to Netlify database",
+        btnRetrySync: "Retry saving",
+        resMainTitle: "Your Safety Leadership Skills Profile",
+        resMainSub: "Percentage distribution of your competencies across the 7 areas based on the priorities expressed in the scenarios.",
+        participantSummary: (name, company, role, site) =>
+          `Company: ${company} • Role: ${role} • Site/Project: ${site} • Participant: ${name}`,
+        btnPrint: "Print / PDF",
+        btnNewTest: "New Assessment",
+        kpiTop1Label: "Dominant Area (#1)",
+        kpiTop2Label: "Co-Dominant Area (#2)",
+        kpiLowLabel: "Least Covered Area (#7)",
+        kpiStatsFormat: (pts, c1, c2) => `${pts} weighted pts (${c1} direct, ${c2} re-proposed)`,
+        chartRadarTitle: "Competency Distribution Radar",
+        chartRadarSub: "Comparison between your distribution (%) and a balanced profile (14.3% per area)",
+        chartRadarDataset1: "Your Distribution (%)",
+        chartRadarDataset2: "Balanced Target (14.3%)",
+        chartBarTitle: "Point Breakdown: Direct vs Re-proposed Choices",
+        chartBarSub: "Shows how much of each area's score comes from immediate selections vs re-proposed behaviors",
+        chartBarDataset1: "1st Appearance Choices",
+        chartBarDataset2: "Re-proposed Choices",
+        coachBadge: "Executive Safety Coaching",
+        coachMainTitle: "Behavioral Analysis & Tailored Action Plan",
+        coachFocusPrefix: "Calibrated on:",
+        coachDomTag: "Primary Lever • Dominant Area",
+        coachWeakTag: "Growth Area • Least Covered",
+        profileShareWord: "of profile",
+        coachDomTitlePrefix: "1. Leverage your strength in",
+        coachArchetypePrefix: "Archetype:",
+        coachDomShadowTitle: "⚠️ Watch Out for the Shadow Effect (Overuse Risk)",
+        coachWeakTitlePrefix: "2. Strengthen your coverage in",
+        coachWeakRiskLabel: "Operational impact if neglected:",
+        coachWeakActionsTitle: "🎯 3 Practical Coaching Actions (Field Quick Wins)",
+        bridgeHeader: "🔗 Tailored Bridge Strategy (Leadership Synergy)",
+        bridgeSynergyPrefix: "Synergy",
+        bridgeTitleFormat: (top, low) => `How to use your leadership in ${top} to grow ${low}`,
+        bridgeTextFormat: (bFrom, second, low, bTo, top) =>
+          `${bFrom} (also supported by your second strongest area, <strong>${second}</strong>) to close the gap in <strong>${low}</strong>, ${bTo} You don't need to change who you are: use the confidence and credibility you already command in <em>${top}</em> to gradually introduce one weekly habit tied to <em>${low}</em>.`,
+        skippedTitle: "📌 Targeted Training: Behaviors in this area you left in the background",
+        skippedSub: "These specific behaviors from your least covered area appeared in the scenarios but were not selected. Pick one to actively practice next week:",
+        skippedCardBadge: "Behavioral Target",
+        skippedCountLabel: (n) => `Passed over ${n}x in scenarios`,
+        methBadge: "Methodological Note",
+        methTitle: "How your score was calculated (Adaptive Weighting & Carry-Over)",
+        methDesc: "To ensure an authentic, unbiased experience during the test, the scoring engine applied a <strong>dual weighting model</strong> behind the scenes: any behavior not selected in a round was not discarded, but placed in a carry-over queue and re-proposed in later scenarios with a progressively lower weight.",
+        methBox1Title: "1. Priority Order Weight (1st, 2nd, 3rd Choice)",
+        methBox1List: `
+          <li>• <strong>1st Choice (High Priority):</strong> 100% of the behavior's value</li>
+          <li>• <strong>2nd Choice (Medium Priority):</strong> 85% of the behavior's value</li>
+          <li>• <strong>3rd Choice (Complementary Priority):</strong> 70% of the behavior's value</li>
+        `,
+        methBox2Title: "2. Appearance Weight (Immediate vs Re-proposed)",
+        methBox2List: `
+          <li>• <strong>Selected on 1st Appearance:</strong> full multiplier <strong>1.00x (100%)</strong></li>
+          <li>• <strong>Selected on 1st Carry-Over (2nd appearance):</strong> reduced multiplier <strong>0.65x (65%)</strong></li>
+          <li>• <strong>Selected on 2nd+ Carry-Over (3rd+ appearance):</strong> multiplier <strong>0.35x (35%)</strong></li>
+        `,
+        tblMainTitle: "Analytical Breakdown of the 7 Areas",
+        thArea: "Competency Area",
+        thFirst: "1st Appearance Choices (1.0x)",
+        thCarry: "Re-proposed Choices (0.65x / 0.35x)",
+        thScore: "Weighted Score",
+        thDist: "Final Distribution (100%)",
+        tblChoicesWord: "choices",
+        tblCarryWord: "re-proposed",
+        logMainTitle: "Summary of Behaviors Selected Across the 12 Scenarios",
+        logMainSub: "Chronological log of the solutions you adopted, showing priority rank and whether the behavior was immediate or re-proposed.",
+        logFirstApp: "1st Appearance (Weight 1.0x)",
+        logCarryApp: (n, w) => `Re-proposed ${n}x (Weight ${w}x)`
+      }
+    };
+
+    // =========================================================================
+    // 2. CARICAMENTO LISTE (AZIENDE, RUOLI, CANTIERI) DAI FILE .TXT SU NETLIFY
+    // =========================================================================
+    let parsedCompaniesList = [];
+    let parsedRolesList = [];
+    let parsedSitesList = [];
+    let listsSourceState = "loading"; // 'loading' | 'netlify' | 'fallback'
+
+    function parseLineItem(line) {
+      const parts = String(line).split("|").map(p => p.trim());
+      return {
+        it: parts[0],
+        en: parts[1] || parts[0]
+      };
+    }
+
+    function parsePlainList(rawText) {
+      return rawText
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0 && !line.startsWith("#") && !line.startsWith("//"))
+        .map(parseLineItem);
+    }
+
+    function updateListsSourceBadge() {
+      const t = UI_TEXT[currentLang];
+      const badge = document.getElementById("listsSourceBadge");
+      if (!badge) return;
+
+      if (listsSourceState === "loading") {
+        badge.className = "text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200";
+        badge.textContent = t.listsLoadingBadge;
+      } else if (listsSourceState === "netlify") {
+        badge.className = "text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200";
+        badge.textContent = t.listsNetlifyBadge;
+      } else {
+        badge.className = "text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded";
+        badge.textContent = t.listsFallbackBadge;
+      }
+    }
+
+async function loadDropdownListsFromNetlify() {
+      // 1. Inizializza subito con le liste integrate nell'HTML come fallback
+      parsedCompaniesList = parsePlainList(document.getElementById("lista-aziende")?.textContent || "");
+      parsedRolesList = parsePlainList(document.getElementById("lista-ruoli")?.textContent || "");
+      parsedSitesList = parsePlainList(document.getElementById("lista-cantieri")?.textContent || "");
+      populateDropdowns();
+
+      listsSourceState = "loading";
+      updateListsSourceBadge();
+
+      // 2. Priorità 1: Carica le liste dinamiche da NETLIFY BLOBS
+      try {
+        const resBlobs = await fetch("/.netlify/functions/manage-lists", { cache: "no-store" });
+        if (resBlobs.ok) {
+          const data = await resBlobs.json();
+          if (data && data.status === "success") {
+            if (Array.isArray(data.companies) && data.companies.length > 0) {
+              parsedCompaniesList = data.companies.map(parseLineItem);
+            }
+            if (Array.isArray(data.roles) && data.roles.length > 0) {
+              parsedRolesList = data.roles.map(parseLineItem);
+            }
+            if (Array.isArray(data.sites) && data.sites.length > 0) {
+              parsedSitesList = data.sites.map(parseLineItem);
+            }
+            listsSourceState = "netlify";
+            populateDropdowns();
+            updateListsSourceBadge();
+            return;
+          }
+        }
+      } catch (_) {}
+
+      // 3. Priorità 2 (Fallback): Carica dai file .txt statici se presenti
+      let loadedFromTxt = false;
+      try {
+        const resC = await fetch(NETLIFY_COMPANIES_FILE, { cache: "no-store" });
+        if (resC.ok) {
+          const list = parsePlainList(await resC.text());
+          if (list.length > 0) { parsedCompaniesList = list; loadedFromTxt = true; }
+        }
+      } catch (_) {}
+
+      try {
+        const resR = await fetch(NETLIFY_ROLES_FILE, { cache: "no-store" });
+        if (resR.ok) {
+          const list = parsePlainList(await resR.text());
+          if (list.length > 0) { parsedRolesList = list; loadedFromTxt = true; }
+        }
+      } catch (_) {}
+
+      try {
+        const resS = await fetch(NETLIFY_SITES_FILE, { cache: "no-store" });
+        if (resS.ok) {
+          const list = parsePlainList(await resS.text());
+          if (list.length > 0) { parsedSitesList = list; loadedFromTxt = true; }
+        }
+      } catch (_) {}
+
+      listsSourceState = loadedFromTxt ? "netlify" : "fallback";
+      populateDropdowns();
+      updateListsSourceBadge();
+    }
+      // 1. Inizializza subito con le liste integrate nell'HTML come fallback
+      parsedCompaniesList = parsePlainList(document.getElementById("lista-aziende")?.textContent || "");
+      parsedRolesList = parsePlainList(document.getElementById("lista-ruoli")?.textContent || "");
+      parsedSitesList = parsePlainList(document.getElementById("lista-cantieri")?.textContent || "");
+      populateDropdowns();
+
+      listsSourceState = "loading";
+      updateListsSourceBadge();
+
+      let loadedFromNetlifyFiles = false;
+
+      // 2. Scarica aziende.txt, ruoli.txt e cantieri.txt direttamente da Netlify
+      try {
+        const resC = await fetch(NETLIFY_COMPANIES_FILE, { cache: "no-store" });
+        if (resC.ok) {
+          const list = parsePlainList(await resC.text());
+          if (list.length > 0) {
+            parsedCompaniesList = list;
+            loadedFromNetlifyFiles = true;
+          }
+        }
+      } catch (_) {}
+
+      try {
+        const resR = await fetch(NETLIFY_ROLES_FILE, { cache: "no-store" });
+        if (resR.ok) {
+          const list = parsePlainList(await resR.text());
+          if (list.length > 0) {
+            parsedRolesList = list;
+            loadedFromNetlifyFiles = true;
+          }
+        }
+      } catch (_) {}
+
+      try {
+        const resS = await fetch(NETLIFY_SITES_FILE, { cache: "no-store" });
+        if (resS.ok) {
+          const list = parsePlainList(await resS.text());
+          if (list.length > 0) {
+            parsedSitesList = list;
+            loadedFromNetlifyFiles = true;
+          }
+        }
+      } catch (_) {}
+
+      listsSourceState = loadedFromNetlifyFiles ? "netlify" : "fallback";
+      populateDropdowns();
+      updateListsSourceBadge();
+    }
+
+    function populateDropdowns() {
+      const t = UI_TEXT[currentLang];
+      const companySelect = document.getElementById("selectUserCompany");
+      const roleSelect = document.getElementById("selectUserRole");
+      const siteSelect = document.getElementById("selectUserSite");
+
+      const prevCompanyIdx = companySelect.selectedIndex;
+      const prevRoleIdx = roleSelect.selectedIndex;
+      const prevSiteIdx = siteSelect.selectedIndex;
+
+      companySelect.innerHTML = `<option value="">${t.phSelectCompany}</option>` +
+        parsedCompaniesList.map((item, idx) => `<option value="${idx}">${item[currentLang]}</option>`).join("");
+
+      roleSelect.innerHTML = `<option value="">${t.phSelectRole}</option>` +
+        parsedRolesList.map((item, idx) => `<option value="${idx}">${item[currentLang]}</option>`).join("");
+
+      siteSelect.innerHTML = `<option value="">${t.phSelectSite}</option>` +
+        parsedSitesList.map((item, idx) => `<option value="${idx}">${item[currentLang]}</option>`).join("");
+
+      if (prevCompanyIdx > 0 && prevCompanyIdx <= parsedCompaniesList.length) companySelect.selectedIndex = prevCompanyIdx;
+      if (prevRoleIdx > 0 && prevRoleIdx <= parsedRolesList.length) roleSelect.selectedIndex = prevRoleIdx;
+      if (prevSiteIdx > 0 && prevSiteIdx <= parsedSitesList.length) siteSelect.selectedIndex = prevSiteIdx;
+    }
+
+    function handleNameInput() {
+      clearFormError();
+      const nameVal = document.getElementById("inputUserName").value.trim();
+      const privContainer = document.getElementById("privacyContainer");
+      const reqBadge = document.getElementById("privacyRequiredBadge");
+      const optBadge = document.getElementById("privacyOptionalBadge");
+
+      if (nameVal.length > 0) {
+        privContainer.className = "mt-4 p-3.5 rounded-xl border-2 border-amber-400 bg-amber-50/50 transition-all";
+        reqBadge.classList.remove("hidden");
+        optBadge.classList.add("hidden");
+      } else {
+        privContainer.className = "mt-4 p-3.5 rounded-xl border border-slate-200 bg-slate-50 transition-all";
+        reqBadge.classList.add("hidden");
+        optBadge.classList.remove("hidden");
+      }
+    }
+
+    function togglePrivacyDetails() {
+      const t = UI_TEXT[currentLang];
+      const box = document.getElementById("privacyDetailsBox");
+      const btn = document.getElementById("btnPrivacyInfo");
+      const isHidden = box.classList.contains("hidden");
+      if (isHidden) {
+        box.classList.remove("hidden");
+        btn.textContent = t.btnPrivacyInfoClose;
+      } else {
+        box.classList.add("hidden");
+        btn.textContent = t.btnPrivacyInfoOpen;
+      }
+    }
+
+    function clearFormError() {
+      document.getElementById("userFormError").classList.add("hidden");
+    }
+
+    // =========================================================================
+    // 3. DEFINIZIONE DELLE 7 AREE E TUTTI I 69 COMPORTAMENTI (EN + IT)
+    // =========================================================================
+    const AREAS = [
+      {
+        id: "VISION",
+        name: "Vision",
+        color: "#2563eb",
+        desc: {
+          it: "Visione strategica, integrazione nei processi e responsabilità non delegabile.",
+          en: "Strategic vision, integration into processes, and non-delegable leadership accountability."
+        },
+        behaviors: [
+          {
+            en: "Demonstrates a strong commitment to the Safety Vision and integrates it into engineering and construction practices.",
+            it: "Dimostro un forte impegno verso la Safety Vision e la integro concretamente nelle pratiche di ingegneria e costruzione."
+          },
+          {
+            en: "Translates the Safety Vision into practical, site-specific applications to ensure its credibility in all operating environments.",
+            it: "Traduco la Safety Vision in applicazioni pratiche e specifiche per il cantiere, garantendone la credibilità operativa."
+          },
+          {
+            en: "Clearly defines the desired future state of safety performance and aligns project execution with this Safety Vision.",
+            it: "Definisco chiaramente lo stato futuro desiderato delle prestazioni di sicurezza e allineo l'esecuzione del progetto a questa visione."
+          },
+          {
+            en: "Has a thorough and data-driven understanding of the current safety culture, identifying key gaps and areas for improvement.",
+            it: "Analizzo in modo approfondito e basato sui dati l'attuale cultura della sicurezza per identificare i gap critici e le aree di miglioramento."
+          },
+          {
+            en: "Takes responsibility for safety leadership at all levels and drives continuous improvement of the safety culture.",
+            it: "Mi assumo la responsabilità della leadership nella sicurezza a tutti i livelli e guido il miglioramento continuo della cultura."
+          },
+          {
+            en: "Establishes and enforces clear safety expectations, roles and accountabilities in line with the Safety Vision.",
+            it: "Stabilisco e faccio rispettare aspettative, ruoli e responsabilità chiari in materia di sicurezza, in linea con la Safety Vision."
+          },
+          {
+            en: "Recognises that achieving safety excellence directly contributes to overall project efficiency, quality and success.",
+            it: "Dimostro coi fatti che raggiungere l'eccellenza nella sicurezza contribuisce direttamente all'efficienza, alla qualità e al successo del progetto."
+          },
+          {
+            en: "Takes full responsibility for maintaining and driving the Safety Vision, ensuring it remains a core leadership responsibility that cannot be delegated.",
+            it: "Mantengo in prima persona la guida della Safety Vision, trattandola come una responsabilità primaria di leadership non delegabile."
+          }
+        ]
+      },
+      {
+        id: "FOCUS",
+        name: "Focus",
+        color: "#d97706",
+        desc: {
+          it: "Presidio sul campo, rimozione barriere, tolleranza zero e gestione proattiva dei rischi.",
+          en: "Field presence, barrier removal, zero tolerance, and proactive risk management."
+        },
+        behaviors: [
+          {
+            en: "Identifies and recognises successful safety outcomes, reinforcing a culture of safety excellence.",
+            it: "Identifico e valorizzo i risultati positivi di sicurezza raggiunti sul campo per consolidare una cultura di eccellenza."
+          },
+          {
+            en: "Actively participates in site safety initiatives, toolbox talks and risk assessments to drive continuous improvement.",
+            it: "Partecipo in prima persona alle iniziative di cantiere, ai toolbox talk e alle valutazioni dei rischi per guidare il miglioramento."
+          },
+          {
+            en: "Identifies and systematically removes barriers to safety performance.",
+            it: "Individuo e rimuovo sistematicamente gli ostacoli operativi o organizzativi che frenano le prestazioni di sicurezza."
+          },
+          {
+            en: "Implements a structured approach to tracking critical safety activities, key behaviours and performance metrics to drive a proactive safety culture.",
+            it: "Implemento un monitoraggio strutturato delle attività critiche, dei comportamenti chiave e delle metriche per prevenire le deviazioni."
+          },
+          {
+            en: "Maintains a visible and unwavering commitment to long-term safety goals and integrates them into daily site operations.",
+            it: "Mantengo un impegno visibile e costante verso gli obiettivi a lungo termine, integrandoli nelle operazioni giornaliere di cantiere."
+          },
+          {
+            en: "Remains focused on safety priorities despite operational pressures such as deadlines, productivity demands or temporary frustrations.",
+            it: "Resto fermamente concentrato sulle priorità di sicurezza nonostante le pressioni su scadenze, produttività o imprevisti."
+          },
+          {
+            en: "Demonstrates zero tolerance for safety violations through consistent, hands-on leadership and prompt corrective action.",
+            it: "Applico tolleranza zero verso le violazioni tramite una presenza costante sul campo e azioni correttive immediate."
+          },
+          {
+            en: "Provides timely and reasoned responses to safety concerns, ensuring that employees feel heard and supported.",
+            it: "Fornisco risposte tempestive e motivate alle segnalazioni di sicurezza, facendo sentire i lavoratori ascoltati e tutelati."
+          },
+          {
+            en: "Personally invests time and effort to drive safety improvements, setting a strong example for the team.",
+            it: "Investo personalmente tempo ed energie per risolvere le criticità di sicurezza, dando un esempio concreto al team."
+          },
+          {
+            en: "Possesses a deep understanding of human behaviour and uses this to influence positive safety attitudes and practices in the field.",
+            it: "Agisco sulle dinamiche del comportamento umano per influenzare positivamente le abitudini e gli atteggiamenti in campo."
+          },
+          {
+            en: "Consistently communicates the value of a strong safety culture and reinforces the real consequences of unsafe actions.",
+            it: "Richiamo con costanza il valore della cultura della sicurezza e le conseguenze reali delle azioni non sicure."
+          },
+          {
+            en: "Encourages team members to document, track and take ownership of their personal safety commitments.",
+            it: "Incoraggio i membri del team a documentare, tracciare e farsi carico in prima persona dei propri impegni di sicurezza."
+          },
+          {
+            en: "Integrates safety discussions into every meeting with purpose and impact, avoiding routine or superficial mentions.",
+            it: "Integro discussioni mirate e incisive sulla sicurezza in ogni riunione, evitando passaggi burocratici o superficiali."
+          },
+          {
+            en: "Takes an active role in planning and risk assessment, ensuring the full participation of key stakeholders and decision-makers.",
+            it: "Assumo un ruolo attivo nella pianificazione e nel risk assessment, coinvolgendo tutti gli stakeholder e i decisori chiave."
+          },
+          {
+            en: "Promotes a culture of heightened risk awareness, encouraging proactive hazard identification and mitigation.",
+            it: "Promuovo un'elevata percezione del rischio, stimolando l'identificazione e la mitigazione preventiva dei pericoli."
+          }
+        ]
+      },
+      {
+        id: "INFLUENCE",
+        name: "Influence",
+        color: "#7c3aed",
+        desc: {
+          it: "Ispirare, unire le squadre e allineare la sicurezza ai valori personali e aziendali.",
+          en: "Inspiring, uniting teams, and aligning safety with personal and business values."
+        },
+        behaviors: [
+          {
+            en: "Delivers powerful safety messages at the most strategic and influential moments to ensure maximum engagement.",
+            it: "Trasmetto messaggi incisivi sulla sicurezza nei momenti più strategici e delicati per ottenere il massimo coinvolgimento."
+          },
+          {
+            en: "Maintains awareness of how their approach to safety is perceived by others, setting the right example on site and in decision making.",
+            it: "Curo il modo in cui il mio approccio alla sicurezza viene percepito dagli altri, dando il buon esempio nelle decisioni e in cantiere."
+          },
+          {
+            en: "Effectively influences and unites teams at all levels - regardless of hierarchy or cultural background - to embrace and act on the Safety Vision.",
+            it: "Unisco e influenzo efficacemente i team di ogni livello e background culturale affinché agiscano secondo la Safety Vision."
+          },
+          {
+            en: "Is widely recognised as a leader who sets, maintains and demands the highest safety standards in all operations.",
+            it: "Stabilisco, mantengo ed esigo in modo fermo i più alti standard di sicurezza in qualsiasi operazione."
+          },
+          {
+            en: "Actively engages teams in envisioning and working towards an injury-free work environment.",
+            it: "Coinvolgo attivamente le squadre nell'immaginare e costruire insieme un ambiente di lavoro a zero infortuni."
+          },
+          {
+            en: "Communicates safety objectives with confidence and conviction and reinforces their achievability through clear action and leadership.",
+            it: "Comunico gli obiettivi di sicurezza con convinzione e ne dimostro la concreta realizzabilità attraverso azioni chiare."
+          },
+          {
+            en: "Aligns safety discussions with employees' core values and priorities, making safety personally relevant to each individual.",
+            it: "Collego le discussioni sulla sicurezza ai valori personali e familiari dei lavoratori, rendendola rilevante per ciascuno."
+          },
+          {
+            en: "Speaks passionately about safety in all settings, particularly in informal conversations, demonstrating a genuine commitment that goes beyond professional obligation.",
+            it: "Parlo con passione della sicurezza anche nelle conversazioni informali, mostrando un impegno autentico oltre il dovere di ruolo."
+          },
+          {
+            en: "Clearly articulates the direct link between safety excellence and business success, ensuring that teams understand the operational and financial implications.",
+            it: "Spiego con chiarezza il legame diretto tra eccellenza nella sicurezza e successo operativo ed economico del progetto."
+          }
+        ]
+      },
+      {
+        id: "CREDIBILITY",
+        name: "Credibility",
+        color: "#059669",
+        desc: {
+          it: "Coraggio decisionale, coerenza, integrità e tutela delle persone sopra gli obiettivi operativi.",
+          en: "Decision-making courage, consistency, integrity, and prioritizing people over operational targets."
+        },
+        behaviors: [
+          {
+            en: "Demonstrates the courage to challenge unsafe practices and drive change in environments with a poor safety culture, making decisions based on safety principles regardless of rank or pressure.",
+            it: "Dimostro il coraggio di bloccare e contestare pratiche non sicure decidendo in base ai principi di sicurezza, a prescindere dal grado o dalle pressioni."
+          },
+          {
+            en: "Prioritises the safety of employees over operational objectives and demonstrates genuine concern for the welfare of employees, both in the field and in personal interactions.",
+            it: "Antepongo la sicurezza e il benessere reale delle persone agli obiettivi operativi, sia sul campo che nei rapporti individuali."
+          },
+          {
+            en: "Follows through on safety commitments and keeps promises, building trust and accountability.",
+            it: "Porto rigorosamente a termine gli impegni di sicurezza presi e mantengo le promesse fatte al team, consolidando la fiducia."
+          },
+          {
+            en: "Maintains a safety perspective in all decisions, applying practical, real-world solutions that meet operational needs.",
+            it: "Mantengo la prospettiva della sicurezza in ogni decisione, applicando soluzioni pratiche e realistiche che rispondono alle esigenze operative."
+          },
+          {
+            en: "Provides unwavering support to the team, even under pressure, so as not to compromise safety.",
+            it: "Fornisco supporto incrollabile alla squadra anche nei momenti di forte pressione, affinché nessuno debba scendere a compromessi sulla sicurezza."
+          },
+          {
+            en: "Is known for fairness and consistency in enforcing safety standards, building a reputation for integrity and reliability.",
+            it: "Applico gli standard di sicurezza con assoluta equità e coerenza verso tutti, rafforzando integrità e affidabilità."
+          },
+          {
+            en: "Advocates the safety needs of their team to higher levels of management, ensuring that concerns are addressed and resources are allocated appropriately.",
+            it: "Sostengo e difendo le esigenze di sicurezza del mio team presso il top management per ottenere le risorse e gli interventi necessari."
+          },
+          {
+            en: "Openly acknowledges mistakes and uses them as an opportunity to learn and improve safety leadership.",
+            it: "Riconosco apertamente eventuali errori di valutazione e li trasformo in un'opportunità di apprendimento e miglioramento."
+          },
+          {
+            en: "Understands how to build and maintain trust across different cultural backgrounds and adapts leadership style accordingly.",
+            it: "Costruisco e mantengo la fiducia tra gruppi di diverso background culturale adattando di conseguenza il mio stile di guida."
+          },
+          {
+            en: "Is widely recognised as a knowledgeable and competent authority on safety standards, risks and best practice.",
+            it: "Metto in campo una conoscenza tecnica autorevole e competente sugli standard di sicurezza, sui rischi specifici e sulle best practice."
+          }
+        ]
+      },
+      {
+        id: "TEAM",
+        name: "Team",
+        color: "#0891b2",
+        desc: {
+          it: "Sicurezza psicologica, partecipazione alle decisioni e responsabilità collettiva.",
+          en: "Psychological safety, shared decision-making, and collective ownership."
+        },
+        behaviors: [
+          {
+            en: "Creates an environment where team members feel heard, valued and respected when sharing their safety perspectives.",
+            it: "Creo un clima in cui ogni membro del team si sente ascoltato, valorizzato e rispettato quando esprime il proprio punto di vista sulla sicurezza."
+          },
+          {
+            en: "Empowers employees to raise safety concerns and take proactive steps to address potential hazards.",
+            it: "Autorizzo e responsabilizzo i lavoratori a sollevare dubbi e ad agire subito in modo proattivo per eliminare i pericoli."
+          },
+          {
+            en: "Builds commitment to safety by encouraging open discussion of critical safety issues and involving the team in decision making.",
+            it: "Costruisco l'impegno comune aprendo il confronto sulle criticità e coinvolgendo direttamente la squadra nelle decisioni operative."
+          },
+          {
+            en: "Reinforces a culture of teamwork by ensuring that all members understand the importance of collective responsibility for safety.",
+            it: "Rafforzo lo spirito di squadra facendo comprendere che la sicurezza è una responsabilità collettiva e reciproca."
+          },
+          {
+            en: "Fosters an environment of trust where employees feel confident to speak up about safety concerns without fear of repercussions.",
+            it: "Garantisco un ambiente di piena fiducia in cui chiunque può segnalare un rischio o fermare un lavoro senza alcun timore di ripercussioni."
+          },
+          {
+            en: "Encourages each team member to take personal responsibility for safety improvements and to lead by example.",
+            it: "Incoraggio ciascun componente del team a farsi promotore dei miglioramenti di sicurezza e a dare il buon esempio ai colleghi."
+          },
+          {
+            en: "Promotes a culture of open, constructive feedback between employees and management to ensure that safety issues are addressed effectively.",
+            it: "Promuovo un dialogo costruttivo e continuo tra operativi e management per risolvere i problemi di sicurezza alla radice."
+          },
+          {
+            en: "Embeds safety into the workplace culture so that addressing unsafe behaviours is a natural and expected part of daily operations.",
+            it: "Rendo l'intervento reciproco sui comportamenti non sicuri una prassi naturale, quotidiana e condivisa da tutto il gruppo."
+          }
+        ]
+      },
+      {
+        id: "COMMUNICATION",
+        name: "Communication",
+        color: "#db2777",
+        desc: {
+          it: "Chiarezza, tempestività, ascolto attivo, domande stimolanti e adattamento del linguaggio.",
+          en: "Clarity, timeliness, active listening, thought-provoking questions, and adaptive style."
+        },
+        behaviors: [
+          {
+            en: "Clearly communicates safety requirements, ensuring transparency of expectations and compliance.",
+            it: "Comunico con estrema chiarezza i requisiti di sicurezza, garantendo totale trasparenza sulle aspettative e sulla conformità."
+          },
+          {
+            en: "Provides high-level safety updates that link day-to-day operations to broader safety goals and industry best practices.",
+            it: "Fornisco aggiornamenti che collegano le attività quotidiane di cantiere agli obiettivi generali di sicurezza e alle best practice di settore."
+          },
+          {
+            en: "Recognises that communication styles vary across different teams and adapts messages to ensure clarity and engagement.",
+            it: "Adatto lo stile e il linguaggio comunicativo alle diverse squadre per garantire comprensione immediata e coinvolgimento."
+          },
+          {
+            en: "Uses active listening techniques to confirm that safety messages are consistently understood at all levels of the organisation.",
+            it: "Utilizzo tecniche di ascolto attivo per verificare che i messaggi di sicurezza siano stati realmente compresi a tutti i livelli."
+          },
+          {
+            en: "Ensures that critical safety information is communicated with urgency and reaches all relevant personnel in a timely manner.",
+            it: "Mi assicuro che le informazioni critiche di sicurezza vengano trasmesse con urgenza e raggiungano tempestivamente tutti gli interessati."
+          },
+          {
+            en: "Leads by example, fostering open, two-way communication where employees feel encouraged to share safety concerns and insights.",
+            it: "Promuovo una comunicazione bidirezionale aperta in cui i lavoratori sono incoraggiati a condividere dubbi, osservazioni e spunti."
+          },
+          {
+            en: "Asks thought-provoking safety questions that challenge assumptions and encourage proactive safety awareness.",
+            it: "Pongo domande mirate e stimolanti che mettono in discussione le abitudini scontate e attivano l'attenzione sui rischi nascosti."
+          },
+          {
+            en: "Uses a constructive approach to explore other people's ideas.",
+            it: "Adotto un approccio costruttivo ed esplorativo per approfondire e sviluppare le idee proposte dagli altri."
+          },
+          {
+            en: "Chooses the most effective communication methods - such as face-to-face or toolbox talks - at the right time to maximise impact.",
+            it: "Scelgo il canale comunicativo più efficace (es. confronto diretto faccia a faccia o toolbox talk mirato) nel momento giusto per massimizzare l'impatto."
+          }
+        ]
+      },
+      {
+        id: "FEEDBACK",
+        name: "Feedback",
+        color: "#4f46e5",
+        desc: {
+          it: "Rinforzo positivo, riconoscimento, feedback dal basso e valorizzazione dei contributi.",
+          en: "Positive reinforcement, recognition, bottom-up feedback, and valuing employee input."
+        },
+        behaviors: [
+          {
+            en: "Provides feedback at critical, high-impact moments to maximise its effectiveness in reinforcing safe practices.",
+            it: "Fornisco un feedback immediato nei momenti critici e ad alto impatto per massimizzarne l'efficacia nel rinforzare le pratiche sicure."
+          },
+          {
+            en: "Leads by example in encouraging bottom-up feedback by implementing systems that allow employees to rate and provide input on safety leadership.",
+            it: "Sollecito il feedback dal basso permettendo ai lavoratori di valutare e dare input su come viene gestita la sicurezza."
+          },
+          {
+            en: "Prioritises positive reinforcement, recognising and reinforcing safe behaviour to build a culture of safety.",
+            it: "Do priorità al rinforzo positivo, riconoscendo e consolidando i comportamenti corretti per rafforzare la cultura della sicurezza."
+          },
+          {
+            en: "Actively celebrates safety achievements and recognises individuals who demonstrate exceptional commitment to safety.",
+            it: "Celebro attivamente i traguardi di sicurezza e riconosco pubblicamente chi dimostra un impegno esemplare."
+          },
+          {
+            en: "Helps employees understand the real-world consequences of unsafe behaviours, emphasising the impact on themselves and their families.",
+            it: "Aiuto le persone a riflettere sulle conseguenze reali dei comportamenti a rischio e sull'impatto per se stessi e le proprie famiglie."
+          },
+          {
+            en: "Genuinely values and considers safety improvement ideas and suggestions from employees at all levels.",
+            it: "Valorizzo e prendo seriamente in carico le idee e i suggerimenti di miglioramento provenienti dai lavoratori di qualsiasi livello."
+          },
+          {
+            en: "Adapts feedback and recognition methods to suit different cultural backgrounds to ensure inclusiveness and effectiveness.",
+            it: "Adatto le modalità di feedback e di riconoscimento alle diverse sensibilità culturali presenti in cantiere per risultare inclusivo ed efficace."
+          },
+          {
+            en: "Supports and empowers individuals to drive positive safety culture change within the organisation.",
+            it: "Supporto e do spazio alle persone che si attivano per guidare un cambiamento positivo nella cultura della sicurezza."
+          },
+          {
+            en: "Ensures that all feedback is consistent with and reinforces the organisation's Safety Vision.",
+            it: "Mi assicuro che ogni feedback fornito sia coerente con la Safety Vision aziendale e la rafforzi."
+          },
+          {
+            en: "Actively encourages and supports proactive safety interventions by individuals, fostering a sense of ownership and leadership at all levels.",
+            it: "Incoraggio e sostengo attivamente gli interventi proattivi dei singoli, promuovendo senso di responsabilità e leadership diffusa."
+          }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // 4. PROFILI DI EXECUTIVE COACHING BILINGUI (IT + EN)
+    // =========================================================================
+    const COACHING_PROFILES = {
+      VISION: {
+        it: {
+          archetype: "L'Architetto Strategico della Sicurezza",
+          strength: "Hai una naturale capacità di leggere la sicurezza in chiave sistemica e progettuale. Non ti limiti a gestire l'emergenza quotidiana, ma integri la Safety Vision nell'ingegneria, nella pianificazione e nella definizione chiara di ruoli e responsabilità.",
+          shadow: "Se sovra-utilizzata a scapito delle aree relazionali o di campo, una forte Vision rischia di apparire astratta o distante dalle difficoltà pratiche degli operativi. Attenzione a non dare per scontato che una strategia chiara su carta si traduca automaticamente in comportamenti sicuri senza presidio e feedback continuo.",
+          weakRisk: "Quando l'area Vision è meno presidiata, la gestione della sicurezza rischia di diventare puramente reattiva ('spegnere incendi'). Le squadre faticano a vedere la direzione a lungo termine, i ruoli restano sfumati e la sicurezza viene percepita come un vincolo esterno anziché come parte integrante della qualità del progetto.",
+          actions: [
+            "Prima di avviare una nuova fase critica di lavoro, definisci e condividi con i preposti 3 aspettative non negoziabili di sicurezza legate all'efficienza del progetto.",
+            "Dedica 30 minuti ogni due settimane all'analisi dei trend (Near-Miss, osservazioni, audit) per individuare i gap culturali ricorrenti anziché reagire ai singoli episodi.",
+            "In sede di revisione ingegneristica o di cronoprogramma, chiedi sempre come la Safety Vision sia stata tradotta in scelte operative specifiche per quel cantiere."
+          ],
+          bridgeFrom: "Usa la tua visione strategica e la lettura dei dati",
+          bridgeTo: "ancorando l'area Vision a obiettivi di cantiere misurabili settimana per settimana e verificabili insieme ai preposti."
+        },
+        en: {
+          archetype: "The Strategic Safety Architect",
+          strength: "You naturally approach safety from a systemic and project-wide perspective. Rather than just reacting to daily emergencies, you integrate the Safety Vision into engineering, planning, and clear role accountability.",
+          shadow: "If overused at the expense of field presence or relational areas, a strong Vision can feel abstract or disconnected from frontline challenges. Be careful not to assume that a clear strategy on paper automatically translates into safe habits without ongoing coaching and feedback.",
+          weakRisk: "When Vision is under-represented, safety management risks becoming purely reactive ('firefighting'). Teams struggle to see the long-term direction, accountabilities blur, and safety is perceived as an external constraint rather than a driver of project quality.",
+          actions: [
+            "Before kicking off a critical project phase, define and align with supervisors on 3 non-negotiable safety expectations tied to project efficiency.",
+            "Set aside 30 minutes bi-weekly to review safety data trends (Near-Misses, observations, audits) to spot cultural gaps rather than reacting to isolated events.",
+            "During engineering or schedule reviews, explicitly ask how the Safety Vision has been translated into practical, site-specific applications."
+          ],
+          bridgeFrom: "Leverage your strategic mindset and data-driven perspective",
+          bridgeTo: "by translating the Safety Vision into weekly, measurable site milestones reviewed directly with frontline supervisors."
+        }
+      },
+      FOCUS: {
+        it: {
+          archetype: "Il Garante del Presidio e del Rigore Operativo",
+          strength: "Il tuo punto di forza è la concretezza sul campo: presidi le lavorazioni critiche, rimuovi sistematicamente le barriere operative, mantieni alta la guardia anche sotto pressione di cronoprogramma e applichi tolleranza zero verso le scorciatoie.",
+          shadow: "Un eccesso di Focus non bilanciato da Team o Feedback può portarti al micromanagement o a un atteggiamento percepito come solo ispettivo/prescrittivo. Se risolvi e presidi tutto in prima persona, rischi di ridurre l'autonomia delle squadre quando non sei fisicamente presente.",
+          weakRisk: "Trascurare il Focus espone il cantiere allo scollamento tra teoria e pratica: sotto la pressione delle scadenze o della produttività, le buone intenzioni cedono il passo a piccole scorciatoie tollerate, ostacoli logistici non rimossi e riunioni in cui si parla di sicurezza solo per formalità.",
+          actions: [
+            "Trasforma ogni giro in cantiere in un'azione di 'rimozione barriere': individua almeno 1 ostacolo fisico, tecnico o organizzativo segnalato dagli operai e risolvilo entro 24 ore.",
+            "Elimina le menzioni generiche sulla sicurezza nelle riunioni operative: apri ogni meeting con un rischio reale specifico della giornata e assegna un responsabile per la sua mitigazione.",
+            "Quando emergono pressioni sulle scadenze, esplicita chiaramente al team quali controlli di sicurezza restano intoccabili, presidiandoli di persona sul campo."
+          ],
+          bridgeFrom: "Sfrutta la tua disciplina operativa e la tua presenza costante sul campo",
+          bridgeTo: "trasformando i tuoi principi in una checklist di 2-3 comportamenti critici da verificare visivamente in cantiere ogni giorno."
+        },
+        en: {
+          archetype: "The Guardian of Operational Rigor & Field Presence",
+          strength: "Your core strength is hands-on execution: you actively participate in field activities, systematically remove operational barriers, stay focused despite schedule pressure, and enforce zero tolerance for unsafe shortcuts.",
+          shadow: "An excess of Focus without enough Team empowerment or positive Feedback can slip into micromanagement or a purely policing style. If you personally drive every fix, teams may become overly dependent on your physical presence.",
+          weakRisk: "When Focus is low, a gap emerges between intention and daily execution: under deadline pressure, minor shortcuts are tolerated, physical barriers remain unresolved, and safety mentions in meetings become superficial.",
+          actions: [
+            "Turn every site walk into a 'barrier removal' session: identify at least 1 physical, technical, or organizational obstacle raised by workers and resolve it within 24 hours.",
+            "Eliminate generic safety reminders in meetings: open every meeting with a specific high-impact hazard for that day and assign clear ownership for its mitigation.",
+            "When schedule pressures mount, explicitly state which critical safety checks remain non-negotiable and verify them personally in the field."
+          ],
+          bridgeFrom: "Capitalize on your operational discipline and hands-on field presence",
+          bridgeTo: "by turning safety goals into 2–3 critical daily behaviors that you track and verify visibly on site."
+        }
+      },
+      INFLUENCE: {
+        it: {
+          archetype: "Il Catalizzatore e Ispiratore Culturale",
+          strength: "Eccelli nel generare adesione emotiva e convinzione: sai parlare al cuore e alla mente delle persone, unisci gruppi di diversa estrazione culturale o gerarchica e riesci a collegare la sicurezza sia ai valori personali/familiari sia al successo del business.",
+          shadow: "Affidarsi prevalentemente al carisma e alla capacità persuasiva può far passare in secondo piano la verifica strutturata dei processi (Focus) o la chiarezza tecnica dei requisiti (Communication). L'entusiasmo iniziale rischia di calare se non è sostenuto da metriche e follow-up rigorosi.",
+          weakRisk: "Quando l'area Influence è bassa, le persone rispettano le regole solo per obbligo contrattuale o timore di sanzioni. Diventa difficile allineare i subappaltatori o superare il cinismo di chi vede la sicurezza come un rallentamento burocratico.",
+          actions: [
+            "Nelle conversazioni informali in campo, collega sempre il rispetto di una procedura all'impatto reale sulla vita personale e familiare dei lavoratori.",
+            "Individua i 'leader informali' (gli operai o capisquadra più ascoltati dai colleghi) e coinvolgili in prima persona nel lanciare i messaggi chiave di sicurezza.",
+            "Mostra ai supervisori con esempi concreti come una lavorazione ben pianificata e sicura abbia evitato fermi cantiere, rilavorazioni e perdite economiche."
+          ],
+          bridgeFrom: "Fai leva sul tuo carisma comunicativo e sulla capacità di ispirare le persone",
+          bridgeTo: "raccontando storie reali ed esempi concreti che tocchino i valori personali e il senso di orgoglio professionale della squadra."
+        },
+        en: {
+          archetype: "The Cultural Catalyst & Inspirational Leader",
+          strength: "You excel at building emotional commitment and conviction: you unite diverse teams across hierarchies and cultures, speak passionately in informal settings, and connect safety to both personal values and business success.",
+          shadow: "Relying primarily on charisma and persuasion can sometimes overshadow structured process tracking (Focus) or technical clarity (Communication). Initial enthusiasm may fade if not backed by systematic follow-through.",
+          weakRisk: "When Influence is low, compliance becomes merely transactional or rule-bound. It becomes harder to unite subcontractors or overcome skepticism among workers who view safety as bureaucratic overhead.",
+          actions: [
+            "During informal site conversations, connect safety procedures directly to workers' personal priorities, health, and families.",
+            "Identify informal peer leaders among crews and engage them early to champion key safety standards on site.",
+            "Show supervisors through concrete examples how safe execution directly prevented rework, downtime, and financial loss."
+          ],
+          bridgeFrom: "Draw on your natural ability to inspire and unite people",
+          bridgeTo: "by sharing compelling real-world stories that connect safety standards to personal pride and shared team values."
+        }
+      },
+      CREDIBILITY: {
+        it: {
+          archetype: "Il Baluardo di Integrità e Coerenza",
+          strength: "La tua leadership poggia sull'esempio morale e sulla fiducia: anteponi la tutela delle persone agli obiettivi di produzione, mantieni sempre le promesse fatte al team, difendi le esigenze di sicurezza presso il top management e hai il coraggio di ammettere eventuali errori.",
+          shadow: "Una forte Credibility individuale può portarti a caricarti sulle spalle tutte le decisioni difficili o gli scontri con la linea operativa, rischiando l'isolamento se non costruisci contemporaneamente una responsabilità collettiva nel gruppo (Team).",
+          weakRisk: "Un basso punteggio in Credibility è critico nei momenti di tensione: basta una promessa non mantenuta su un'attrezzatura o un compromesso accettato in silenzio per rispettare una scadenza per incrinare la fiducia delle squadre nella leadership.",
+          actions: [
+            "Tieni un registro visibile delle promesse di sicurezza fatte agli operativi (es. DPI, illuminazione, modifiche di accesso) e chiudile tempestivamente comunicando l'esito.",
+            "Alla prima occasione in cui c'è conflitto tra fretta operativa e sicurezza, prendi una posizione netta e pubblica a tutela della squadra, facendoti garante verso l'alto.",
+            "Durante un briefing, condividi apertamente un errore di valutazione passato e cosa hai imparato: aumenterà immediatamente la fiducia psicologica del gruppo."
+          ],
+          bridgeFrom: "Usa l'autorevolezza, l'integrità e la fiducia che ti sei guadagnato sul campo",
+          bridgeTo: "dando seguito immediato agli impegni presi con i lavoratori e prendendo posizione netta senza compromessi quando la pressione sale."
+        },
+        en: {
+          archetype: "The Pillar of Integrity & Walk-the-Talk",
+          strength: "Your leadership is built on trust and moral courage: you prioritize employee welfare over production targets, keep your promises, advocate for your team's safety needs to senior management, and openly acknowledge mistakes.",
+          shadow: "High personal Credibility can lead you to shoulder every tough call or confrontation alone, risking burnout or isolation if you don't simultaneously build shared ownership across the crew (Team).",
+          weakRisk: "Low coverage in Credibility is fragile under pressure: a single unkept promise regarding equipment or a silent compromise made to hit a deadline can quickly erode workforce trust.",
+          actions: [
+            "Keep a visible log of safety commitments made to crews (e.g., lighting, access, PPE upgrades) and close the loop promptly.",
+            "When operational urgency clashes with safety, take a visible, unambiguous stand to protect the team and escalate resource needs to senior management.",
+            "In your next team briefing, openly share a past lessons-learned or mistake of your own to model humility and reinforce trust."
+          ],
+          bridgeFrom: "Use the personal integrity, fairness, and authority you command",
+          bridgeTo: "by following through visibly on commitments and standing firm behind your team whenever operational pressures rise."
+        }
+      },
+      TEAM: {
+        it: {
+          archetype: "Il Costruttore di Fiducia e Responsabilità Diffusa",
+          strength: "Sai creare un ambiente psicologicamente sicuro in cui ciascuno si sente ascoltato e legittimato a fermare un lavoro a rischio. Promuovi il gioco di squadra, il coinvolgimento nelle decisioni e l'intervento spontaneo tra colleghi (peer-to-peer safety).",
+          shadow: "Cercare sempre il consenso e la partecipazione orizzontale può talvolta rallentare la rapidità decisionale nei momenti di emergenza o attenuare la fermezza necessaria di fronte a violazioni gravi e consapevoli (Focus / Credibility).",
+          weakRisk: "Se l'area Team è poco presidiata, la sicurezza resta 'affare dell'HSE o del capo'. Gli operai non segnalano i Near-Miss per timore di ripercussioni e non intervengono quando vedono un collega di un'altra squadra compiere una manovra azzardata.",
+          actions: [
+            "Prima di un'operazione complessa o interferente, coinvolgi direttamente gli esecutori materiali per 10 minuti nel co-definire le misure di sicurezza operative.",
+            "Istituisci e tutela pubblicamente la 'Stop Work Authority': ringrazia davanti a tutti il primo lavoratore che segnala un dubbio bloccando un'attività.",
+            "Promuovi il controllo reciproco ('Buddy System') tra coppie di lavoratori, rendendo normale e apprezzato l'avvertimento costruttivo tra pari."
+          ],
+          bridgeFrom: "Sfrutta la tua capacità di creare spirito di squadra e partecipazione",
+          bridgeTo: "delegando parte del controllo alle squadre stesse e coinvolgendo gli operai nelle decisioni prima di avviare le lavorazioni."
+        },
+        en: {
+          archetype: "The Builder of Trust & Collective Ownership",
+          strength: "You create a psychologically safe environment where everyone feels heard, respected, and empowered to stop unsafe work. You foster open discussion, shared decision-making, and peer-to-peer safety interventions.",
+          shadow: "Always seeking group consensus can occasionally slow down urgent decision-making or soften the hard edge needed when addressing willful violations (Focus / Credibility).",
+          weakRisk: "When Team is under-covered, safety remains 'the supervisor's or HSE's job.' Workers hesitate to report Near-Misses out of fear of blame and rarely step in when a peer acts unsafely.",
+          actions: [
+            "Before a complex or overlapping task, spend 10 minutes involving the frontline crew in co-designing the safe work method.",
+            "Publicly champion 'Stop Work Authority': recognize and thank the first worker who speaks up to pause an activity due to a hazard.",
+            "Pair up crew members in a 'Buddy System' to normalize constructive peer-to-peer safety interventions during daily operations."
+          ],
+          bridgeFrom: "Build on your ability to foster trust and team cohesion",
+          bridgeTo: "by involving frontline workers directly in risk decisions and empowering peer-to-peer accountability."
+        }
+      },
+      COMMUNICATION: {
+        it: {
+          archetype: "Il Facilitatore del Dialogo e della Chiarezza",
+          strength: "Padroneggi l'arte della comunicazione bidirezionale: trasmetti i requisiti con trasparenza, adatti il registro linguistico ai diversi interlocutori, pratichi l'ascolto attivo e usi domande stimolanti per accendere la consapevolezza sui rischi nascosti.",
+          shadow: "Il rischio principale è scambiare una buona comunicazione per la risoluzione del problema: spiegare benissimo una procedura o fare ottime domande non basta se poi non vengono rimosse le barriere fisiche (Focus) o se manca il rinforzo sui risultati (Feedback).",
+          weakRisk: "Quando Communication è l'area meno presidiata, si creano pericolose zone grigie: i messaggi critici non arrivano in tempo a tutti i subappaltatori, i toolbox talk diventano monologhi noiosi e si dà per scontato che un silenzio significhi 'tutto chiaro'.",
+          actions: [
+            "Sostituisci nei briefing mattutini le raccomandazioni generiche ('state attenti') con 2 domande aperte: 'Qual è il punto più critico del lavoro di oggi?' e 'Cosa ci serve per farlo in sicurezza?'.",
+            "Applica la tecnica del feedback di comprensione (Active Listening): chiedi a un caposquadra o operaio di riassumere a parole sue i passaggi chiave appena concordati.",
+            "Adatta i canali comunicativi alle squadre multietniche o subappaltatrici usando schemi visivi in campo e confronti brevi faccia a faccia sul posto di lavoro."
+          ],
+          bridgeFrom: "Appoggiati alla tua chiarezza espositiva e alla capacità di ascolto attivo",
+          bridgeTo: "aprendo un dialogo bidirezionale fatto di domande mirate in campo e verificando che le aspettative siano comprese da ogni singolo lavoratore."
+        },
+        en: {
+          archetype: "The Facilitator of Clarity & Two-Way Dialogue",
+          strength: "You master two-way communication: you state safety expectations transparently, adapt your style to different audiences, practice active listening, and ask thought-provoking questions that challenge assumptions.",
+          shadow: "The main pitfall is mistaking great communication for problem resolution: explaining a procedure clearly or asking good questions isn't enough if physical barriers remain (Focus) or positive behaviors go unrecognized (Feedback).",
+          weakRisk: "When Communication is your lowest area, dangerous blind spots appear: critical alerts fail to reach all subcontractors on time, toolbox talks become one-way monologues, and silence is mistaken for understanding.",
+          actions: [
+            "Replace generic warnings ('be careful') in morning briefings with 2 open questions: 'What is today's highest-risk step?' and 'What could go wrong if conditions change?'",
+            "Use active listening checks: ask a supervisor or worker to summarize in their own words the critical safety controls just agreed upon.",
+            "Tailor your delivery to multicultural crews by using visual field aids and brief face-to-face huddles right at the workface."
+          ],
+          bridgeFrom: "Rely on your communication clarity and active listening skills",
+          bridgeTo: "by asking thought-provoking questions on site and confirming that safety expectations are truly understood at every level."
+        }
+      },
+      FEEDBACK: {
+        it: {
+          archetype: "Il Motore di Rinforzo Positivo e Riconoscimento",
+          strength: "Utilizzi il feedback come leva trasformativa: intervieni nei momenti ad alto impatto, valorizzi e celebri chi lavora in sicurezza, accogli le idee di miglioramento dal basso e aiuti le persone a riflettere sulle conseguenze reali delle proprie scelte.",
+          shadow: "Concentrarsi molto sul feedback comportamentale ai singoli può far perdere di vista le carenze strutturali, organizzative o di pianificazione a monte (Vision / Focus). Inoltre, un elogio frequente ma non ancorato a standard rigorosi rischia di abbassare la tensione ('complacency').",
+          weakRisk: "Quando il Feedback è l'area più debole, i lavoratori ricevono attenzione solo quando commettono un errore o c'è un'ispezione punitiva. Questo spegne la proattività, blocca il flusso di suggerimenti dal basso e genera chiusura difensiva.",
+          actions: [
+            "Applica la regola del 'Rinforzo Positivo Immediato': durante ogni giro in cantiere, individua e ringrazia sul posto almeno 3 lavoratori che stanno applicando correttamente una procedura.",
+            "Prendi in carico una proposta di miglioramento avanzata da un lavoratore, realizzala e dai visibilità pubblica a chi ha avuto l'idea durante il briefing settimanale.",
+            "Chiedi periodicamente un feedback dal basso ai tuoi preposti: 'Cosa posso fare io come leader per mettervi in condizione di lavorare più sicuri questa settimana?'."
+          ],
+          bridgeFrom: "Usa la tua naturale attenzione al riconoscimento e alla valorizzazione delle persone",
+          bridgeTo: "premiando tempestivamente sul campo ogni piccolo progresso e sollecitando riscontri diretti dai lavoratori."
+        },
+        en: {
+          archetype: "The Champion of Positive Reinforcement & Recognition",
+          strength: "You use feedback as a catalyst for culture change: you intervene at high-impact moments, celebrate safe behaviors, genuinely value bottom-up suggestions, and help workers connect safe actions to real-world consequences for their families.",
+          shadow: "Focusing heavily on individual behavioral feedback can sometimes overlook upstream engineering or planning flaws (Vision / Focus). Also, celebration without rigorous standards can inadvertently breed complacency.",
+          weakRisk: "When Feedback is the least covered area, workers only hear from management when something goes wrong. This stifles proactive engagement, dries up bottom-up improvement ideas, and creates a defensive climate.",
+          actions: [
+            "Practice 'Immediate Positive Reinforcement': on every site walk, spot and specifically thank at least 3 workers who are following safe practices.",
+            "Act on a safety improvement suggestion from a frontline worker and publicly credit them during the next site briefing.",
+            "Solicit bottom-up feedback from your supervisors: 'What is one thing I can do better as a leader this week to support your crew's safety?'"
+          ],
+          bridgeFrom: "Use your natural focus on recognition and valuing people",
+          bridgeTo: "by delivering timely positive reinforcement at critical moments and actively inviting bottom-up input from the field."
+        }
+      }
+    };
+
+    // =========================================================================
+    // 5. I 12 SCENARI VEROSIMILI COMPLETAMENTE BILINGUI (IT + EN)
+    // =========================================================================
+    const SCENARIOS = [
+      {
+        id: 1,
+        context: {
+          it: "Pressione Operativa & Cronoprogramma",
+          en: "Operational Pressure & Project Schedule"
+        },
+        title: {
+          it: "Ritardo critico sulla milestone e tentazione di scorciatoie",
+          en: "Critical milestone delay and temptation to cut corners"
+        },
+        desc: {
+          it: "Il progetto ha accumulato 10 giorni di ritardo a causa del maltempo. Durante la riunione operativa, alcuni supervisori lasciano intendere che per recuperare terreno si potrebbero velocizzare le verifiche preliminari sui mezzi di sollevamento e rimandare i controlli non bloccanti.",
+          en: "The project is 10 days behind schedule due to severe weather. During the progress meeting, some supervisors subtly suggest speeding up pre-use checks on lifting equipment and postponing non-critical safety inspections to recover lost time."
+        },
+        primaryMap: { VISION: 6, FOCUS: 5, INFLUENCE: 8, CREDIBILITY: 1, TEAM: 4, COMMUNICATION: 0, FEEDBACK: 8 }
+      },
+      {
+        id: 2,
+        context: {
+          it: "Segnalazione Rischi & Cultura No-Blame",
+          en: "Hazard Reporting & No-Blame Culture"
+        },
+        title: {
+          it: "Quasi-infortuni (Near-Miss) non segnalati dalle squadre",
+          en: "Unreported Near-Misses across active work zones"
+        },
+        desc: {
+          it: "Noti che negli ultimi due mesi il numero di segnalazioni di Near-Miss in un'area ad alta intensità lavorativa è sceso a zero, nonostante alcune evidenze sul campo mostrino piccoli urti e materiali lasciati in bilico. Gli operai temono ripercussioni o blocchi delle attività.",
+          en: "Over the past two months, Near-Miss reporting in a high-intensity work zone has dropped to zero, despite field evidence of minor bumps and unsecured materials. Workers fear blame or work stoppages if they speak up."
+        },
+        primaryMap: { VISION: 3, FOCUS: 7, INFLUENCE: 4, CREDIBILITY: 0, TEAM: 1, COMMUNICATION: 5, FEEDBACK: 9 }
+      },
+      {
+        id: 3,
+        context: {
+          it: "Gestione Subappalti & Multiculturalità",
+          en: "Subcontractor Management & Multicultural Crews"
+        },
+        title: {
+          it: "Ingresso di nuove squadre multietniche con standard disomogenei",
+          en: "Onboarding multicultural subcontractor crews with uneven standards"
+        },
+        desc: {
+          it: "Entrano in cantiere tre nuove imprese subappaltatrici con personale di diverse nazionalità e abitudini operative molto distanti dagli standard del sito. Si registrano già le prime incomprensioni linguistiche e una scarsa percezione delle regole comuni.",
+          en: "Three new subcontractor companies mobilize on site with crews from diverse nationalities and work habits far below site safety standards. Language barriers and differing risk perceptions are already causing friction."
+        },
+        primaryMap: { VISION: 1, FOCUS: 9, INFLUENCE: 2, CREDIBILITY: 8, TEAM: 3, COMMUNICATION: 2, FEEDBACK: 6 }
+      },
+      {
+        id: 4,
+        context: {
+          it: "Coerenza & Tolleranza Zero",
+          en: "Consistency & Zero Tolerance"
+        },
+        title: {
+          it: "Violazione delle regole da parte di un caposquadra molto produttivo",
+          en: "Safety violation by a highly productive senior foreman"
+        },
+        desc: {
+          it: "Mentre attraversi l'area di montaggio, vedi uno dei capisquadra più esperti e stimati per la sua rapidità esecutiva operare su un trabattello senza aver fissato i parapetti regolamentari, sotto gli occhi di due giovani neoassunti.",
+          en: "While walking the assembly area, you spot one of your most experienced and productive foremen working on a mobile scaffold without guardrails installed, right in front of two newly hired junior workers."
+        },
+        primaryMap: { VISION: 5, FOCUS: 6, INFLUENCE: 3, CREDIBILITY: 5, TEAM: 7, COMMUNICATION: 4, FEEDBACK: 0 }
+      },
+      {
+        id: 5,
+        context: {
+          it: "Partecipazione & Riunioni Efficaci",
+          en: "Engagement & Impactful Briefings"
+        },
+        title: {
+          it: "Toolbox talk mattutini percepiti come pura formalità burocratica",
+          en: "Morning toolbox talks treated as a bureaucratic formality"
+        },
+        desc: {
+          it: "Partecipando ai briefing pre-turno noti che i preposti leggono meccanicamente un modulo standard mentre gli operai guardano altrove in attesa di firmare il foglio presenze. Nessuno interviene sui rischi reali delle lavorazioni previste in giornata.",
+          en: "Attending pre-shift briefings, you notice supervisors mechanically reading a generic form while workers look away, waiting just to sign the attendance sheet. No one discusses the real hazards of the day's tasks."
+        },
+        primaryMap: { VISION: 4, FOCUS: 12, INFLUENCE: 0, CREDIBILITY: 3, TEAM: 2, COMMUNICATION: 8, FEEDBACK: 1 }
+      },
+      {
+        id: 6,
+        context: {
+          it: "Investimenti, Risorse & Barriere Operative",
+          en: "Resources, Budget & Operational Barriers"
+        },
+        title: {
+          it: "Richiesta di adeguamento sicurezza respinta per motivi di budget",
+          en: "Safety upgrade request pushed back due to budget constraints"
+        },
+        desc: {
+          it: "La squadra segnala che i percorsi di accesso a una trincea e l'illuminazione provvisoria per il turno serale sono insufficienti. La contabilità di cantiere obietta che l'intervento non era previsto a budget e richiede l'approvazione della direzione.",
+          en: "The crew reports that trench access walkways and temporary lighting for the evening shift are inadequate. Cost control objects that the upgrade was not budgeted and requires senior management approval."
+        },
+        primaryMap: { VISION: 7, FOCUS: 2, INFLUENCE: 5, CREDIBILITY: 6, TEAM: 0, COMMUNICATION: 3, FEEDBACK: 5 }
+      },
+      {
+        id: 7,
+        context: {
+          it: "Rinforzo Positivo & Calo di Tensione",
+          en: "Positive Reinforcement & Complacency Risk"
+        },
+        title: {
+          it: "Raggiungimento di un record di ore senza infortuni e rischio 'complacency'",
+          en: "Major injury-free milestone achieved and emerging complacency"
+        },
+        desc: {
+          it: "Il sito ha appena superato un importante traguardo senza infortuni. Mentre il morale è alto, noti però i primi segnali di eccessiva confidenza e abbassamento della guardia proprio alla vigilia dei collaudi in pressione.",
+          en: "The site has just achieved a major LTI-free milestone. While morale is high, you notice early signs of overconfidence and lowered vigilance right before critical high-pressure testing begins."
+        },
+        primaryMap: { VISION: 2, FOCUS: 0, INFLUENCE: 6, CREDIBILITY: 4, TEAM: 5, COMMUNICATION: 6, FEEDBACK: 3 }
+      },
+      {
+        id: 8,
+        context: {
+          it: "Ingegneria, Pianificazione & Interferenze",
+          en: "Engineering, Planning & SIMOPS"
+        },
+        title: {
+          it: "Interferenza imprevista tra due squadre in area ristretta",
+          en: "Unplanned simultaneous operations (SIMOPS) in a confined area"
+        },
+        desc: {
+          it: "A causa di una modifica progettuale dell'ultimo minuto, la squadra di carpenteria e quella elettrica si ritrovano a operare contemporaneamente nello stesso vano tecnico. I capi cantiere spingono per lavorare in parallelo pur di non perdere la giornata.",
+          en: "Due to a last-minute design change, structural steel and electrical crews end up scheduled in the same tight utility shaft at the same time. Site superintendents push to work in parallel to avoid losing a day."
+        },
+        primaryMap: { VISION: 0, FOCUS: 13, INFLUENCE: 1, CREDIBILITY: 9, TEAM: 6, COMMUNICATION: 1, FEEDBACK: 7 }
+      },
+      {
+        id: 9,
+        context: {
+          it: "Ascolto & Miglioramento dal Basso",
+          en: "Active Listening & Bottom-Up Improvement"
+        },
+        title: {
+          it: "Proposta tecnica di un operaio ignorata dai livelli intermedi",
+          en: "Worker's practical safety suggestion ignored by middle management"
+        },
+        desc: {
+          it: "Durante un giro in campo, un saldatore ti confida con frustrazione di aver proposto due settimane fa una modifica semplice per aspirare meglio i fumi in spazi confinati, ma di non aver mai ricevuto risposta dal proprio supervisore.",
+          en: "During a site walk, a welder frustratedly tells you he suggested a simple modification two weeks ago to improve fume extraction in confined spaces, but never heard back from his supervisor."
+        },
+        primaryMap: { VISION: 4, FOCUS: 8, INFLUENCE: 7, CREDIBILITY: 2, TEAM: 0, COMMUNICATION: 7, FEEDBACK: 2 }
+      },
+      {
+        id: 10,
+        context: {
+          it: "Gestione dell'Errore & Post-Evento",
+          en: "Error Management & Post-Incident Learning"
+        },
+        title: {
+          it: "Tensione e ricerca del colpevole dopo un mancato infortunio grave",
+          en: "Blame game after a high-potential dropped-object Near-Miss"
+        },
+        desc: {
+          it: "Un carico sospeso ha oscillato pericolosamente per un errore nella stima del baricentro, fortunatamente senza ferire nessuno. Nella riunione successiva i responsabili di area iniziano ad accusarsi a vicenda invece di analizzare le cause sistemiche.",
+          en: "A suspended load swung dangerously due to a center-of-gravity miscalculation, thankfully injuring no one. In the review meeting, area leads start blaming each other instead of analyzing systemic root causes."
+        },
+        primaryMap: { VISION: 7, FOCUS: 3, INFLUENCE: 2, CREDIBILITY: 7, TEAM: 4, COMMUNICATION: 5, FEEDBACK: 4 }
+      },
+      {
+        id: 11,
+        context: {
+          it: "Cultura Proattiva & Consapevolezza del Rischio",
+          en: "Proactive Culture & Risk Awareness"
+        },
+        title: {
+          it: "Abitudine al rischio in lavorazioni ripetitive di fine cantiere",
+          en: "Risk normalization during routine demobilization and finishing works"
+        },
+        desc: {
+          it: "Nelle attività di finitura e smobilizzo, considerate da molti 'a basso rischio' rispetto alle fasi pesanti già concluse, aumentano le piccole disattenzioni nell'uso degli utensili manuali e nella gestione dell'ordine e pulizia (housekeeping).",
+          en: "During finishing and demobilization activities—viewed by many as 'low risk' compared to heavy construction—minor carelessness with hand tools and poor housekeeping are noticeably increasing."
+        },
+        primaryMap: { VISION: 1, FOCUS: 14, INFLUENCE: 6, CREDIBILITY: 3, TEAM: 7, COMMUNICATION: 6, FEEDBACK: 4 }
+      },
+      {
+        id: 12,
+        context: {
+          it: "Empowerment & Responsabilità Diffusa",
+          en: "Empowerment & Shared Ownership"
+        },
+        title: {
+          it: "Dipendenza eccessiva dalla sola presenza dell'HSE Manager",
+          en: "Over-reliance on HSE personnel to police site behaviors"
+        },
+        desc: {
+          it: "Ti accorgi che le squadre rispettano scrupolosamente le procedure quando i referenti HSE o la direzione sono visibili in area, ma tendono ad attendere indicazioni dall'alto anziché intervenire autonomamente tra pari quando manca un supervisore.",
+          en: "You notice crews follow procedures strictly when HSE officers or managers are visible in the area, but tend to wait for top-down instruction rather than intervening peer-to-peer when supervisors are absent."
+        },
+        primaryMap: { VISION: 5, FOCUS: 11, INFLUENCE: 4, CREDIBILITY: 5, TEAM: 5, COMMUNICATION: 3, FEEDBACK: 9 }
+      }
+    ];
+
+    // =========================================================================
+    // 6. STATO DELL'APPLICAZIONE E LOGICA DEL TEST
+    // =========================================================================
+    let currentLang = "it";
+    const totalRounds = 12;
+    let currentRoundIndex = 0;
+
+    let participantInfo = {
+      name: "",
+      privacyAccepted: false,
+      companyIdx: -1,
+      roleIdx: -1,
+      siteIdx: -1,
+      companyText: "",
+      roleText: "",
+      siteText: ""
+    };
+
+    let areaPools = {};
+    let currentRoundOptions = [];
+    let currentSelectedIds = [];
+    let decisionHistory = [];
+    let lastComputedResults = null;
+    let lastSyncState = "idle";
+
+    let radarChartInstance = null;
+    let stackedBarChartInstance = null;
+
+    function getAppearanceWeight(timesSkipped) {
+      if (timesSkipped === 0) return 1.00;
+      if (timesSkipped === 1) return 0.65;
+      return 0.35;
+    }
+
+    function getPriorityMultiplier(rankIndex) {
+      if (rankIndex === 0) return 1.00;
+      if (rankIndex === 1) return 0.85;
+      return 0.70;
+    }
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === "it" ? "en" : "it";
+      applyStaticTranslations();
+      populateDropdowns();
+      updateListsSourceBadge();
+
+      if (!document.getElementById("screen-quiz").classList.contains("hidden")) {
+        updateQuizTexts();
+        renderScenarioOptions();
+      } else if (!document.getElementById("screen-results").classList.contains("hidden") && lastComputedResults) {
+        renderDashboard(lastComputedResults, false);
+        updateSyncBadgeUI();
+      }
+    }
+
+    function applyStaticTranslations() {
+      const t = UI_TEXT[currentLang];
+      document.documentElement.lang = currentLang;
+
+      document.getElementById("hdrTitle").textContent = t.hdrTitle;
+      document.getElementById("hdrSub").textContent = t.hdrSub;
+      document.getElementById("langSwitchPrefix").textContent = t.langSwitchPrefix;
+      document.getElementById("langLabel").textContent = t.langLabel;
+      document.getElementById("btnResetHdr").textContent = t.btnResetHdr;
+
+      document.getElementById("wBadge1").textContent = t.wBadge1;
+      document.getElementById("wBadge2").textContent = t.wBadge2;
+      document.getElementById("wBadge3").textContent = t.wBadge3;
+      document.getElementById("wTitle").textContent = t.wTitle;
+      document.getElementById("wDesc").innerHTML = t.wDesc;
+
+      document.getElementById("userFormTitle").textContent = t.userFormTitle;
+      document.getElementById("lblRequiredNote").textContent = t.lblRequiredNote;
+      document.getElementById("lblUserCompany").textContent = t.lblUserCompany;
+      document.getElementById("lblUserRole").textContent = t.lblUserRole;
+      document.getElementById("lblUserSite").textContent = t.lblUserSite;
+      document.getElementById("lblUserName").textContent = t.lblUserName;
+      document.getElementById("inputUserName").placeholder = t.phUserName;
+
+      document.getElementById("lblPrivacyText").textContent = t.lblPrivacyText;
+      document.getElementById("privacyRequiredBadge").textContent = t.privacyRequiredBadge;
+      document.getElementById("privacyOptionalBadge").textContent = t.privacyOptionalBadge;
+      const isPrivOpen = !document.getElementById("privacyDetailsBox").classList.contains("hidden");
+      document.getElementById("btnPrivacyInfo").textContent = isPrivOpen ? t.btnPrivacyInfoClose : t.btnPrivacyInfoOpen;
+      document.getElementById("privacyDetailsBox").textContent = t.privacyDetailsText;
+
+      document.getElementById("wHowTitle").textContent = t.wHowTitle;
+      document.getElementById("wStep1Title").textContent = t.wStep1Title;
+      document.getElementById("wStep1Desc").textContent = t.wStep1Desc;
+      document.getElementById("wStep2Title").textContent = t.wStep2Title;
+      document.getElementById("wStep2Desc").textContent = t.wStep2Desc;
+      document.getElementById("wStep3Title").textContent = t.wStep3Title;
+      document.getElementById("wStep3Desc").textContent = t.wStep3Desc;
+      document.getElementById("btnStart").textContent = t.btnStart;
+      document.getElementById("btnDemo").textContent = t.btnDemo;
+
+      document.getElementById("validationWarning").textContent = t.validationWarning;
+
+      document.getElementById("resBadge").textContent = t.resBadge;
+      document.getElementById("btnRetrySync").textContent = t.btnRetrySync;
+      document.getElementById("resMainTitle").textContent = t.resMainTitle;
+      document.getElementById("resMainSub").textContent = t.resMainSub;
+      document.getElementById("btnPrint").textContent = t.btnPrint;
+      document.getElementById("btnNewTest").textContent = t.btnNewTest;
+      document.getElementById("kpiTop1Label").textContent = t.kpiTop1Label;
+      document.getElementById("kpiTop2Label").textContent = t.kpiTop2Label;
+      document.getElementById("kpiLowLabel").textContent = t.kpiLowLabel;
+
+      document.getElementById("chartRadarTitle").textContent = t.chartRadarTitle;
+      document.getElementById("chartRadarSub").textContent = t.chartRadarSub;
+      document.getElementById("chartBarTitle").textContent = t.chartBarTitle;
+      document.getElementById("chartBarSub").textContent = t.chartBarSub;
+
+      document.getElementById("coachBadge").textContent = t.coachBadge;
+      document.getElementById("coachMainTitle").textContent = t.coachMainTitle;
+      document.getElementById("coachFocusPrefix").textContent = t.coachFocusPrefix;
+      document.getElementById("coachDomTag").textContent = t.coachDomTag;
+      document.getElementById("coachWeakTag").textContent = t.coachWeakTag;
+      document.getElementById("coachDomShadowTitle").textContent = t.coachDomShadowTitle;
+      document.getElementById("coachWeakRiskLabel").textContent = t.coachWeakRiskLabel;
+      document.getElementById("coachWeakActionsTitle").textContent = t.coachWeakActionsTitle;
+      document.getElementById("bridgeHeader").textContent = t.bridgeHeader;
+      document.getElementById("skippedTitle").textContent = t.skippedTitle;
+      document.getElementById("skippedSub").textContent = t.skippedSub;
+
+      document.getElementById("methBadge").textContent = t.methBadge;
+      document.getElementById("methTitle").textContent = t.methTitle;
+      document.getElementById("methDesc").innerHTML = t.methDesc;
+      document.getElementById("methBox1Title").textContent = t.methBox1Title;
+      document.getElementById("methBox1List").innerHTML = t.methBox1List;
+      document.getElementById("methBox2Title").textContent = t.methBox2Title;
+      document.getElementById("methBox2List").innerHTML = t.methBox2List;
+
+      document.getElementById("tblMainTitle").textContent = t.tblMainTitle;
+      document.getElementById("thArea").textContent = t.thArea;
+      document.getElementById("thFirst").textContent = t.thFirst;
+      document.getElementById("thCarry").textContent = t.thCarry;
+      document.getElementById("thScore").textContent = t.thScore;
+      document.getElementById("thDist").textContent = t.thDist;
+
+      document.getElementById("logMainTitle").textContent = t.logMainTitle;
+      document.getElementById("logMainSub").textContent = t.logMainSub;
+    }
+
+    function startAssessment() {
+      const t = UI_TEXT[currentLang];
+      const companyVal = document.getElementById("selectUserCompany").value;
+      const roleVal = document.getElementById("selectUserRole").value;
+      const siteVal = document.getElementById("selectUserSite").value;
+      const nameVal = document.getElementById("inputUserName").value.trim();
+      const privacyChecked = document.getElementById("checkboxPrivacy").checked;
+      const errEl = document.getElementById("userFormError");
+
+      if (companyVal === "" || roleVal === "" || siteVal === "") {
+        errEl.textContent = t.errMissingDropdowns;
+        errEl.classList.remove("hidden");
+        if (companyVal === "") document.getElementById("selectUserCompany").focus();
+        else if (roleVal === "") document.getElementById("selectUserRole").focus();
+        else document.getElementById("selectUserSite").focus();
+        return;
+      }
+
+      if (nameVal.length > 0 && !privacyChecked) {
+        errEl.textContent = t.errMissingPrivacy;
+        errEl.classList.remove("hidden");
+        document.getElementById("checkboxPrivacy").focus();
+        return;
+      }
+
+      errEl.classList.add("hidden");
+
+      const cIdx = parseInt(companyVal, 10);
+      const rIdx = parseInt(roleVal, 10);
+      const sIdx = parseInt(siteVal, 10);
+
+      participantInfo = {
+        name: nameVal,
+        privacyAccepted: privacyChecked,
+        companyIdx: cIdx,
+        roleIdx: rIdx,
+        siteIdx: sIdx,
+        companyText: parsedCompaniesList[cIdx]?.[currentLang] || "",
+        roleText: parsedRolesList[rIdx]?.[currentLang] || "",
+        siteText: parsedSitesList[sIdx]?.[currentLang] || ""
+      };
+
+      currentRoundIndex = 0;
+      decisionHistory = [];
+      lastComputedResults = null;
+      areaPools = {};
+
+      AREAS.forEach(area => {
+        areaPools[area.id] = {
+          usedFreshIndices: new Set(),
+          carryOverQueue: [],
+          scoreFirstAppearance: 0,
+          scoreCarryOver: 0,
+          countFirstChosen: 0,
+          countCarryOverChosen: 0
+        };
+      });
+
+      document.getElementById("screen-welcome").classList.add("hidden");
+      document.getElementById("screen-results").classList.add("hidden");
+      document.getElementById("screen-quiz").classList.remove("hidden");
+
+      prepareRound(0);
+    }
+
+    function prepareRound(roundIdx) {
+      const scenario = SCENARIOS[roundIdx];
+      currentSelectedIds = [];
+      currentRoundOptions = [];
+
+      AREAS.forEach((area, areaOrderIdx) => {
+        const pool = areaPools[area.id];
+        let chosenBehaviorIdx = null;
+        let timesSkipped = 0;
+
+        const shouldPullFromCarryOver =
+          roundIdx > 0 &&
+          pool.carryOverQueue.length > 0 &&
+          ((roundIdx + areaOrderIdx) % 2 === 0 || pool.usedFreshIndices.size >= area.behaviors.length);
+
+        if (shouldPullFromCarryOver) {
+          const carryItem = pool.carryOverQueue.shift();
+          chosenBehaviorIdx = carryItem.behaviorIdx;
+          timesSkipped = carryItem.timesSkipped;
+        } else {
+          const preferredIdx = scenario.primaryMap[area.id];
+          if (!pool.usedFreshIndices.has(preferredIdx)) {
+            chosenBehaviorIdx = preferredIdx;
+          } else {
+            const availableFresh = area.behaviors
+              .map((_, i) => i)
+              .filter(i => !pool.usedFreshIndices.has(i));
+
+            if (availableFresh.length > 0) {
+              chosenBehaviorIdx = availableFresh[0];
+            } else if (pool.carryOverQueue.length > 0) {
+              const carryItem = pool.carryOverQueue.shift();
+              chosenBehaviorIdx = carryItem.behaviorIdx;
+              timesSkipped = carryItem.timesSkipped;
+            } else {
+              chosenBehaviorIdx = preferredIdx;
+            }
+          }
+          pool.usedFreshIndices.add(chosenBehaviorIdx);
+        }
+
+        const bObj = area.behaviors[chosenBehaviorIdx];
+        currentRoundOptions.push({
+          optionId: `r${roundIdx}_${area.id}_${chosenBehaviorIdx}`,
+          areaId: area.id,
+          areaName: area.name,
+          behaviorIdx: chosenBehaviorIdx,
+          timesSkipped: timesSkipped,
+          appearanceWeight: getAppearanceWeight(timesSkipped),
+          en: bObj.en,
+          it: bObj.it
+        });
+      });
+
+      currentRoundOptions = shuffleArray(currentRoundOptions);
+
+      updateQuizTexts();
+      document.getElementById("validationWarning").classList.add("hidden");
+      renderScenarioOptions();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function updateQuizTexts() {
+      const t = UI_TEXT[currentLang];
+      const scenario = SCENARIOS[currentRoundIndex];
+      const pct = Math.round(((currentRoundIndex + 1) / totalRounds) * 100);
+
+      document.getElementById("progressText").textContent = `${t.scenarioWord} ${currentRoundIndex + 1} ${t.ofWord} ${totalRounds}`;
+      document.getElementById("progressPctText").textContent = `${pct}%`;
+      document.getElementById("progressBar").style.width = `${pct}%`;
+
+      document.getElementById("scenarioTag").textContent = `${t.scenarioWord} #${currentRoundIndex + 1}`;
+      document.getElementById("scenarioContext").textContent = `${t.contextPrefix} ${scenario.context[currentLang]}`;
+      document.getElementById("scenarioTitle").textContent = scenario.title[currentLang];
+      document.getElementById("scenarioDescription").textContent = scenario.desc[currentLang];
+
+      document.getElementById("selectionPromptTitle").textContent = t.selectionPromptTitle;
+      document.getElementById("selectionPromptSub").textContent = t.selectionPromptSub;
+      document.getElementById("btnConfirmRound").textContent =
+        currentRoundIndex === totalRounds - 1 ? t.btnFinishRound : t.btnNextRound;
+    }
+
+    function renderScenarioOptions() {
+      const t = UI_TEXT[currentLang];
+      document.getElementById("selectionCounterBadge").textContent = t.chosenCounter(currentSelectedIds.length);
+
+      const container = document.getElementById("optionsContainer");
+      container.innerHTML = "";
+
+      currentRoundOptions.forEach(opt => {
+        const rankIdx = currentSelectedIds.indexOf(opt.optionId);
+        const isSelected = rankIdx !== -1;
+
+        let priorityBadgeHTML = "";
+        if (isSelected) {
+          priorityBadgeHTML = `
+            <div class="mb-1.5">
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-xs font-extrabold">
+                ${t.choiceBadge(rankIdx + 1)}
+              </span>
+            </div>
+          `;
+        }
+
+        const card = document.createElement("div");
+        card.onclick = () => toggleOption(opt.optionId);
+        card.className = `option-card cursor-pointer p-4 rounded-xl border-2 flex items-start gap-3.5 ${
+          isSelected
+            ? "border-amber-500 bg-amber-50/60 shadow-sm"
+            : "border-slate-200 bg-white hover:border-slate-300"
+        }`;
+
+        card.innerHTML = `
+          <div class="mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+            isSelected ? "bg-amber-500 text-slate-950" : "bg-slate-100 text-slate-500 border border-slate-300"
+          }">
+            ${isSelected ? (rankIdx + 1) : ""}
+          </div>
+          <div class="flex-grow">
+            ${priorityBadgeHTML}
+            <p class="text-sm md:text-base text-slate-800 font-medium leading-snug">
+              ${opt[currentLang]}
+            </p>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleOption(optionId) {
+      document.getElementById("validationWarning").classList.add("hidden");
+
+      const idx = currentSelectedIds.indexOf(optionId);
+      if (idx !== -1) {
+        currentSelectedIds.splice(idx, 1);
+      } else {
+        if (currentSelectedIds.length >= 3) return;
+        currentSelectedIds.push(optionId);
+      }
+      renderScenarioOptions();
+    }
+
+    function confirmRound() {
+      if (currentSelectedIds.length === 0) {
+        document.getElementById("validationWarning").classList.remove("hidden");
+        return;
+      }
+
+      currentRoundOptions.forEach(opt => {
+        const pool = areaPools[opt.areaId];
+        const rankIdx = currentSelectedIds.indexOf(opt.optionId);
+
+        if (rankIdx !== -1) {
+          const prioMult = getPriorityMultiplier(rankIdx);
+          const earnedPoints = opt.appearanceWeight * prioMult;
+
+          if (opt.timesSkipped === 0) {
+            pool.scoreFirstAppearance += earnedPoints;
+            pool.countFirstChosen += 1;
+          } else {
+            pool.scoreCarryOver += earnedPoints;
+            pool.countCarryOverChosen += 1;
+          }
+
+          decisionHistory.push({
+            roundIdx: currentRoundIndex,
+            areaName: opt.areaName,
+            areaId: opt.areaId,
+            behaviorIdx: opt.behaviorIdx,
+            timesSkipped: opt.timesSkipped,
+            appearanceWeight: opt.appearanceWeight,
+            rankOrder: rankIdx + 1,
+            earnedPoints: earnedPoints
+          });
+        } else {
+          pool.carryOverQueue.push({
+            behaviorIdx: opt.behaviorIdx,
+            timesSkipped: opt.timesSkipped + 1
+          });
+        }
+      });
+
+      if (currentRoundIndex < totalRounds - 1) {
+        currentRoundIndex++;
+        prepareRound(currentRoundIndex);
+      } else {
+        showFinalResults();
+      }
+    }
+
+    // =========================================================================
+    // 7. SALVATAGGIO DIRETTO NEL DATABASE INTERNO DI NETLIFY (NETLIFY FORMS)
+    // =========================================================================
+    function updateSyncBadgeUI() {
+      const t = UI_TEXT[currentLang];
+      const badge = document.getElementById("syncStatusBadge");
+      const retryBtn = document.getElementById("btnRetrySync");
+
+      retryBtn.classList.add("hidden");
+
+      if (lastSyncState === "sending") {
+        badge.className = "inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold no-print";
+        badge.textContent = t.syncSending;
+      } else if (lastSyncState === "success") {
+        badge.className = "inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold no-print";
+        badge.textContent = t.syncSuccess;
+      } else if (lastSyncState === "error") {
+        badge.className = "inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold no-print";
+        badge.textContent = t.syncError;
+        retryBtn.classList.remove("hidden");
+      } else {
+        badge.className = "inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold no-print";
+        badge.textContent = t.syncLocalPreview;
+      }
+    }
+
+    async function sendResultsToNetlifyDB() {
+      if (!lastComputedResults) return;
+
+      // Se aperto in locale tramite file://, segnala che il salvataggio avverrà una volta pubblicato su Netlify
+      if (!window.location.protocol.startsWith("http")) {
+        lastSyncState = "local_preview";
+        updateSyncBadgeUI();
+        return;
+      }
+
+      lastSyncState = "sending";
+      updateSyncBadgeUI();
+
+      const t = UI_TEXT[currentLang];
+      const sorted = [...lastComputedResults].sort((a, b) => b.distributionPct - a.distributionPct);
+      const pctMap = {};
+      const ptsMap = {};
+
+      lastComputedResults.forEach(r => {
+        pctMap[r.id] = `${r.distributionPct.toFixed(1)}%`;
+        ptsMap[r.id] = r.totalScore.toFixed(2);
+      });
+
+      const choicesCompact = decisionHistory.map(d =>
+        `S${d.roundIdx + 1}:${d.areaId}(#${d.rankOrder},w=${d.appearanceWeight},+${d.earnedPoints.toFixed(2)})`
+      ).join(" | ");
+
+      const resolvedCompany = participantInfo.companyIdx >= 0
+        ? (parsedCompaniesList[participantInfo.companyIdx]?.[currentLang] || participantInfo.companyText)
+        : participantInfo.companyText;
+
+      const resolvedRole = participantInfo.roleIdx >= 0
+        ? (parsedRolesList[participantInfo.roleIdx]?.[currentLang] || participantInfo.roleText)
+        : participantInfo.roleText;
+
+      const resolvedSite = participantInfo.siteIdx >= 0
+        ? (parsedSitesList[participantInfo.siteIdx]?.[currentLang] || participantInfo.siteText)
+        : participantInfo.siteText;
+
+      const privacyStatus = participantInfo.name
+        ? (participantInfo.privacyAccepted ? t.privacyAcceptedLog : "-")
+        : t.privacyAnonymousLog;
+
+      const formPayload = new URLSearchParams({
+        "form-name": NETLIFY_FORM_NAME,
+        "data_ora": new Date().toLocaleString("it-IT"),
+        "partecipante": participantInfo.name || t.anonymousLabel,
+        "consenso_privacy": privacyStatus,
+        "azienda": resolvedCompany || "-",
+        "ruolo": resolvedRole || "-",
+        "cantiere": resolvedSite || "-",
+        "lingua": currentLang.toUpperCase(),
+        "area_dominante_1": `${sorted[0].name} (${sorted[0].distributionPct.toFixed(1)}%)`,
+        "area_codominante_2": `${sorted[1].name} (${sorted[1].distributionPct.toFixed(1)}%)`,
+        "area_meno_presidiata_7": `${sorted[sorted.length - 1].name} (${sorted[sorted.length - 1].distributionPct.toFixed(1)}%)`,
+        "vision_pct": pctMap.VISION,
+        "focus_pct": pctMap.FOCUS,
+        "influence_pct": pctMap.INFLUENCE,
+        "credibility_pct": pctMap.CREDIBILITY,
+        "team_pct": pctMap.TEAM,
+        "communication_pct": pctMap.COMMUNICATION,
+        "feedback_pct": pctMap.FEEDBACK,
+        "vision_pt": ptsMap.VISION,
+        "focus_pt": ptsMap.FOCUS,
+        "influence_pt": ptsMap.INFLUENCE,
+        "credibility_pt": ptsMap.CREDIBILITY,
+        "team_pt": ptsMap.TEAM,
+        "communication_pt": ptsMap.COMMUNICATION,
+        "feedback_pt": ptsMap.FEEDBACK,
+        "riepilogo_scelte": choicesCompact
+      });
+
+      try {
+        const res = await fetch("/", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formPayload.toString()
+        });
+
+        if (res.ok) {
+          lastSyncState = "success";
+        } else {
+          lastSyncState = "error";
+        }
+        updateSyncBadgeUI();
+      } catch (err) {
+        console.error("Netlify DB save error:", err);
+        lastSyncState = "error";
+        updateSyncBadgeUI();
+      }
+    }
+
+    // =========================================================================
+    // 8. CALCOLO DISTRIBUZIONE FINALE, COACHING E DASHBOARD
+    // =========================================================================
+    function showFinalResults() {
+      let totalWeightedPoints = 0;
+
+      const results = AREAS.map(area => {
+        const pool = areaPools[area.id];
+        const totalAreaScore = pool.scoreFirstAppearance + pool.scoreCarryOver;
+        totalWeightedPoints += totalAreaScore;
+        return {
+          id: area.id,
+          name: area.name,
+          color: area.color,
+          scoreFirst: pool.scoreFirstAppearance,
+          scoreCarry: pool.scoreCarryOver,
+          totalScore: totalAreaScore,
+          countFirst: pool.countFirstChosen,
+          countCarry: pool.countCarryOverChosen,
+          distributionPct: 0
+        };
+      });
+
+      results.forEach(r => {
+        r.distributionPct = totalWeightedPoints > 0 ? (r.totalScore / totalWeightedPoints) * 100 : (100 / 7);
+      });
+
+      lastComputedResults = results;
+      renderDashboard(results, true);
+      sendResultsToNetlifyDB();
+    }
+
+    function renderCoachingAdvice(topArea, secondArea, lowArea) {
+      const t = UI_TEXT[currentLang];
+      const domProfile = COACHING_PROFILES[topArea.id][currentLang];
+      const weakProfile = COACHING_PROFILES[lowArea.id][currentLang];
+
+      document.getElementById("coachingHeaderBadge").textContent =
+        `${topArea.name} (#1) → ${lowArea.name} (#7)`;
+
+      document.getElementById("coachDomPct").textContent = `${topArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
+      document.getElementById("coachDomTitle").textContent = `${t.coachDomTitlePrefix} "${topArea.name}"`;
+      document.getElementById("coachDomArchetype").textContent = `${t.coachArchetypePrefix} ${domProfile.archetype}`;
+      document.getElementById("coachDomStrength").textContent = domProfile.strength;
+      document.getElementById("coachDomShadow").textContent = domProfile.shadow;
+
+      document.getElementById("coachWeakPct").textContent = `${lowArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
+      document.getElementById("coachWeakTitle").textContent = `${t.coachWeakTitlePrefix} "${lowArea.name}"`;
+      document.getElementById("coachWeakRisk").textContent = weakProfile.weakRisk;
+
+      const actionsUl = document.getElementById("coachWeakActions");
+      actionsUl.innerHTML = weakProfile.actions.map((act, idx) => `
+        <li class="flex items-start gap-2">
+          <span class="w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-extrabold text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</span>
+          <span class="leading-snug">${act}</span>
+        </li>
+      `).join("");
+
+      document.getElementById("bridgeTag").textContent = `${t.bridgeSynergyPrefix}: ${topArea.name} + ${secondArea.name} → ${lowArea.name}`;
+      document.getElementById("bridgeTitle").textContent = t.bridgeTitleFormat(topArea.name, lowArea.name);
+      document.getElementById("bridgeText").innerHTML =
+        t.bridgeTextFormat(domProfile.bridgeFrom, secondArea.name, lowArea.name, weakProfile.bridgeTo, topArea.name);
+
+      const lowAreaObj = AREAS.find(a => a.id === lowArea.id);
+      const pool = areaPools[lowArea.id];
+
+      let targetBehaviors = [];
+      if (pool && pool.carryOverQueue && pool.carryOverQueue.length > 0) {
+        const uniqueIndices = [...new Set(pool.carryOverQueue.map(item => item.behaviorIdx))].slice(0, 4);
+        targetBehaviors = uniqueIndices.map(idx => ({
+          text: lowAreaObj.behaviors[idx][currentLang],
+          skippedCount: pool.carryOverQueue.find(i => i.behaviorIdx === idx)?.timesSkipped || 1
+        }));
+      }
+
+      if (targetBehaviors.length === 0) {
+        targetBehaviors = lowAreaObj.behaviors.slice(0, 4).map((b, i) => ({
+          text: b[currentLang],
+          skippedCount: i % 2 === 0 ? 2 : 1
+        }));
+      }
+
+      const skippedContainer = document.getElementById("skippedBehaviorsList");
+      skippedContainer.innerHTML = targetBehaviors.map(tb => `
+        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase">
+              ${t.skippedCardBadge} • ${lowArea.name}
+            </span>
+            <span class="text-[11px] text-slate-400 font-semibold">
+              ${t.skippedCountLabel(tb.skippedCount)}
+            </span>
+          </div>
+          <p class="text-xs text-slate-700 font-medium leading-relaxed">${tb.text}</p>
+        </div>
+      `).join("");
+    }
+
+    function simulateDemo() {
+      const companyVal = document.getElementById("selectUserCompany").value;
+      const roleVal = document.getElementById("selectUserRole").value;
+      const siteVal = document.getElementById("selectUserSite").value;
+      const nameVal = document.getElementById("inputUserName").value.trim();
+
+      const cIdx = companyVal !== "" ? parseInt(companyVal, 10) : 0;
+      const rIdx = roleVal !== "" ? parseInt(roleVal, 10) : 0;
+      const sIdx = siteVal !== "" ? parseInt(siteVal, 10) : 0;
+
+      participantInfo = {
+        name: nameVal,
+        privacyAccepted: true,
+        companyIdx: cIdx,
+        roleIdx: rIdx,
+        siteIdx: sIdx,
+        companyText: parsedCompaniesList[cIdx]?.[currentLang] || "General Contractor SpA",
+        roleText: parsedRolesList[rIdx]?.[currentLang] || "Site Manager",
+        siteText: parsedSitesList[sIdx]?.[currentLang] || "North Site"
+      };
+
+      areaPools = {};
+      const demoData = [
+        { id: "VISION", scoreFirst: 3.00, scoreCarry: 0.65, countFirst: 3, countCarry: 1 },
+        { id: "FOCUS", scoreFirst: 3.85, scoreCarry: 1.10, countFirst: 4, countCarry: 2 },
+        { id: "INFLUENCE", scoreFirst: 2.00, scoreCarry: 0.90, countFirst: 2, countCarry: 2 },
+        { id: "CREDIBILITY", scoreFirst: 4.55, scoreCarry: 0.65, countFirst: 5, countCarry: 1 },
+        { id: "TEAM", scoreFirst: 2.70, scoreCarry: 1.30, countFirst: 3, countCarry: 2 },
+        { id: "COMMUNICATION", scoreFirst: 1.85, scoreCarry: 0.95, countFirst: 2, countCarry: 2 },
+        { id: "FEEDBACK", scoreFirst: 1.00, scoreCarry: 0.35, countFirst: 1, countCarry: 1 }
+      ];
+
+      let totalPts = 0;
+      const results = AREAS.map((area, i) => {
+        const d = demoData[i];
+        const tot = d.scoreFirst + d.scoreCarry;
+        totalPts += tot;
+        areaPools[area.id] = {
+          carryOverQueue: [
+            { behaviorIdx: 0, timesSkipped: 2 },
+            { behaviorIdx: 2, timesSkipped: 2 },
+            { behaviorIdx: 5, timesSkipped: 1 },
+            { behaviorIdx: 9, timesSkipped: 1 }
+          ]
+        };
+        return {
+          id: area.id,
+          name: area.name,
+          color: area.color,
+          scoreFirst: d.scoreFirst,
+          scoreCarry: d.scoreCarry,
+          totalScore: tot,
+          countFirst: d.countFirst,
+          countCarry: d.countCarry,
+          distributionPct: 0
+        };
+      });
+
+      results.forEach(r => {
+        r.distributionPct = (r.totalScore / totalPts) * 100;
+      });
+
+      decisionHistory = [
+        {
+          roundIdx: 0,
+          areaName: "Credibility",
+          areaId: "CREDIBILITY",
+          behaviorIdx: 1,
+          timesSkipped: 0,
+          appearanceWeight: 1.00,
+          rankOrder: 1,
+          earnedPoints: 1.00
+        },
+        {
+          roundIdx: 1,
+          areaName: "Focus",
+          areaId: "FOCUS",
+          behaviorIdx: 5,
+          timesSkipped: 1,
+          appearanceWeight: 0.65,
+          rankOrder: 2,
+          earnedPoints: 0.55
+        }
+      ];
+
+      lastComputedResults = results;
+      renderDashboard(results, true);
+      sendResultsToNetlifyDB();
+    }
+
+    function renderDashboard(results, scrollToTop = true) {
+      const t = UI_TEXT[currentLang];
+      document.getElementById("screen-welcome").classList.add("hidden");
+      document.getElementById("screen-quiz").classList.add("hidden");
+      document.getElementById("screen-results").classList.remove("hidden");
+
+      const displayCompany = participantInfo.companyIdx >= 0
+        ? (parsedCompaniesList[participantInfo.companyIdx]?.[currentLang] || participantInfo.companyText)
+        : participantInfo.companyText;
+      const displayRole = participantInfo.roleIdx >= 0
+        ? (parsedRolesList[participantInfo.roleIdx]?.[currentLang] || participantInfo.roleText)
+        : participantInfo.roleText;
+      const displaySite = participantInfo.siteIdx >= 0
+        ? (parsedSitesList[participantInfo.siteIdx]?.[currentLang] || participantInfo.siteText)
+        : participantInfo.siteText;
+      const displayName = participantInfo.name || t.anonymousLabel;
+
+      document.getElementById("resParticipantInfo").textContent =
+        t.participantSummary(displayName, displayCompany, displayRole, displaySite);
+
+      const sorted = [...results].sort((a, b) => b.distributionPct - a.distributionPct);
+      const top1 = sorted[0];
+      const top2 = sorted[1];
+      const low = sorted[sorted.length - 1];
+
+      document.getElementById("kpiTop1Name").textContent = `${top1.name} (${top1.distributionPct.toFixed(1)}%)`;
+      document.getElementById("kpiTop1Stats").textContent = t.kpiStatsFormat(top1.totalScore.toFixed(2), top1.countFirst, top1.countCarry);
+
+      document.getElementById("kpiTop2Name").textContent = `${top2.name} (${top2.distributionPct.toFixed(1)}%)`;
+      document.getElementById("kpiTop2Stats").textContent = t.kpiStatsFormat(top2.totalScore.toFixed(2), top2.countFirst, top2.countCarry);
+
+      document.getElementById("kpiLowName").textContent = `${low.name} (${low.distributionPct.toFixed(1)}%)`;
+      document.getElementById("kpiLowStats").textContent = t.kpiStatsFormat(low.totalScore.toFixed(2), low.countFirst, low.countCarry);
+
+      renderCoachingAdvice(top1, top2, low);
+
+      const tbody = document.getElementById("resultsTableBody");
+      tbody.innerHTML = sorted.map(r => {
+        const areaObj = AREAS.find(a => a.id === r.id);
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3.5 pr-4">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3 h-3 rounded-full shrink-0" style="background:${r.color}"></span>
+                <div>
+                  <div class="font-bold text-slate-900">${r.name}</div>
+                  <div class="text-xs text-slate-500">${areaObj.desc[currentLang]}</div>
+                </div>
+              </div>
+            </td>
+            <td class="py-3.5 px-3 font-medium text-emerald-700">
+              ${r.countFirst} ${t.tblChoicesWord} <span class="text-xs text-slate-400">(${r.scoreFirst.toFixed(2)} pt)</span>
+            </td>
+            <td class="py-3.5 px-3 font-medium text-amber-700">
+              ${r.countCarry} ${t.tblCarryWord} <span class="text-xs text-slate-400">(${r.scoreCarry.toFixed(2)} pt)</span>
+            </td>
+            <td class="py-3.5 px-3 font-bold text-slate-800">
+              ${r.totalScore.toFixed(2)} pt
+            </td>
+            <td class="py-3.5 pl-4">
+              <div class="flex items-center gap-2.5">
+                <div class="w-28 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full" style="width:${Math.min(100, r.distributionPct * 2.5)}%; background:${r.color}"></div>
+                </div>
+                <span class="font-extrabold text-slate-900">${r.distributionPct.toFixed(1)}%</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      const logContainer = document.getElementById("decisionLogContainer");
+      logContainer.innerHTML = decisionHistory.map(item => {
+        const scObj = SCENARIOS[item.roundIdx];
+        const areaObj = AREAS.find(a => a.id === item.areaId);
+        const behText = areaObj.behaviors[item.behaviorIdx][currentLang];
+        return `
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-start justify-between gap-2 text-xs">
+            <div class="max-w-3xl">
+              <div class="flex flex-wrap items-center gap-2 mb-1">
+                <span class="font-bold text-slate-900">${t.scenarioWord} #${item.roundIdx + 1}: ${scObj.title[currentLang]}</span>
+                <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold">${item.areaName}</span>
+                <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">${t.choiceBadge(item.rankOrder)}</span>
+                <span class="px-2 py-0.5 rounded ${item.timesSkipped === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'} font-semibold">
+                  ${item.timesSkipped === 0 ? t.logFirstApp : t.logCarryApp(item.timesSkipped, item.appearanceWeight)}
+                </span>
+              </div>
+              <p class="text-slate-600">${behText}</p>
+            </div>
+            <div class="font-extrabold text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+              +${item.earnedPoints.toFixed(2)} pt
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const radarCtx = document.getElementById("radarChart").getContext("2d");
+      if (radarChartInstance) radarChartInstance.destroy();
+      radarChartInstance = new Chart(radarCtx, {
+        type: "radar",
+        data: {
+          labels: results.map(r => r.name),
+          datasets: [
+            {
+              label: t.chartRadarDataset1,
+              data: results.map(r => Number(r.distributionPct.toFixed(1))),
+              backgroundColor: "rgba(245, 158, 11, 0.22)",
+              borderColor: "#d97706",
+              pointBackgroundColor: "#0f172a",
+              borderWidth: 2
+            },
+            {
+              label: t.chartRadarDataset2,
+              data: results.map(() => 14.3),
+              backgroundColor: "rgba(148, 163, 184, 0.08)",
+              borderColor: "#94a3b8",
+              borderDash: [5, 5],
+              pointRadius: 0,
+              borderWidth: 1.5
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              beginAtZero: true,
+              suggestedMax: 25
+            }
+          }
+        }
+      });
+
+      const barCtx = document.getElementById("stackedBarChart").getContext("2d");
+      if (stackedBarChartInstance) stackedBarChartInstance.destroy();
+      stackedBarChartInstance = new Chart(barCtx, {
+        type: "bar",
+        data: {
+          labels: results.map(r => r.name),
+          datasets: [
+            {
+              label: t.chartBarDataset1,
+              data: results.map(r => Number(r.scoreFirst.toFixed(2))),
+              backgroundColor: "#10b981"
+            },
+            {
+              label: t.chartBarDataset2,
+              data: results.map(r => Number(r.scoreCarry.toFixed(2))),
+              backgroundColor: "#f59e0b"
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true }
+          }
+        }
+      });
+
+      if (scrollToTop) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    function resetApp() {
+      document.getElementById("screen-quiz").classList.add("hidden");
+      document.getElementById("screen-results").classList.add("hidden");
+      document.getElementById("screen-welcome").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // Inizializzazione all'avvio
+    applyStaticTranslations();
+    loadDropdownListsFromNetlify();
+  </script>
+</body>
+</html>
