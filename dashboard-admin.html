@@ -28,7 +28,7 @@
         </div>
         <div>
           <h1 id="hdrTitle" class="font-bold text-lg leading-tight">Safety Leadership — Admin & Config</h1>
-          <p id="hdrSub" class="text-xs text-slate-400">Analisi risultati in tempo reale e gestione liste su Netlify Blobs</p>
+          <p id="hdrSub" class="text-xs text-slate-400">Analisi risultati in tempo reale e gestione file .txt</p>
         </div>
       </div>
 
@@ -67,7 +67,7 @@
         </button>
         <button id="navTabLists" onclick="switchAdminView('lists')"
           class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
-          <span>🗂️</span> <span id="navTabListsLabel">Gestione Liste (Aziende, Ruoli, Cantieri)</span>
+          <span>🗂️</span> <span id="navTabListsLabel">Gestione Liste (aziende.txt, ruoli.txt, cantieri.txt)</span>
         </button>
       </div>
     </div>
@@ -82,7 +82,7 @@
         <div class="bg-slate-900 text-white px-6 py-5 border-b-4 border-amber-500 flex items-center justify-between">
           <div>
             <span id="loginBadge" class="inline-block px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold uppercase tracking-wider mb-1">
-              Connessione Diretta Database & Netlify Blobs
+              Connessione Diretta Database Netlify
             </span>
             <h2 id="loginTitle" class="text-xl md:text-2xl font-extrabold">
               Accedi alla Console di Amministrazione
@@ -99,14 +99,14 @@
             </button>
             <button id="tabBtnDirect" onclick="switchAuthMode('direct')"
               class="pb-3 px-4 border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition">
-              2. Connessione Diretta Token API (Per Netlify Drop puro)
+              2. Connessione Diretta Token API
             </button>
           </div>
 
           <!-- Modalità A: Tramite Netlify Function -->
           <div id="authPanelFunction" class="space-y-4">
             <p id="funcDesc" class="text-xs text-slate-600 leading-relaxed">
-              Inserisci la password configurata nella variabile <code>ADMIN_PASSWORD</code> su Netlify. Potrai visualizzare i grafici in tempo reale, eliminare uno o più test di prova e modificare le liste su <strong>Netlify Blobs</strong>.
+              Inserisci la password configurata nella variabile <code>ADMIN_PASSWORD</code> su Netlify per visualizzare i grafici in tempo reale, eliminare i test di prova e gestire i file <code>.txt</code> delle liste.
             </p>
             <div class="flex flex-col sm:flex-row gap-3">
               <input id="inputAdminPassword" type="password" placeholder="Inserisci la Password Admin..."
@@ -122,7 +122,7 @@
           <!-- Modalità B: Connessione Diretta REST API Netlify -->
           <div id="authPanelDirect" class="hidden space-y-4">
             <p id="directDesc" class="text-xs text-slate-600 leading-relaxed">
-              Se usi <strong>Netlify Drop</strong> senza funzioni serverless, inserisci il tuo <strong>Site ID</strong> e il tuo <strong>Personal Access Token</strong>:
+              Inserisci il tuo <strong>Site ID</strong> (da <em>Site configuration → General</em>) e il tuo <strong>Personal Access Token</strong> (<code>nfp_...</code>) di Netlify:
             </p>
             <div class="grid sm:grid-cols-2 gap-3">
               <div>
@@ -158,7 +158,7 @@
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 id="altTitle" class="font-bold text-slate-800 text-sm">Modalità Offline: Carica CSV o Apri Demo</h3>
-            <p id="altSub" class="text-xs text-slate-500">Esplora subito sia i grafici sia la selezione multipla e la scheda "Gestione Liste" con dati dimostrativi.</p>
+            <p id="altSub" class="text-xs text-slate-500">Esplora i grafici e la scheda "Gestione Liste" (caricata da aziende.txt, ruoli.txt e cantieri.txt).</p>
           </div>
           <div class="flex flex-wrap gap-2.5">
             <button onclick="document.getElementById('csvFileInput').click()" id="btnBrowseCSV"
@@ -168,7 +168,7 @@
             <input id="csvFileInput" type="file" accept=".csv,text/csv" class="hidden" onchange="handleFileSelect(event)" />
             <button id="btnLoadDemo" onclick="loadDemoDataset()"
               class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-              Apri Console Demo (25 Test + Gestione Liste) →
+              Apri Console Demo (25 Test + Liste .txt) →
             </button>
           </div>
         </div>
@@ -336,7 +336,6 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2.5 no-print">
-            <!-- Pulsante Elimina Selezionati (Compare quando almeno 1 casella è spuntata) -->
             <button id="btnDeleteSelected" onclick="deleteSelectedSubmissions()"
               class="hidden px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-1.5">
               <span>🗑️</span> <span id="btnDeleteSelectedLabel">Elimina selezionati (0)</span>
@@ -349,7 +348,6 @@
           </div>
         </div>
 
-        <!-- Banner feedback eliminazione -->
         <div id="deleteFeedbackBanner" class="hidden mb-4 rounded-xl p-3 text-xs font-bold border no-print"></div>
 
         <div class="overflow-x-auto max-h-96 overflow-y-auto">
@@ -378,57 +376,57 @@
 
     </section>
 
-    <!-- 3. SCHEDA B: GESTIONE LISTE (AZIENDE, RUOLI, CANTIERI SU NETLIFY BLOBS) -->
+    <!-- 3. SCHEDA B: GESTIONE LISTE (CARICATE ESCLUSIVAMENTE DAI 3 FILE .TXT) -->
     <section id="screen-lists" class="hidden space-y-6 no-print">
 
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-2.5 mb-1">
-            <span id="blobsStatusBadge" class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-              Netlify Blobs
+            <span id="txtSourceStatusBadge" class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+              Lettura file .txt...
             </span>
             <span id="unsavedChangesBadge" class="hidden px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold animate-pulse">
-              Modifiche non salvate *
+              Modifiche pronte da esportare *
             </span>
           </div>
           <h2 id="lstMainTitle" class="text-xl md:text-2xl font-extrabold text-slate-900">
-            Gestione Menu a Discesa (Aziende, Ruoli, Cantieri)
+            Gestione Liste (aziende.txt, ruoli.txt, cantieri.txt)
           </h2>
           <p id="lstMainSub" class="text-xs md:text-sm text-slate-500 mt-0.5">
-            Aggiungi o rimuovi le voci dei menu a discesa. Per il supporto bilingue puoi inserire sia il testo in Italiano sia la traduzione in Inglese.
+            Le liste vengono caricate esclusivamente dai file <code>aziende.txt</code>, <code>ruoli.txt</code> e <code>cantieri.txt</code>. Aggiungi o rimuovi le voci e scarica i file aggiornati.
           </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
-          <button onclick="loadListsFromBlobs()" id="btnReloadBlobs"
+          <button onclick="loadListsFromTxtOnly()" id="btnReloadTxt"
             class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
-            ↻ Ricarica Liste
+            ↻ Ricarica dai file .txt
           </button>
-          <button onclick="downloadAllTxtBackups()" id="btnDownloadTxt"
-            class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
-            ⬇ Scarica .txt Backup
-          </button>
-          <button onclick="saveListsToBlobs()" id="btnSaveBlobs"
+          <button onclick="downloadAllTxtFiles()" id="btnDownloadAllTxt"
             class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs md:text-sm shadow-sm transition">
-            💾 Salva su Netlify Blobs
+            ⬇ Scarica tutti i 3 file .txt aggiornati
           </button>
         </div>
       </div>
 
-      <div id="blobsFeedbackBanner" class="hidden rounded-xl p-4 text-xs font-bold border"></div>
-
-      <!-- 3 Colonne: Aziende | Ruoli | Cantieri -->
+      <!-- 3 Colonne: aziende.txt | ruoli.txt | cantieri.txt -->
       <div class="grid lg:grid-cols-3 gap-6">
 
-        <!-- COLONNA 1: AZIENDE -->
+        <!-- COLONNA 1: AZIENDE (aziende.txt) -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
           <div>
             <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
               <div>
                 <h3 id="colCompTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">1. Aziende</h3>
-                <p class="text-[11px] text-slate-400">Menu a discesa obbligatorio</p>
+                <p class="text-[11px] text-slate-400 font-mono">aziende.txt</p>
               </div>
-              <span id="countCompaniesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
+              <div class="flex items-center gap-2">
+                <button onclick="downloadSingleTxtFile('companies')" title="Scarica solo aziende.txt"
+                  class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-bold border border-slate-700 transition">
+                  ⬇ .txt
+                </button>
+                <span id="countCompaniesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
+              </div>
             </div>
 
             <div id="listContainer-companies" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
@@ -449,15 +447,21 @@
           </div>
         </div>
 
-        <!-- COLONNA 2: RUOLI / FUNZIONI -->
+        <!-- COLONNA 2: RUOLI (ruoli.txt) -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
           <div>
             <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
               <div>
                 <h3 id="colRoleTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">2. Ruoli / Funzioni</h3>
-                <p class="text-[11px] text-slate-400">Menu a discesa obbligatorio</p>
+                <p class="text-[11px] text-slate-400 font-mono">ruoli.txt</p>
               </div>
-              <span id="countRolesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
+              <div class="flex items-center gap-2">
+                <button onclick="downloadSingleTxtFile('roles')" title="Scarica solo ruoli.txt"
+                  class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-bold border border-slate-700 transition">
+                  ⬇ .txt
+                </button>
+                <span id="countRolesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
+              </div>
             </div>
 
             <div id="listContainer-roles" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
@@ -478,15 +482,21 @@
           </div>
         </div>
 
-        <!-- COLONNA 3: CANTIERI / PROGETTI -->
+        <!-- COLONNA 3: CANTIERI (cantieri.txt) -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
           <div>
             <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
               <div>
                 <h3 id="colSiteTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">3. Cantieri / Progetti</h3>
-                <p class="text-[11px] text-slate-400">Menu a discesa obbligatorio</p>
+                <p class="text-[11px] text-slate-400 font-mono">cantieri.txt</p>
               </div>
-              <span id="countSitesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
+              <div class="flex items-center gap-2">
+                <button onclick="downloadSingleTxtFile('sites')" title="Scarica solo cantieri.txt"
+                  class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-bold border border-slate-700 transition">
+                  ⬇ .txt
+                </button>
+                <span id="countSitesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
+              </div>
             </div>
 
             <div id="listContainer-sites" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
@@ -548,8 +558,12 @@
 
   <script>
     // =========================================================================
-    // 1. CONFIGURAZIONE AREE E LISTE DI DEFAULT
+    // 1. FILE DI TESTO UNICI (NESSUNA LISTA DI DEFAULT NEL CODICE)
     // =========================================================================
+    const COMPANIES_TXT_URL = "./aziende.txt";
+    const ROLES_TXT_URL = "./ruoli.txt";
+    const SITES_TXT_URL = "./cantieri.txt";
+
     const AREA_KEYS = [
       { id: "VISION", name: "Vision", csvPct: "vision_pct", color: "#2563eb" },
       { id: "FOCUS", name: "Focus", csvPct: "focus_pct", color: "#d97706" },
@@ -560,60 +574,30 @@
       { id: "FEEDBACK", name: "Feedback", csvPct: "feedback_pct", color: "#4f46e5" }
     ];
 
-    const DEFAULT_BLOBS_LISTS = {
-      companies: [
-        "General Contractor SpA",
-        "Tech Engineering Srl",
-        "SafeWorks Costruzioni",
-        "Subappalto Elettrico Srl",
-        "Subappalto Meccanico SpA",
-        "Altra Azienda | Other Company"
-      ],
-      roles: [
-        "Project Manager / Direttore di Progetto | Project Manager",
-        "Site Manager / Direttore di Cantiere | Site Manager",
-        "Construction Manager | Construction Manager",
-        "HSE Manager / RSPP | HSE Manager",
-        "HSE Supervisor / ASPP | HSE Supervisor / Officer",
-        "Ingegnere di Progetto / Field Engineer | Project / Field Engineer",
-        "Supervisore / Preposto | Supervisor / Foreman",
-        "Caposquadra | Crew Leader",
-        "Tecnico / Operativo di Campo | Field Technician / Operator",
-        "Altro Ruolo | Other Role"
-      ],
-      sites: [
-        "Cantiere Nord - Lotto 1 | North Site - Lot 1",
-        "Cantiere Sud - Lotto 2 | South Site - Lot 2",
-        "Impianto Industriale Centrale | Central Industrial Plant",
-        "Polo Logistico & Infrastrutture | Logistics & Infrastructure Hub",
-        "Sede Ingegneria / Direzione | Engineering Office / HQ"
-      ]
-    };
-
     const UI_TEXT = {
       it: {
         hdrTitle: "Safety Leadership — Admin & Config",
-        hdrSub: "Analisi risultati in tempo reale e gestione liste su Netlify Blobs",
+        hdrSub: "Analisi risultati in tempo reale e gestione file .txt",
         langSwitchPrefix: "Lingua:",
         langLabel: "Italiano 🇮🇹",
         btnChangeSource: "Esci / Cambia Sorgente",
         btnPrintReport: "Stampa / PDF",
         btnRefreshNow: "↻ Aggiorna ora",
         navTabAnalyticsLabel: "Analisi Risultati",
-        navTabListsLabel: "Gestione Liste (Aziende, Ruoli, Cantieri)",
-        loginBadge: "Connessione Diretta Database & Netlify Blobs",
+        navTabListsLabel: "Gestione Liste (aziende.txt, ruoli.txt, cantieri.txt)",
+        loginBadge: "Connessione Diretta Database Netlify",
         loginTitle: "Accedi alla Console di Amministrazione",
         tabBtnFunc: "1. Tramite Netlify Function (Password Admin)",
-        tabBtnDirect: "2. Connessione Diretta Token API (Per Netlify Drop puro)",
-        funcDesc: "Inserisci la password configurata nella variabile <code>ADMIN_PASSWORD</code> su Netlify. Potrai visualizzare i grafici in tempo reale, eliminare uno o più test di prova e modificare le liste su <strong>Netlify Blobs</strong>.",
+        tabBtnDirect: "2. Connessione Diretta Token API",
+        funcDesc: "Inserisci la password configurata nella variabile <code>ADMIN_PASSWORD</code> su Netlify per visualizzare i grafici in tempo reale, eliminare i test di prova e gestire i file <code>.txt</code> delle liste.",
         btnConnectFunc: "Accedi alla Console →",
-        directDesc: "Se usi <strong>Netlify Drop</strong> senza funzioni serverless, inserisci il tuo <strong>Site ID</strong> e il tuo <strong>Personal Access Token</strong>:",
+        directDesc: "Inserisci il tuo <strong>Site ID</strong> (da <em>Site configuration → General</em>) e il tuo <strong>Personal Access Token</strong> (<code>nfp_...</code>) di Netlify:",
         lblRememberCreds: "Ricorda credenziali in questo browser",
         btnConnectDirect: "Connetti alle API di Netlify →",
         altTitle: "Modalità Offline: Carica CSV o Apri Demo",
-        altSub: "Esplora subito sia i grafici sia la selezione multipla e la scheda 'Gestione Liste' con dati dimostrativi.",
+        altSub: "Esplora i grafici e la scheda 'Gestione Liste' (caricata da aziende.txt, ruoli.txt e cantieri.txt).",
         btnBrowseCSV: "Sfoglia file CSV...",
-        btnLoadDemo: "Apri Console Demo (25 Test + Gestione Liste) →",
+        btnLoadDemo: "Apri Console Demo (25 Test + Liste .txt) →",
         fltTitle: "Filtri di Analisi",
         activeRecords: (n, tot) => `${n} di ${tot} test selezionati`,
         btnResetFilters: "Azzera filtri",
@@ -671,12 +655,14 @@
         confirmBulkDeleteMsg: (n) => `Vuoi davvero eliminare definitivamente i ${n} test selezionati? L'operazione non può essere annullata.`,
         deleteSuccessMsg: (name) => `✓ Test di "${name}" eliminato con successo. Tutti i grafici sono stati aggiornati.`,
         bulkDeleteSuccessMsg: (n) => `✓ ${n} test eliminati con successo. Tutti i grafici e le medie sono stati aggiornati.`,
-        lstMainTitle: "Gestione Menu a Discesa (Aziende, Ruoli, Cantieri)",
-        lstMainSub: "Aggiungi o rimuovi le voci dei menu a discesa. Per il supporto bilingue puoi inserire sia il testo in Italiano sia la traduzione in Inglese.",
-        btnReloadBlobs: "↻ Ricarica Liste",
-        btnDownloadTxt: "⬇ Scarica .txt Backup",
-        btnSaveBlobs: "💾 Salva su Netlify Blobs",
-        unsavedChanges: "Modifiche non salvate *",
+        lstMainTitle: "Gestione Liste (aziende.txt, ruoli.txt, cantieri.txt)",
+        lstMainSub: "Le liste vengono caricate esclusivamente dai file aziende.txt, ruoli.txt e cantieri.txt. Aggiungi o rimuovi le voci e scarica i file aggiornati.",
+        btnReloadTxt: "↻ Ricarica dai file .txt",
+        btnDownloadAllTxt: "⬇ Scarica tutti i 3 file .txt aggiornati",
+        txtLoadingBadge: "Lettura file .txt in corso...",
+        txtLoadedOkBadge: "Caricati da aziende.txt, ruoli.txt, cantieri.txt ✓",
+        txtMissingBadge: (missing) => `File .txt non trovati o vuoti: ${missing}`,
+        unsavedChanges: "Modifiche pronte da esportare *",
         colCompTitle: "1. Aziende",
         colRoleTitle: "2. Ruoli / Funzioni",
         colSiteTitle: "3. Cantieri / Progetti",
@@ -686,32 +672,31 @@
         btnAddComp: "+ Aggiungi Azienda",
         btnAddRole: "+ Aggiungi Ruolo",
         btnAddSite: "+ Aggiungi Cantiere",
-        blobsSavedOk: "✓ Liste salvate con successo su Netlify Blobs! I menu a discesa di index.html sono ora aggiornati.",
-        blobsSavedLocal: "✓ Liste salvate nella memoria locale del browser (Modalità Demo/Offline). Usa 'Scarica .txt Backup' o pubblica la funzione manage-lists.js per salvare su Netlify Blobs."
+        emptyListNotice: "Nessuna voce caricata dal file .txt"
       },
       en: {
         hdrTitle: "Safety Leadership — Admin & Config",
-        hdrSub: "Real-time results analytics and list management on Netlify Blobs",
+        hdrSub: "Real-time results analytics and .txt list management",
         langSwitchPrefix: "Language:",
         langLabel: "English 🇬🇧",
         btnChangeSource: "Logout / Change Source",
         btnPrintReport: "Print / PDF",
         btnRefreshNow: "↻ Refresh now",
         navTabAnalyticsLabel: "Results Analytics",
-        navTabListsLabel: "Manage Lists (Companies, Roles, Sites)",
-        loginBadge: "Direct Database & Netlify Blobs Connection",
+        navTabListsLabel: "Manage Lists (aziende.txt, ruoli.txt, cantieri.txt)",
+        loginBadge: "Direct Netlify Database Connection",
         loginTitle: "Sign In to Admin Console",
         tabBtnFunc: "1. Via Netlify Function (Admin Password)",
-        tabBtnDirect: "2. Direct API Token (For pure Netlify Drop)",
-        funcDesc: "Enter the password configured in <code>ADMIN_PASSWORD</code> on Netlify. You will be able to view live charts, bulk-delete test runs, and edit lists on <strong>Netlify Blobs</strong>.",
+        tabBtnDirect: "2. Direct API Token",
+        funcDesc: "Enter the password configured in <code>ADMIN_PASSWORD</code> on Netlify to view live charts, delete test runs, and manage your <code>.txt</code> list files.",
         btnConnectFunc: "Sign In to Console →",
-        directDesc: "If using <strong>Netlify Drop</strong> without serverless functions, enter your <strong>Site ID</strong> and <strong>Personal Access Token</strong>:",
+        directDesc: "Enter your <strong>Site ID</strong> (from <em>Site configuration → General</em>) and your <strong>Personal Access Token</strong> (<code>nfp_...</code>):",
         lblRememberCreds: "Remember credentials in this browser",
         btnConnectDirect: "Connect to Netlify API →",
         altTitle: "Offline Mode: Upload CSV or Open Demo",
-        altSub: "Explore the analytics charts, multi-select deletion, and the 'Manage Lists' tab with sample data.",
+        altSub: "Explore the analytics charts and the 'Manage Lists' tab (loaded from aziende.txt, ruoli.txt, and cantieri.txt).",
         btnBrowseCSV: "Browse CSV file...",
-        btnLoadDemo: "Open Demo Console (25 Tests + List Manager) →",
+        btnLoadDemo: "Open Demo Console (25 Tests + .txt Lists) →",
         fltTitle: "Analysis Filters",
         activeRecords: (n, tot) => `${n} of ${tot} assessments selected`,
         btnResetFilters: "Reset filters",
@@ -769,12 +754,14 @@
         confirmBulkDeleteMsg: (n) => `Are you sure you want to permanently delete the ${n} selected assessments? This action cannot be undone.`,
         deleteSuccessMsg: (name) => `✓ Assessment by "${name}" deleted. All charts have been recalculated.`,
         bulkDeleteSuccessMsg: (n) => `✓ ${n} assessments deleted successfully. All charts and averages have been updated.`,
-        lstMainTitle: "Dropdown List Manager (Companies, Roles, Sites)",
-        lstMainSub: "Add or remove dropdown items. For bilingual support, you can provide both the Italian label and the English translation.",
-        btnReloadBlobs: "↻ Reload Lists",
-        btnDownloadTxt: "⬇ Download .txt Backup",
-        btnSaveBlobs: "💾 Save to Netlify Blobs",
-        unsavedChanges: "Unsaved changes *",
+        lstMainTitle: "Manage Lists (aziende.txt, ruoli.txt, cantieri.txt)",
+        lstMainSub: "Lists are loaded exclusively from aziende.txt, ruoli.txt, and cantieri.txt. Add or remove items and download the updated files.",
+        btnReloadTxt: "↻ Reload from .txt files",
+        btnDownloadAllTxt: "⬇ Download all 3 updated .txt files",
+        txtLoadingBadge: "Reading .txt files...",
+        txtLoadedOkBadge: "Loaded from aziende.txt, ruoli.txt, cantieri.txt ✓",
+        txtMissingBadge: (missing) => `Missing or empty .txt files: ${missing}`,
+        unsavedChanges: "Changes ready to export *",
         colCompTitle: "1. Companies",
         colRoleTitle: "2. Roles / Job Titles",
         colSiteTitle: "3. Sites / Projects",
@@ -784,27 +771,29 @@
         btnAddComp: "+ Add Company",
         btnAddRole: "+ Add Role",
         btnAddSite: "+ Add Site",
-        blobsSavedOk: "✓ Lists saved to Netlify Blobs! Dropdowns in index.html are now updated.",
-        blobsSavedLocal: "✓ Lists saved to browser storage (Demo/Offline mode). Deploy manage-lists.js to save directly to Netlify Blobs."
+        emptyListNotice: "No items loaded from .txt file"
       }
     };
 
     let currentLang = "it";
     let currentAdminView = "analytics";
-    let activeConnectionMode = null; // 'function' | 'direct' | 'csv' | 'demo'
+    let activeConnectionMode = null;
     let savedAdminPassword = "";
     let autoRefreshTimer = null;
 
     let allRecords = [];
     let filteredRecords = [];
-    let selectedRecordIds = new Set(); // Insieme degli ID selezionati con le checkbox
+    let selectedRecordIds = new Set();
     let currentModalRecordId = null;
 
+    // Stato delle 3 liste (inizializzate vuote: vengono popolate SOLO dai 3 file .txt)
     let editableLists = {
-      companies: [...DEFAULT_BLOBS_LISTS.companies],
-      roles: [...DEFAULT_BLOBS_LISTS.roles],
-      sites: [...DEFAULT_BLOBS_LISTS.sites]
+      companies: [],
+      roles: [],
+      sites: []
     };
+    let txtLoadState = "loading"; // 'loading' | 'loaded' | 'error'
+    let missingTxtFiles = [];
     let hasUnsavedListChanges = false;
 
     let aggRadarInstance = null;
@@ -840,21 +829,15 @@
     // 3. SELEZIONE MULTIPLA (CHECKBOX) ED ELIMINAZIONE SINGOLA / IN BLOCCO
     // =========================================================================
     function toggleRowSelection(recordId, isChecked) {
-      if (isChecked) {
-        selectedRecordIds.add(recordId);
-      } else {
-        selectedRecordIds.delete(recordId);
-      }
+      if (isChecked) selectedRecordIds.add(recordId);
+      else selectedRecordIds.delete(recordId);
       updateBulkSelectionUI();
     }
 
     function toggleSelectAllFiltered(isChecked) {
       filteredRecords.forEach(r => {
-        if (isChecked) {
-          selectedRecordIds.add(r.id);
-        } else {
-          selectedRecordIds.delete(r.id);
-        }
+        if (isChecked) selectedRecordIds.add(r.id);
+        else selectedRecordIds.delete(r.id);
       });
       renderParticipantsTable();
       updateBulkSelectionUI();
@@ -862,7 +845,6 @@
 
     function updateBulkSelectionUI() {
       const t = UI_TEXT[currentLang];
-      // Mantiene solo gli ID che esistono ancora in allRecords
       const validIds = new Set(allRecords.map(r => r.id));
       for (const id of selectedRecordIds) {
         if (!validIds.has(id)) selectedRecordIds.delete(id);
@@ -879,7 +861,6 @@
         bulkBtn.classList.add("hidden");
       }
 
-      // Sincronizza lo stato della checkbox d'intestazione "Seleziona tutti"
       const selectAllChk = document.getElementById("chkSelectAllRows");
       if (selectAllChk) {
         if (filteredRecords.length === 0) {
@@ -893,7 +874,6 @@
       }
     }
 
-    // Eliminazione in blocco di tutti i test spuntati
     async function deleteSelectedSubmissions() {
       const idsArray = Array.from(selectedRecordIds);
       if (idsArray.length === 0) return;
@@ -911,7 +891,6 @@
       banner.classList.add("hidden");
 
       try {
-        // 1. Modalità Netlify Function (invia l'array completo di ID in un'unica chiamata DELETE)
         if (activeConnectionMode === "function") {
           const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
           const res = await fetch("/.netlify/functions/get-results", {
@@ -927,9 +906,7 @@
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.error || `Errore HTTP ${res.status}`);
           }
-        }
-        // 2. Modalità Connessione Diretta Token API
-        else if (activeConnectionMode === "direct") {
+        } else if (activeConnectionMode === "direct") {
           const token = document.getElementById("inputDirectToken").value.trim();
           await Promise.all(idsArray.map(async (subId) => {
             const res = await fetch(`https://api.netlify.com/api/v1/submissions/${encodeURIComponent(subId)}`, {
@@ -942,7 +919,6 @@
           }));
         }
 
-        // 3. Rimuove tutti i record eliminati dall'array locale e ricalcola i grafici
         const deletedSet = new Set(idsArray);
         allRecords = allRecords.filter(r => !deletedSet.has(r.id));
         selectedRecordIds.clear();
@@ -968,7 +944,6 @@
       }
     }
 
-    // Eliminazione di una singola riga tramite il pulsante sulla destra o dal modale
     async function deleteSubmissionById(recordId, event) {
       if (event) event.stopPropagation();
 
@@ -1043,46 +1018,92 @@
     }
 
     // =========================================================================
-    // 4. GESTIONE LISTE CON NETLIFY BLOBS
+    // 4. CARICAMENTO ESCLUSIVO DAI FILE .TXT (aziende.txt, ruoli.txt, cantieri.txt)
     // =========================================================================
-    async function loadListsFromBlobs() {
-      const badge = document.getElementById("blobsStatusBadge");
-      document.getElementById("blobsFeedbackBanner").classList.add("hidden");
+    function parsePlainTxtLines(rawText) {
+      if (!rawText) return [];
+      return String(rawText)
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line =>
+          line.length > 0 &&
+          !line.startsWith("#") &&
+          !line.startsWith("//") &&
+          !line.toLowerCase().startsWith("<!doctype") &&
+          !line.startsWith("<")
+        );
+    }
 
-      try {
-        const res = await fetch("/.netlify/functions/manage-lists", { cache: "no-store" });
-        const contentType = res.headers.get("content-type") || "";
-        if (res.ok && contentType.includes("application/json")) {
-          const data = await res.json();
-          if (data && data.status === "success") {
-            editableLists.companies = Array.isArray(data.companies) ? data.companies : [...DEFAULT_BLOBS_LISTS.companies];
-            editableLists.roles = Array.isArray(data.roles) ? data.roles : [...DEFAULT_BLOBS_LISTS.roles];
-            editableLists.sites = Array.isArray(data.sites) ? data.sites : [...DEFAULT_BLOBS_LISTS.sites];
-            badge.className = "px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold";
-            badge.textContent = data.source === "netlify-blobs" ? "Netlify Blobs Sync ✓" : "Netlify Blobs (Default)";
-            hasUnsavedListChanges = false;
-            updateUnsavedBadge();
-            renderEditableListsUI();
-            return;
-          }
-        }
-      } catch (_) {}
-
-      const savedLocal = localStorage.getItem("sl_admin_blobs_backup");
-      if (savedLocal) {
-        try {
-          const parsed = JSON.parse(savedLocal);
-          if (parsed.companies) editableLists = parsed;
-        } catch (_) {}
+    async function fetchRawTxtList(fileUrl) {
+      const response = await fetch(`${fileUrl}?v=${Date.now()}`, { cache: "no-store" });
+      const contentType = response.headers.get("content-type") || "";
+      if (!response.ok || contentType.includes("text/html")) {
+        throw new Error(`File non trovato: ${fileUrl}`);
       }
-      badge.className = "px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 text-xs font-bold";
-      badge.textContent = "Storage Locale / Demo";
+      const text = await response.text();
+      const lines = parsePlainTxtLines(text);
+      if (lines.length === 0) {
+        throw new Error(`File vuoto: ${fileUrl}`);
+      }
+      return lines;
+    }
+
+    function updateTxtSourceBadgeUI() {
+      const t = UI_TEXT[currentLang];
+      const badge = document.getElementById("txtSourceStatusBadge");
+      if (!badge) return;
+
+      if (txtLoadState === "loading") {
+        badge.className = "px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold";
+        badge.textContent = t.txtLoadingBadge;
+      } else if (txtLoadState === "loaded") {
+        badge.className = "px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold";
+        badge.textContent = t.txtLoadedOkBadge;
+      } else {
+        badge.className = "px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 text-xs font-bold";
+        badge.textContent = t.txtMissingBadge(missingTxtFiles.join(", "));
+      }
+    }
+
+    async function loadListsFromTxtOnly() {
+      editableLists = { companies: [], roles: [], sites: [] };
+      missingTxtFiles = [];
+      txtLoadState = "loading";
       hasUnsavedListChanges = false;
       updateUnsavedBadge();
+      updateTxtSourceBadgeUI();
+
+      // 1. Legge aziende.txt
+      try {
+        editableLists.companies = await fetchRawTxtList(COMPANIES_TXT_URL);
+      } catch (e) {
+        console.error(e);
+        missingTxtFiles.push("aziende.txt");
+      }
+
+      // 2. Legge ruoli.txt
+      try {
+        editableLists.roles = await fetchRawTxtList(ROLES_TXT_URL);
+      } catch (e) {
+        console.error(e);
+        missingTxtFiles.push("ruoli.txt");
+      }
+
+      // 3. Legge cantieri.txt
+      try {
+        editableLists.sites = await fetchRawTxtList(SITES_TXT_URL);
+      } catch (e) {
+        console.error(e);
+        missingTxtFiles.push("cantieri.txt");
+      }
+
+      txtLoadState = missingTxtFiles.length === 0 ? "loaded" : "error";
+      updateTxtSourceBadgeUI();
       renderEditableListsUI();
     }
 
     function renderEditableListsUI() {
+      const t = UI_TEXT[currentLang];
       ["companies", "roles", "sites"].forEach(category => {
         const container = document.getElementById(`listContainer-${category}`);
         const list = editableLists[category] || [];
@@ -1093,7 +1114,7 @@
         document.getElementById(countBadgeId).textContent = list.length;
 
         if (list.length === 0) {
-          container.innerHTML = `<p class="text-xs text-slate-400 italic py-4 text-center">Nessuna voce presente</p>`;
+          container.innerHTML = `<p class="text-xs text-slate-400 italic py-6 text-center">${t.emptyListNotice}</p>`;
           return;
         }
 
@@ -1172,78 +1193,34 @@
 
     function updateUnsavedBadge() {
       const badge = document.getElementById("unsavedChangesBadge");
-      if (hasUnsavedListChanges) {
-        badge.classList.remove("hidden");
-      } else {
-        badge.classList.add("hidden");
-      }
+      if (hasUnsavedListChanges) badge.classList.remove("hidden");
+      else badge.classList.add("hidden");
     }
 
-    async function saveListsToBlobs() {
-      const t = UI_TEXT[currentLang];
-      const banner = document.getElementById("blobsFeedbackBanner");
-      const btn = document.getElementById("btnSaveBlobs");
-      const origText = btn.textContent;
+    function downloadSingleTxtFile(category) {
+      const fileMap = {
+        companies: { name: "aziende.txt", data: editableLists.companies },
+        roles: { name: "ruoli.txt", data: editableLists.roles },
+        sites: { name: "cantieri.txt", data: editableLists.sites }
+      };
+      const target = fileMap[category];
+      if (!target) return;
 
-      btn.textContent = "Salvataggio...";
-      btn.disabled = true;
-      banner.classList.add("hidden");
-
-      localStorage.setItem("sl_admin_blobs_backup", JSON.stringify(editableLists));
-
-      try {
-        const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
-        const res = await fetch("/.netlify/functions/manage-lists", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-admin-password": pwd
-          },
-          body: JSON.stringify(editableLists)
-        });
-
-        const contentType = res.headers.get("content-type") || "";
-        if (res.ok && contentType.includes("application/json")) {
-          hasUnsavedListChanges = false;
-          updateUnsavedBadge();
-          banner.className = "rounded-xl p-4 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
-          banner.textContent = t.blobsSavedOk;
-          banner.classList.remove("hidden");
-          document.getElementById("blobsStatusBadge").textContent = "Netlify Blobs Sync ✓";
-        } else if (res.status === 401) {
-          throw new Error("Password Admin mancante o errata per salvare su Netlify Blobs.");
-        } else {
-          hasUnsavedListChanges = false;
-          updateUnsavedBadge();
-          banner.className = "rounded-xl p-4 text-xs font-bold border bg-amber-50 border-amber-200 text-amber-900";
-          banner.textContent = t.blobsSavedLocal;
-          banner.classList.remove("hidden");
-        }
-      } catch (err) {
-        banner.className = "rounded-xl p-4 text-xs font-bold border bg-amber-50 border-amber-200 text-amber-900";
-        banner.textContent = err.message || t.blobsSavedLocal;
-        banner.classList.remove("hidden");
-      } finally {
-        btn.textContent = origText;
-        btn.disabled = false;
-      }
+      const blob = new Blob([target.data.join("\n") + "\n"], { type: "text/plain;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = target.name;
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
-    function downloadAllTxtBackups() {
-      const files = [
-        { name: "aziende.txt", content: editableLists.companies.join("\n") },
-        { name: "ruoli.txt", content: editableLists.roles.join("\n") },
-        { name: "cantieri.txt", content: editableLists.sites.join("\n") }
-      ];
-      files.forEach(f => {
-        const blob = new Blob([f.content], { type: "text/plain;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = f.name;
-        a.click();
-        URL.revokeObjectURL(url);
-      });
+    function downloadAllTxtFiles() {
+      downloadSingleTxtFile("companies");
+      setTimeout(() => downloadSingleTxtFile("roles"), 200);
+      setTimeout(() => downloadSingleTxtFile("sites"), 400);
+      hasUnsavedListChanges = false;
+      updateUnsavedBadge();
     }
 
     // =========================================================================
@@ -1315,7 +1292,7 @@
         activeConnectionMode = "function";
         allRecords = normalizeNetlifyRows(data.rows || []);
         updateLastSyncTimestamp();
-        await loadListsFromBlobs();
+        await loadListsFromTxtOnly();
         initDashboardWithData(isBackgroundRefresh);
 
       } catch (err) {
@@ -1363,7 +1340,7 @@
           });
 
           if (!res.ok) {
-            throw new Error(`Impossibile leggere dal Site ID specificato (HTTP ${res.status}).`);
+            throw new Error(`Impossibile leggere dal Site ID specificato (HTTP ${res.status}). Verifica che il Token inizi con nfp_ e il Site ID sia corretto.`);
           }
 
           const batch = await res.json();
@@ -1379,7 +1356,7 @@
         activeConnectionMode = "direct";
         allRecords = normalizeNetlifyRows(rawRows);
         updateLastSyncTimestamp();
-        await loadListsFromBlobs();
+        await loadListsFromTxtOnly();
         initDashboardWithData(isBackgroundRefresh);
 
       } catch (err) {
@@ -1426,7 +1403,7 @@
             activeConnectionMode = "csv";
             allRecords = parsed;
             selectedRecordIds.clear();
-            await loadListsFromBlobs();
+            await loadListsFromTxtOnly();
             initDashboardWithData(false);
           }
         });
@@ -1492,29 +1469,22 @@
     }
 
     // =========================================================================
-    // 6. DATASET DEMO E RENDERING ANALYTICS
+    // 6. DATASET DEMO RISULTATI (E CARICAMENTO LISTE REALE DAI FILE .TXT)
     // =========================================================================
     async function loadDemoDataset() {
-      const companies = [
-        "General Contractor SpA",
-        "Tech Engineering Srl",
-        "SafeWorks Costruzioni",
-        "Subappalto Elettrico Srl",
-        "Subappalto Meccanico SpA"
-      ];
-      const sites = [
-        "Cantiere Nord - Lotto 1",
-        "Cantiere Sud - Lotto 2",
-        "Impianto Industriale Centrale",
-        "Polo Logistico & Infrastrutture"
-      ];
-      const roles = [
-        "Site Manager / Direttore di Cantiere",
-        "HSE Manager / RSPP",
-        "Supervisore / Preposto",
-        "Caposquadra",
-        "Ingegnere di Progetto / Field Engineer"
-      ];
+      await loadListsFromTxtOnly();
+
+      // Usa le voci reali lette dai tuoi file .txt (se disponibili) per generare i 25 test demo
+      const companies = editableLists.companies.length > 0
+        ? editableLists.companies.map(x => x.split("|")[0].trim())
+        : ["Azienda 1", "Azienda 2"];
+      const sites = editableLists.sites.length > 0
+        ? editableLists.sites.map(x => x.split("|")[0].trim())
+        : ["Cantiere 1", "Cantiere 2"];
+      const roles = editableLists.roles.length > 0
+        ? editableLists.roles.map(x => x.split("|")[0].trim())
+        : ["Ruolo 1", "Ruolo 2"];
+
       const names = [
         "Marco Bianchi (Test Prova #1)", "Anonimo (Test Prova #2)", "Luca Verdi", "Anonimo", "Alessandro Neri",
         "Giulia Rusconi", "Anonimo", "Matteo Ferri", "Davide Galli", "Anonimo",
@@ -1531,13 +1501,13 @@
         const name = names[i];
 
         const raw = {
-          VISION: 10 + ((i * 3) % 9) + (role.includes("Manager") ? 4 : 0),
-          FOCUS: 12 + ((i * 5) % 10) + (site.includes("Nord") ? 3 : 0),
+          VISION: 10 + ((i * 3) % 9),
+          FOCUS: 12 + ((i * 5) % 10),
           INFLUENCE: 9 + ((i * 7) % 8),
-          CREDIBILITY: 13 + ((i * 2) % 9) + (role.includes("HSE") ? 4 : 0),
+          CREDIBILITY: 13 + ((i * 2) % 9),
           TEAM: 10 + ((i * 4) % 9),
           COMMUNICATION: 9 + ((i * 6) % 8),
-          FEEDBACK: 8 + ((i * 3) % 7) - (comp.includes("Subappalto") ? 2 : 0)
+          FEEDBACK: 8 + ((i * 3) % 7)
         };
         const tot = Object.values(raw).reduce((a, b) => a + b, 0);
 
@@ -1564,7 +1534,6 @@
       activeConnectionMode = "demo";
       allRecords = normalizeNetlifyRows(demoRows);
       selectedRecordIds.clear();
-      await loadListsFromBlobs();
       initDashboardWithData(false);
     }
 
@@ -1973,6 +1942,8 @@
     function toggleLanguage() {
       currentLang = currentLang === "it" ? "en" : "it";
       applyTranslations();
+      updateTxtSourceBadgeUI();
+      renderEditableListsUI();
       if (allRecords.length > 0) {
         populateFilterDropdowns(true);
         renderAllAnalytics();
@@ -1997,7 +1968,7 @@
         "partTableTitle", "partTableSub", "btnExportFilteredCSV",
         "thPDate", "thPName", "thPComp", "thPRole", "thPSite", "thPDom", "thPLow", "thPAction",
         "btnModalDelete",
-        "lstMainTitle", "lstMainSub", "btnReloadBlobs", "btnDownloadTxt", "btnSaveBlobs",
+        "lstMainTitle", "lstMainSub", "btnReloadTxt", "btnDownloadAllTxt",
         "colCompTitle", "colRoleTitle", "colSiteTitle",
         "addCompLabel", "addRoleLabel", "addSiteLabel",
         "btnAddComp", "btnAddRole", "btnAddSite"
@@ -2015,6 +1986,7 @@
 
     window.addEventListener("DOMContentLoaded", () => {
       applyTranslations();
+      loadListsFromTxtOnly();
       const savedSite = localStorage.getItem("sl_netlify_site_id");
       const savedTok = localStorage.getItem("sl_netlify_token");
       if (savedSite) document.getElementById("inputDirectSiteId").value = savedSite;
