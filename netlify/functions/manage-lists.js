@@ -149,7 +149,7 @@ exports.handler = async (event) => {
         };
       }
 
-      // Azione B: Assegna un questionario già compilato a un Workshop nel Database Netlify Blobs
+// Azione B: Assegna un questionario già compilato a un Workshop nel Database Netlify Blobs
       if (action === "assign_submission") {
         const currentMap = (await dbStore.get("workshop-assignments", { type: "json" }).catch(() => ({}))) || {};
         if (payload.submissionId) {
@@ -159,7 +159,8 @@ exports.handler = async (event) => {
               workshopName: payload.workshopName || "",
               workshopDate: payload.workshopDate || "",
               workshopLevel: payload.workshopLevel || "",
-              workshopSite: payload.workshopSite || ""
+              workshopSite: payload.workshopSite || "",
+              workshopTarget: payload.workshopTarget || "site"
             };
           } else {
             delete currentMap[payload.submissionId];
@@ -175,7 +176,6 @@ exports.handler = async (event) => {
           })
         };
       }
-
       // Azione C: Salva i 3 file .txt direttamente su GitHub
       if (!githubToken) {
         return {

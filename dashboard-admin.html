@@ -194,16 +194,24 @@
           </button>
         </div>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
+<div class="grid sm:grid-cols-2 lg:grid-cols-7 gap-3">
           <div>
             <label id="lblFilterWorkshop" class="block text-xs font-bold text-slate-600 mb-1">Workshop</label>
-            <select id="filterWorkshop" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+            <select id="filterWorkshop" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
               <option value="ALL">Tutti i Workshop</option>
             </select>
           </div>
           <div>
+            <label id="lblFilterTarget" class="block text-xs font-bold text-slate-600 mb-1">Profilo (Site / HQ)</label>
+            <select id="filterTarget" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-amber-300 text-xs font-bold bg-amber-50/40 focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti (Cantiere + Ufficio)</option>
+              <option value="Site / Field">🏗️ Cantiere / Site</option>
+              <option value="Office / HQ">🏢 Ufficio / Sede (HQ)</option>
+            </select>
+          </div>
+          <div>
             <label id="lblFilterLevel" class="block text-xs font-bold text-slate-600 mb-1">Livello Workshop</label>
-            <select id="filterLevel" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+            <select id="filterLevel" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
               <option value="ALL">Tutti i Livelli</option>
               <option value="Top manager">Top manager</option>
               <option value="Second level">Second level</option>
@@ -212,26 +220,26 @@
           </div>
           <div>
             <label id="lblFilterCompany" class="block text-xs font-bold text-slate-600 mb-1">Azienda</label>
-            <select id="filterCompany" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+            <select id="filterCompany" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
               <option value="ALL">Tutte le Aziende</option>
             </select>
           </div>
           <div>
-            <label id="lblFilterSite" class="block text-xs font-bold text-slate-600 mb-1">Cantiere / Progetto</label>
-            <select id="filterSite" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
-              <option value="ALL">Tutti i Cantieri</option>
+            <label id="lblFilterSite" class="block text-xs font-bold text-slate-600 mb-1">Cantiere / Sede</label>
+            <select id="filterSite" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti i Cantieri/Sedi</option>
             </select>
           </div>
           <div>
             <label id="lblFilterRole" class="block text-xs font-bold text-slate-600 mb-1">Ruolo / Funzione</label>
-            <select id="filterRole" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+            <select id="filterRole" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
               <option value="ALL">Tutti i Ruoli</option>
             </select>
           </div>
           <div>
             <label id="lblFilterSearch" class="block text-xs font-bold text-slate-600 mb-1">Cerca Partecipante</label>
             <input id="filterSearch" type="text" oninput="applyFilters()" placeholder="Nome o Anonimo..."
-              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
+              class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
           </div>
         </div>
       </div>
@@ -304,14 +312,14 @@
 
           <div class="flex items-center gap-2 no-print">
             <span id="lblGroupBy" class="text-xs font-bold text-slate-600">Raggruppa per:</span>
-            <select id="selectGroupBy" onchange="renderGroupComparison()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:outline-none focus:border-amber-500">
+<select id="selectGroupBy" onchange="renderGroupComparison()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:outline-none focus:border-amber-500">
               <option value="workshop" id="optGroupWorkshop">Workshop</option>
+              <option value="target" id="optGroupTarget">Profilo (🏗️ Cantiere vs 🏢 Ufficio)</option>
               <option value="livello" id="optGroupLevel">Livello Workshop</option>
-              <option value="cantiere" id="optGroupSite">Cantiere / Progetto</option>
+              <option value="cantiere" id="optGroupSite">Cantiere / Sede</option>
               <option value="azienda" id="optGroupCompany">Azienda</option>
               <option value="ruolo" id="optGroupRole">Ruolo / Funzione</option>
-            </select>
-          </div>
+            </select>          </div>
         </div>
 
         <div class="relative h-72 mb-6">
@@ -416,10 +424,10 @@
           <h3 id="wsCreateHeader" class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-4">
             + Registra un Nuovo Workshop nel Database
           </h3>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <label id="lblWsName" class="block text-xs font-bold text-slate-700 mb-1">Nome del Workshop *</label>
-              <input id="inputWsName" type="text" placeholder="Es. Workshop Leadership Lotto 1"
+              <input id="inputWsName" type="text" placeholder="Es. Workshop Engineering HQ"
                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
             </div>
             <div>
@@ -428,7 +436,7 @@
                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
             </div>
             <div>
-              <label id="lblWsSite" class="block text-xs font-bold text-slate-700 mb-1">Cantiere (da cantieri.txt) *</label>
+              <label id="lblWsSite" class="block text-xs font-bold text-slate-700 mb-1">Cantiere / Sede (cantieri.txt) *</label>
               <select id="selectWsSite"
                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500">
               </select>
@@ -440,6 +448,14 @@
                 <option value="Top manager">Top manager</option>
                 <option value="Second level">Second level</option>
                 <option value="Baseline">Baseline</option>
+              </select>
+            </div>
+            <div>
+              <label id="lblWsTarget" class="block text-xs font-bold text-slate-700 mb-1"> Scenari & Linguaggio *</label>
+              <select id="selectWsTarget"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-amber-400 text-xs font-bold bg-amber-50/50 focus:outline-none focus:border-amber-600">
+                <option value="site">🏗️ Cantiere / Site</option>
+                <option value="office">🏢 Ufficio / Sede (HQ)</option>
               </select>
             </div>
           </div>
@@ -760,16 +776,17 @@
     }
 
 // Crea un nuovo workshop impostandolo di default come APERTO (active: true)
-    async function createNewWorkshop() {
+async function createNewWorkshop() {
       const nameVal = document.getElementById("inputWsName").value.trim();
       const dateVal = document.getElementById("inputWsDate").value;
       const siteVal = document.getElementById("selectWsSite").value;
       const levelVal = document.getElementById("selectWsLevel").value;
+      const targetVal = document.getElementById("selectWsTarget") ? document.getElementById("selectWsTarget").value : "site";
       const banner = document.getElementById("wsFeedbackBanner");
 
       if (!nameVal || !dateVal || !siteVal) {
         banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-red-50 border-red-200 text-red-700";
-        banner.textContent = "Compila tutti i campi obbligatori del Workshop: Nome, Data e Cantiere.";
+        banner.textContent = "Compila tutti i campi obbligatori del Workshop: Nome, Data e Cantiere/Sede.";
         banner.classList.remove("hidden");
         return;
       }
@@ -780,14 +797,16 @@
         date: dateVal,
         site: siteVal,
         level: levelVal,
-        active: true, // Aperto di default
+        targetType: targetVal, // 'site' oppure 'office'
+        active: true,
         createdAt: new Date().toISOString()
       };
 
       workshopsDB.unshift(newWs);
       document.getElementById("inputWsName").value = "";
 
-      await persistWorkshopsToDatabase("✓ Workshop creato (Stato: Aperto) e salvato nel database Netlify!");
+      const typeLabel = targetVal === "office" ? "Ufficio / Sede (HQ)" : "Cantiere / Site";
+      await persistWorkshopsToDatabase(`✓ Workshop creato (Profilo: ${typeLabel}) e salvato nel database Netlify!`);
       renderWorkshopsTable();
       populateFilterDropdowns(true);
       renderParticipantsTable();
@@ -857,29 +876,33 @@
       }
     }
 
-    // Riassegna un questionario già presente in tabella a uno specifico Workshop
+// 1. In assignRecordToWorkshop: aggiorna anche il profilo Target quando cambi il Workshop a un test esistente
     async function assignRecordToWorkshop(recordId, newWorkshopId) {
       const rec = allRecords.find(r => r.id === recordId);
       if (!rec) return;
 
       const wsObj = workshopsDB.find(w => w.id === newWorkshopId);
       if (wsObj) {
+        const isOff = wsObj.targetType === "office";
         rec.workshopId = wsObj.id;
         rec.workshopName = wsObj.name;
         rec.workshopDate = wsObj.date;
         rec.workshopLevel = wsObj.level;
+        rec.workshopTarget = isOff ? "Office / HQ" : "Site / Field";
         workshopAssignments[recordId] = {
           workshopId: wsObj.id,
           workshopName: wsObj.name,
           workshopDate: wsObj.date,
           workshopLevel: wsObj.level,
-          workshopSite: wsObj.site
+          workshopSite: wsObj.site,
+          workshopTarget: wsObj.targetType || "site"
         };
       } else {
         rec.workshopId = "";
         rec.workshopName = "Non assegnato";
         rec.workshopDate = "-";
         rec.workshopLevel = "Non assegnato";
+        rec.workshopTarget = "Site / Field";
         delete workshopAssignments[recordId];
       }
 
@@ -887,7 +910,6 @@
       populateFilterDropdowns(true);
       applyFilters();
 
-      // Salva nel database Netlify Blobs
       const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
       if (pwd) {
         try {
@@ -904,7 +926,8 @@
               workshopName: wsObj ? wsObj.name : "",
               workshopDate: wsObj ? wsObj.date : "",
               workshopLevel: wsObj ? wsObj.level : "",
-              workshopSite: wsObj ? wsObj.site : ""
+              workshopSite: wsObj ? wsObj.site : "",
+              workshopTarget: wsObj ? (wsObj.targetType || "site") : "site"
             })
           });
         } catch (e) {
@@ -912,7 +935,6 @@
         }
       }
     }
-
 // Passa alla scheda Analisi Risultati e filtra tutti i grafici sul singolo Workshop selezionato
     function viewWorkshopReport(wsId) {
       const ws = workshopsDB.find(w => w.id === wsId);
@@ -952,7 +974,8 @@ function renderWorkshopsTable() {
       const baseUrl = getParticipantTestBaseUrl();
 
       tbody.innerHTML = workshopsDB.map(ws => {
-        const isOpen = ws.active !== false; // Default true per retrocompatibilità
+        const isOpen = ws.active !== false;
+        const isOffice = ws.targetType === "office";
         const wsLink = `${baseUrl}?ws=${encodeURIComponent(ws.id)}`;
         const siteLabel = String(ws.site || "").split("|")[0].trim();
         const linkedCount = allRecords.filter(r => r.workshopId === ws.id || r.workshopName === ws.name).length;
@@ -962,10 +985,17 @@ function renderWorkshopsTable() {
           ws.level === "Second level" ? "bg-blue-100 text-blue-900 border-blue-200" :
           "bg-emerald-100 text-emerald-900 border-emerald-200";
 
+        const targetBadge = isOffice
+          ? `<span class="ml-1.5 px-2 py-0.5 rounded bg-indigo-100 text-indigo-900 border border-indigo-200 text-[10px] font-extrabold">🏢 Ufficio / HQ</span>`
+          : `<span class="ml-1.5 px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-extrabold">🏗️ Cantiere</span>`;
+
         return `
           <tr class="hover:bg-slate-50 transition ${!isOpen ? 'opacity-65 bg-slate-50/60' : ''}">
             <td class="py-3 px-3 font-mono text-[11px] font-bold text-slate-500">${ws.id}</td>
-            <td class="py-3 px-3 font-extrabold text-slate-900">${ws.name}</td>
+            <td class="py-3 px-3 font-extrabold text-slate-900">
+              ${ws.name}
+              ${targetBadge}
+            </td>
             <td class="py-3 px-3 text-slate-600 whitespace-nowrap">${ws.date}</td>
             <td class="py-3 px-3 text-slate-700 font-medium">${siteLabel}</td>
             <td class="py-3 px-3">
@@ -1017,7 +1047,6 @@ function renderWorkshopsTable() {
             <td class="py-3 px-3 text-right whitespace-nowrap">
               <div class="inline-flex items-center gap-1.5">
                 <button onclick="viewWorkshopReport('${ws.id}')"
-                  title="Filtra la dashboard e mostra i grafici di questo Workshop"
                   class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[11px] border border-blue-200 transition">
                   📊 Vedi Report
                 </button>
@@ -1518,6 +1547,7 @@ function renderWorkshopsTable() {
       return isNaN(num) ? 0 : num;
     }
 
+// 2. In normalizeNetlifyRows: legge il campo workshop_target (o lo ricava dal Workshop associato)
     function normalizeNetlifyRows(rawRows) {
       const valid = [];
       rawRows.forEach((row, index) => {
@@ -1537,7 +1567,6 @@ function renderWorkshopsTable() {
         const sortedAreas = [...AREA_KEYS].sort((a, b) => pcts[b.id] - pcts[a.id]);
         const recordId = String(norm["submission_id"] || norm["id"] || `local_${index}`);
 
-        // Controlla se questo questionario è stato riassegnato manualmente a un Workshop dall'admin
         const override = workshopAssignments[recordId];
         const wsId = override ? override.workshopId : (norm["workshop_id"] || "");
         const wsFromDb = workshopsDB.find(w => w.id === wsId);
@@ -1545,6 +1574,11 @@ function renderWorkshopsTable() {
         const wsName = override?.workshopName || wsFromDb?.name || norm["workshop_nome"] || "Non assegnato";
         const wsDate = override?.workshopDate || wsFromDb?.date || norm["workshop_data"] || "-";
         const wsLevel = override?.workshopLevel || wsFromDb?.level || norm["workshop_livello"] || "Non assegnato";
+
+        // Determina se il questionario appartiene a "Office / HQ" o "Site / Field"
+        let rawTarget = override?.workshopTarget || wsFromDb?.targetType || norm["workshop_target"] || "site";
+        const isOffice = String(rawTarget).toLowerCase().includes("office") || String(rawTarget).toLowerCase().includes("hq");
+        const wsTarget = isOffice ? "Office / HQ" : "Site / Field";
 
         let dateFormatted = norm["data_ora"] || norm["created_at"] || "-";
         if (dateFormatted.includes("T") && dateFormatted.includes("Z")) {
@@ -1558,6 +1592,7 @@ function renderWorkshopsTable() {
           workshopName: wsName,
           workshopDate: wsDate,
           workshopLevel: wsLevel,
+          workshopTarget: wsTarget, // 'Site / Field' | 'Office / HQ'
           name: norm["partecipante"] || "Anonimo",
           company: norm["azienda"] || "Non specificata",
           role: norm["ruolo"] || "Non specificato",
@@ -1573,9 +1608,7 @@ function renderWorkshopsTable() {
         });
       });
       return valid;
-    }
-
-    // =========================================================================
+    }    // =========================================================================
     // 7. MODALITÀ DEMO (GENERA ANCHE 3 WORKSHOP DIMOSTRATIVI)
     // =========================================================================
     async function loadDemoDataset() {
@@ -1697,8 +1730,10 @@ function renderWorkshopsTable() {
       if (roles.includes(prevR)) selR.value = prevR;
     }
 
+// 3. In resetFilters, viewWorkshopReport e applyFilters: include il filtro filterTarget
     function resetFilters() {
       document.getElementById("filterWorkshop").value = "ALL";
+      document.getElementById("filterTarget").value = "ALL";
       document.getElementById("filterLevel").value = "ALL";
       document.getElementById("filterCompany").value = "ALL";
       document.getElementById("filterSite").value = "ALL";
@@ -1706,9 +1741,9 @@ function renderWorkshopsTable() {
       document.getElementById("filterSearch").value = "";
       applyFilters();
     }
-
-    function applyFilters() {
+function applyFilters() {
       const wVal = document.getElementById("filterWorkshop").value;
+      const tVal = document.getElementById("filterTarget") ? document.getElementById("filterTarget").value : "ALL";
       const lVal = document.getElementById("filterLevel").value;
       const cVal = document.getElementById("filterCompany").value;
       const sVal = document.getElementById("filterSite").value;
@@ -1717,6 +1752,7 @@ function renderWorkshopsTable() {
 
       filteredRecords = allRecords.filter(rec => {
         if (wVal !== "ALL" && rec.workshopName !== wVal) return false;
+        if (tVal !== "ALL" && rec.workshopTarget !== tVal) return false;
         if (lVal !== "ALL" && rec.workshopLevel !== lVal) return false;
         if (cVal !== "ALL" && rec.company !== cVal) return false;
         if (sVal !== "ALL" && rec.site !== sVal) return false;
@@ -1727,7 +1763,7 @@ function renderWorkshopsTable() {
 
       renderAllAnalytics();
     }
-
+    
     function computeGroupAverages(records) {
       const avg = {};
       AREA_KEYS.forEach(a => avg[a.id] = 0);
@@ -1807,11 +1843,12 @@ function renderWorkshopsTable() {
       renderParticipantsTable();
       updateBulkSelectionUI();
     }
-
+// 4. In renderGroupComparison: aggiunge la mappatura "target: 'workshopTarget'" per la Heatmap
     function renderGroupComparison() {
       const groupField = document.getElementById("selectGroupBy").value;
       const propMap = {
         workshop: "workshopName",
+        target: "workshopTarget",
         livello: "workshopLevel",
         cantiere: "site",
         azienda: "company",
@@ -1821,7 +1858,10 @@ function renderWorkshopsTable() {
 
       const groupsMap = {};
       filteredRecords.forEach(r => {
-        const gName = r[recKey] || "Non assegnato";
+        let gName = r[recKey] || "Non assegnato";
+        if (groupField === "target") {
+          gName = gName === "Office / HQ" ? "🏢 Ufficio / Sede (HQ)" : "🏗️ Cantiere / Site";
+        }
         if (!groupsMap[gName]) groupsMap[gName] = [];
         groupsMap[gName].push(r);
       });
@@ -1871,7 +1911,6 @@ function renderWorkshopsTable() {
         `;
       }).join("");
     }
-
     function renderParticipantsTable() {
       const tbody = document.getElementById("participantsTableBody");
       tbody.innerHTML = filteredRecords.map((r, idx) => {
