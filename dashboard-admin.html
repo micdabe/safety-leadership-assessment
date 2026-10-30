@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Safety Leadership — Admin, Workshops & Analytics</title>
+  <title>Safety Leadership — Admin & Workshop Console (Supabase)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
@@ -28,27 +29,20 @@
           SL
         </div>
         <div>
-          <h1 id="hdrTitle" class="font-bold text-lg leading-tight">Safety Leadership — Admin & Workshop Console</h1>
-          <p id="hdrSub" class="text-xs text-slate-400">Gestione Workshop su Database Netlify, Analisi e Liste .txt</p>
+          <h1 class="font-bold text-lg leading-tight">Safety Leadership — Admin & Workshop Console</h1>
+          <p class="text-xs text-slate-400">Architettura GitHub Pages + Database Cloud Supabase</p>
         </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2.5">
         <div id="liveControls" class="hidden items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="lastSyncText" class="text-[11px] text-slate-300 font-medium">Live</span>
-          <button onclick="refreshLiveData()" id="btnRefreshNow" class="ml-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] transition">
+          <span id="lastSyncText" class="text-[11px] text-slate-300 font-medium">Supabase Live</span>
+          <button onclick="refreshFromSupabase()" class="ml-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] transition">
             ↻ Aggiorna ora
           </button>
-          <label class="flex items-center gap-1 text-[11px] text-slate-300 ml-1 cursor-pointer">
-            <input type="checkbox" id="chkAutoRefresh" onchange="toggleAutoRefresh()" class="accent-amber-500" />
-            <span>Auto (60s)</span>
-          </label>
         </div>
 
-        <button onclick="toggleLanguage()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
-          <span id="langSwitchPrefix">Lingua:</span> <span id="langLabel" class="text-amber-400 font-bold">Italiano 🇮🇹</span>
-        </button>
         <button id="btnChangeSource" onclick="logoutAndShowLogin()" class="hidden px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
           Esci
         </button>
@@ -63,15 +57,15 @@
       <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 pt-2">
         <button id="navTabAnalytics" onclick="switchAdminView('analytics')"
           class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
-          <span>📊</span> <span id="navTabAnalyticsLabel">Analisi Risultati</span>
+          <span>📊</span> <span>Analisi Risultati</span>
         </button>
         <button id="navTabWorkshops" onclick="switchAdminView('workshops')"
           class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
-          <span>🎯</span> <span id="navTabWorkshopsLabel">Gestione Workshop (Link & QR)</span>
+          <span>🎯</span> <span>Gestione Workshop (Link & QR)</span>
         </button>
         <button id="navTabLists" onclick="switchAdminView('lists')"
           class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
-          <span>🗂️</span> <span id="navTabListsLabel">Liste .txt (Aziende, Ruoli, Cantieri)</span>
+          <span>🗂️</span> <span>Gestione Liste (Aziende, Ruoli, Cantieri)</span>
         </button>
       </div>
     </div>
@@ -79,130 +73,106 @@
 
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
 
-    <!-- 1. SCHERMATA DI LOGIN -->
+    <!-- 1. SCHERMATA DI LOGIN SUPABASE -->
     <section id="screen-upload" class="max-w-3xl mx-auto space-y-6">
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="bg-slate-900 text-white px-6 py-5 border-b-4 border-amber-500 flex items-center justify-between">
           <div>
-            <span id="loginBadge" class="inline-block px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold uppercase tracking-wider mb-1">
-              Database Netlify & Workshop Manager
+            <span class="inline-block px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[11px] font-bold uppercase tracking-wider mb-1">
+              GitHub Pages + Supabase Cloud DB
             </span>
-            <h2 id="loginTitle" class="text-xl md:text-2xl font-extrabold">
+            <h2 class="text-xl md:text-2xl font-extrabold">
               Accedi alla Console di Amministrazione
             </h2>
           </div>
-          <div class="text-2xl">🔒</div>
+          <div class="text-2xl">⚡</div>
         </div>
 
-        <div class="p-6 md:p-8">
-          <div class="flex border-b border-slate-200 mb-6 text-xs font-bold">
-            <button id="tabBtnFunc" onclick="switchAuthMode('function')"
-              class="pb-3 px-4 border-b-2 border-amber-500 text-slate-900 transition">
-              1. Tramite Netlify Function (Password Admin)
-            </button>
-            <button id="tabBtnDirect" onclick="switchAuthMode('direct')"
-              class="pb-3 px-4 border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition">
-              2. Connessione Diretta Token API
-            </button>
-          </div>
+        <div class="p-6 md:p-8 space-y-4">
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Inserisci il <strong>Project URL</strong> e la <strong>Anon Public Key</strong> del tuo progetto Supabase (se non li hai già salvati nel codice) insieme alla tua <strong>Password Admin</strong> (di default <code>Safety2026!</code>):
+          </p>
 
-          <div id="authPanelFunction" class="space-y-4">
-            <p id="funcDesc" class="text-xs text-slate-600 leading-relaxed">
-              Inserisci la tua <code>ADMIN_PASSWORD</code> per gestire i <strong>Workshop</strong> nel database Netlify, generare i link di invito per i partecipanti e analizzare i risultati.
-            </p>
-            <div class="flex flex-col sm:flex-row gap-3">
-              <input id="inputAdminPassword" type="password" placeholder="Inserisci la Password Admin..."
-                onkeydown="if(event.key==='Enter') connectViaNetlifyFunction()"
-                class="flex-grow px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-amber-500" />
-              <button onclick="connectViaNetlifyFunction()" id="btnConnectFunc"
-                class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm shadow-sm transition shrink-0">
-                Accedi alla Console →
-              </button>
+          <div id="supabaseConfigInputs" class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Supabase Project URL</label>
+              <input id="inputSbUrl" type="text" placeholder="https://xxxx.supabase.co"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-amber-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Supabase Anon Public Key</label>
+              <input id="inputSbKey" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-amber-500" />
             </div>
           </div>
 
-          <div id="authPanelDirect" class="hidden space-y-4">
-            <p id="directDesc" class="text-xs text-slate-600 leading-relaxed">
-              Inserisci il tuo <strong>Site ID</strong> e il tuo <strong>Personal Access Token</strong> (<code>nfp_...</code>) di Netlify:
-            </p>
-            <div class="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-1">Netlify Site ID (API ID)</label>
-                <input id="inputDirectSiteId" type="text" placeholder="es. 84a9b12c-3456-7890-abcd-..."
-                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-amber-500" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-1">Netlify Personal Access Token</label>
-                <input id="inputDirectToken" type="password" placeholder="nfp_..."
-                  onkeydown="if(event.key==='Enter') connectViaDirectAPI()"
-                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-amber-500" />
-              </div>
-            </div>
-            <div class="flex items-center justify-between pt-1">
-              <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-                <input id="chkRememberDirect" type="checkbox" checked class="accent-amber-600" />
-                <span id="lblRememberCreds">Ricorda credenziali in questo browser</span>
-              </label>
-              <button onclick="connectViaDirectAPI()" id="btnConnectDirect"
-                class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition">
-                Connetti alle API di Netlify →
-              </button>
-            </div>
+          <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <input id="inputAdminPassword" type="password" placeholder="Password Admin (es. Safety2026!)"
+              onkeydown="if(event.key==='Enter') connectToSupabase()"
+              class="flex-grow px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-amber-500" />
+            <button onclick="connectToSupabase()" id="btnConnectSb"
+              class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm shadow-sm transition shrink-0">
+              Connetti a Supabase →
+            </button>
           </div>
+
+          <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer pt-1">
+            <input id="chkRememberSb" type="checkbox" checked class="accent-amber-600" />
+            <span>Ricorda URL e Anon Key in questo browser</span>
+          </label>
 
           <p id="uploadError" class="hidden mt-4 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-3.5"></p>
         </div>
       </div>
 
+      <!-- Modalità Offline / Demo -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h3 id="altTitle" class="font-bold text-slate-800 text-sm">Modalità Offline: Carica CSV o Apri Demo</h3>
-            <p id="altSub" class="text-xs text-slate-500">Prova subito la creazione dei Workshop, il raggruppamento e i grafici con dati dimostrativi.</p>
+            <h3 class="font-bold text-slate-800 text-sm">Modalità Offline: Carica CSV o Apri Demo</h3>
+            <p class="text-xs text-slate-500">Prova subito i Workshop (Cantiere vs Ufficio), l'interruttore Aperto/Chiuso e i grafici senza database.</p>
           </div>
           <div class="flex flex-wrap gap-2.5">
-            <button onclick="document.getElementById('csvFileInput').click()" id="btnBrowseCSV"
+            <button onclick="document.getElementById('csvFileInput').click()"
               class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
               Sfoglia file CSV...
             </button>
             <input id="csvFileInput" type="file" accept=".csv,text/csv" class="hidden" onchange="handleFileSelect(event)" />
-            <button id="btnLoadDemo" onclick="loadDemoDataset()"
+            <button onclick="loadDemoDataset()"
               class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-              Apri Console Demo (Workshop + 25 Test) →
+              Apri Console Demo (Cantiere + Ufficio) →
             </button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 2. SCHEDA A: ANALISI RISULTATI (CON FILTRO E ASSEGNAZIONE WORKSHOP) -->
+    <!-- 2. SCHEDA A: ANALISI RISULTATI -->
     <section id="screen-dashboard" class="hidden space-y-6">
 
-      <!-- Barra Filtri Interattivi (Aggiunto Workshop e Livello Workshop) -->
+      <!-- Barra Filtri Interattivi a 7 Colonne -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 no-print">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div class="flex items-center gap-2">
-            <h2 id="fltTitle" class="text-sm font-extrabold uppercase tracking-wider text-slate-800">
-              Filtri di Analisi
-            </h2>
+            <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-800">Filtri di Analisi</h2>
             <span id="activeRecordsBadge" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
               0 test selezionati
             </span>
           </div>
-          <button id="btnResetFilters" onclick="resetFilters()" class="text-xs font-bold text-amber-700 hover:underline">
+          <button onclick="resetFilters()" class="text-xs font-bold text-amber-700 hover:underline">
             Azzera filtri
           </button>
         </div>
 
-<div class="grid sm:grid-cols-2 lg:grid-cols-7 gap-3">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-7 gap-3">
           <div>
-            <label id="lblFilterWorkshop" class="block text-xs font-bold text-slate-600 mb-1">Workshop</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Workshop</label>
             <select id="filterWorkshop" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
               <option value="ALL">Tutti i Workshop</option>
             </select>
           </div>
           <div>
-            <label id="lblFilterTarget" class="block text-xs font-bold text-slate-600 mb-1">Profilo (Site / HQ)</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Profilo (Site / HQ)</label>
             <select id="filterTarget" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-amber-300 text-xs font-bold bg-amber-50/40 focus:outline-none focus:border-amber-500">
               <option value="ALL">Tutti (Cantiere + Ufficio)</option>
               <option value="Site / Field">🏗️ Cantiere / Site</option>
@@ -210,7 +180,7 @@
             </select>
           </div>
           <div>
-            <label id="lblFilterLevel" class="block text-xs font-bold text-slate-600 mb-1">Livello Workshop</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Livello Workshop</label>
             <select id="filterLevel" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
               <option value="ALL">Tutti i Livelli</option>
               <option value="Top manager">Top manager</option>
@@ -219,25 +189,25 @@
             </select>
           </div>
           <div>
-            <label id="lblFilterCompany" class="block text-xs font-bold text-slate-600 mb-1">Azienda</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Azienda</label>
             <select id="filterCompany" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
               <option value="ALL">Tutte le Aziende</option>
             </select>
           </div>
           <div>
-            <label id="lblFilterSite" class="block text-xs font-bold text-slate-600 mb-1">Cantiere / Sede</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Cantiere / Sede</label>
             <select id="filterSite" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
               <option value="ALL">Tutti i Cantieri/Sedi</option>
             </select>
           </div>
           <div>
-            <label id="lblFilterRole" class="block text-xs font-bold text-slate-600 mb-1">Ruolo / Funzione</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Ruolo / Funzione</label>
             <select id="filterRole" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
               <option value="ALL">Tutti i Ruoli</option>
             </select>
           </div>
           <div>
-            <label id="lblFilterSearch" class="block text-xs font-bold text-slate-600 mb-1">Cerca Partecipante</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Cerca Partecipante</label>
             <input id="filterSearch" type="text" oninput="applyFilters()" placeholder="Nome o Anonimo..."
               class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
           </div>
@@ -247,25 +217,22 @@
       <!-- 4 KPI Cards -->
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 print-break">
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-          <div id="kpi1Title" class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Test Analizzati</div>
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Test Analizzati</div>
           <div id="kpi1Value" class="text-2xl font-extrabold text-slate-900">0</div>
           <div id="kpi1Sub" class="text-xs text-slate-500 mt-1">-</div>
         </div>
-
         <div class="bg-emerald-50 p-5 rounded-2xl shadow-sm border border-emerald-200">
-          <div id="kpi2Title" class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">Punto di Forza Medio (#1)</div>
+          <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">Punto di Forza Medio (#1)</div>
           <div id="kpi2Value" class="text-2xl font-extrabold text-slate-900">-</div>
           <div id="kpi2Sub" class="text-xs text-emerald-800 mt-1">-</div>
         </div>
-
         <div class="bg-amber-50 p-5 rounded-2xl shadow-sm border border-amber-200">
-          <div id="kpi3Title" class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">Gap Formativo Medio (#7)</div>
+          <div class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">Gap Formativo Medio (#7)</div>
           <div id="kpi3Value" class="text-2xl font-extrabold text-slate-900">-</div>
           <div id="kpi3Sub" class="text-xs text-amber-900 mt-1">-</div>
         </div>
-
         <div class="bg-blue-50 p-5 rounded-2xl shadow-sm border border-blue-200">
-          <div id="kpi4Title" class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">Seconda Leva Media (#2)</div>
+          <div class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">Seconda Leva Media (#2)</div>
           <div id="kpi4Value" class="text-2xl font-extrabold text-slate-900">-</div>
           <div id="kpi4Sub" class="text-xs text-blue-800 mt-1">-</div>
         </div>
@@ -274,52 +241,43 @@
       <!-- Riga Grafici Principali -->
       <div class="grid lg:grid-cols-2 gap-6 print-break">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h3 id="chart1Title" class="font-bold text-slate-900 text-base mb-1">
-            Profilo Medio delle 7 Aree (Selezione vs Globale)
-          </h3>
-          <p id="chart1Sub" class="text-xs text-slate-500 mb-4">
-            Confronta la media del gruppo filtrato con la media generale e il target bilanciato (14.3%)
-          </p>
+          <h3 class="font-bold text-slate-900 text-base mb-1">Profilo Medio delle 7 Aree (Selezione vs Globale)</h3>
+          <p class="text-xs text-slate-500 mb-4">Confronta la media del gruppo filtrato con la media generale e il target bilanciato (14.3%)</p>
           <div class="relative h-80 flex items-center justify-center">
             <canvas id="aggRadarChart"></canvas>
           </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h3 id="chart2Title" class="font-bold text-slate-900 text-base mb-1">
-            Distribuzione Punti di Forza (#1) vs Bisogni Formativi (#7)
-          </h3>
-          <p id="chart2Sub" class="text-xs text-slate-500 mb-4">
-            Numero di partecipanti per i quali ciascuna area risulta la #1 (Dominante) o la #7 (Meno Presidiata)
-          </p>
+          <h3 class="font-bold text-slate-900 text-base mb-1">Distribuzione Punti di Forza (#1) vs Bisogni Formativi (#7)</h3>
+          <p class="text-xs text-slate-500 mb-4">Numero di partecipanti per i quali ciascuna area risulta la #1 (Dominante) o la #7 (Meno Presidiata)</p>
           <div class="relative h-80 flex items-center justify-center">
             <canvas id="domWeakBarChart"></canvas>
           </div>
         </div>
       </div>
 
-      <!-- MATRICE HEATMAP DI CONFRONTO (Include ora Raggruppamento per Workshop e Livello) -->
+      <!-- MATRICE HEATMAP DI CONFRONTO (Include Cantiere vs Ufficio) -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
         <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div>
-            <h3 id="heatmapTitle" class="font-bold text-slate-900 text-lg">
-              Matrice Comparativa (Heatmap) per Gruppo
-            </h3>
-            <p id="heatmapSub" class="text-xs text-slate-500 mt-0.5">
-              Confronta le percentuali medie delle 7 aree raggruppate per Workshop, Livello Workshop, Cantiere, Azienda o Ruolo.
+            <h3 class="font-bold text-slate-900 text-lg">Matrice Comparativa (Heatmap) per Gruppo</h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Confronta le percentuali medie delle 7 aree per Workshop, Profilo (🏗️ Cantiere vs 🏢 Ufficio), Livello, Sede o Ruolo.
             </p>
           </div>
 
           <div class="flex items-center gap-2 no-print">
-            <span id="lblGroupBy" class="text-xs font-bold text-slate-600">Raggruppa per:</span>
-<select id="selectGroupBy" onchange="renderGroupComparison()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:outline-none focus:border-amber-500">
-              <option value="workshop" id="optGroupWorkshop">Workshop</option>
-              <option value="target" id="optGroupTarget">Profilo (🏗️ Cantiere vs 🏢 Ufficio)</option>
-              <option value="livello" id="optGroupLevel">Livello Workshop</option>
-              <option value="cantiere" id="optGroupSite">Cantiere / Sede</option>
-              <option value="azienda" id="optGroupCompany">Azienda</option>
-              <option value="ruolo" id="optGroupRole">Ruolo / Funzione</option>
-            </select>          </div>
+            <span class="text-xs font-bold text-slate-600">Raggruppa per:</span>
+            <select id="selectGroupBy" onchange="renderGroupComparison()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:outline-none focus:border-amber-500">
+              <option value="workshop">Workshop</option>
+              <option value="target">Profilo (🏗️ Cantiere vs 🏢 Ufficio)</option>
+              <option value="livello">Livello Workshop</option>
+              <option value="cantiere">Cantiere / Sede</option>
+              <option value="azienda">Azienda</option>
+              <option value="ruolo">Ruolo / Funzione</option>
+            </select>
+          </div>
         </div>
 
         <div class="relative h-72 mb-6">
@@ -330,8 +288,8 @@
           <table class="w-full text-left border-collapse text-xs">
             <thead>
               <tr class="border-b-2 border-slate-200 uppercase text-slate-500 bg-slate-50">
-                <th id="thGroupCol" class="py-3 px-3">Gruppo</th>
-                <th id="thGroupCount" class="py-3 px-2 text-center">N. Test</th>
+                <th class="py-3 px-3">Gruppo</th>
+                <th class="py-3 px-2 text-center">N. Test</th>
                 <th class="py-3 px-2 text-center">Vision</th>
                 <th class="py-3 px-2 text-center">Focus</th>
                 <th class="py-3 px-2 text-center">Influence</th>
@@ -339,7 +297,7 @@
                 <th class="py-3 px-2 text-center">Team</th>
                 <th class="py-3 px-2 text-center">Comm.</th>
                 <th class="py-3 px-2 text-center">Feedback</th>
-                <th id="thGroupGap" class="py-3 px-3">Priorità Formativa (Gap)</th>
+                <th class="py-3 px-3">Priorità Formativa (Gap)</th>
               </tr>
             </thead>
             <tbody id="heatmapTableBody" class="divide-y divide-slate-100"></tbody>
@@ -347,15 +305,13 @@
         </div>
       </div>
 
-      <!-- TABELLA ELENCO PARTECIPANTI (CON COLONNA WORKSHOP EDITABILE PER I DATI GIÀ PRESENTI) -->
+      <!-- TABELLA PARTECIPANTI CON ASSEGNAZIONE WORKSHOP EDITABILE -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
         <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div>
-            <h3 id="partTableTitle" class="font-bold text-slate-900 text-lg">
-              Dettaglio Singoli Test Completati (Con Assegnazione Workshop Editabile)
-            </h3>
-            <p id="partTableSub" class="text-xs text-slate-500">
-              Puoi associare o modificare il Workshop di qualsiasi test già presente usando il menu a discesa nella colonna "Workshop".
+            <h3 class="font-bold text-slate-900 text-lg">Dettaglio Singoli Test Completati</h3>
+            <p class="text-xs text-slate-500">
+              Usa il menu a discesa nella colonna "Workshop" per associare o spostare qualsiasi test in tempo reale su Supabase.
             </p>
           </div>
 
@@ -364,15 +320,12 @@
               class="hidden px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-1.5">
               <span>🗑️</span> <span id="btnDeleteSelectedLabel">Elimina selezionati (0)</span>
             </button>
-
-            <button id="btnExportFilteredCSV" onclick="exportFilteredCSV()"
+            <button onclick="exportFilteredCSV()"
               class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
               Esporta Vista Filtrata (CSV)
             </button>
           </div>
         </div>
-
-        <div id="deleteFeedbackBanner" class="hidden mb-4 rounded-xl p-3 text-xs font-bold border no-print"></div>
 
         <div class="overflow-x-auto max-h-96 overflow-y-auto">
           <table class="w-full text-left border-collapse text-xs">
@@ -382,16 +335,17 @@
                   <input id="chkSelectAllRows" type="checkbox" onchange="toggleSelectAllFiltered(this.checked)"
                     class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
                 </th>
-                <th id="thPDate" class="py-3 px-3">Data</th>
-                <th id="thPWorkshop" class="py-3 px-3">Workshop (Editabile)</th>
-                <th id="thPLevel" class="py-3 px-3">Livello</th>
-                <th id="thPName" class="py-3 px-3">Partecipante</th>
-                <th id="thPComp" class="py-3 px-3">Azienda</th>
-                <th id="thPRole" class="py-3 px-3">Ruolo</th>
-                <th id="thPSite" class="py-3 px-3">Cantiere</th>
-                <th id="thPDom" class="py-3 px-3">Area #1</th>
-                <th id="thPLow" class="py-3 px-3">Area #7</th>
-                <th id="thPAction" class="py-3 px-3 text-right no-print">Azioni</th>
+                <th class="py-3 px-3">Data</th>
+                <th class="py-3 px-3">Workshop (Editabile)</th>
+                <th class="py-3 px-3">Profilo</th>
+                <th class="py-3 px-3">Livello</th>
+                <th class="py-3 px-3">Partecipante</th>
+                <th class="py-3 px-3">Azienda</th>
+                <th class="py-3 px-3">Ruolo</th>
+                <th class="py-3 px-3">Cantiere/Sede</th>
+                <th class="py-3 px-3">Area #1</th>
+                <th class="py-3 px-3">Area #7</th>
+                <th class="py-3 px-3 text-right no-print">Azioni</th>
               </tr>
             </thead>
             <tbody id="participantsTableBody" class="divide-y divide-slate-100"></tbody>
@@ -401,48 +355,45 @@
 
     </section>
 
-    <!-- 3. SCHEDA B: GESTIONE WORKSHOP (SALVATI NEL DATABASE NETLIFY BLOBS) -->
+    <!-- 3. SCHEDA B: GESTIONE WORKSHOP SU SUPABASE -->
     <section id="screen-workshops" class="hidden space-y-6 no-print">
 
-      <!-- Form Creazione Nuovo Workshop -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
-          <div>
-            <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
-              Database Netlify Blobs
-            </span>
-            <h2 id="wsTabTitle" class="text-xl md:text-2xl font-extrabold text-slate-900 mt-1">
-              Crea e Gestisci i Workshop
-            </h2>
-            <p id="wsTabSub" class="text-xs md:text-sm text-slate-500 mt-0.5">
-              Ogni Workshop genera un <strong>Link univoco</strong> e un <strong>QR Code</strong>: i partecipanti potranno avviare <code>index.html</code> solo tramite il link del Workshop.
-            </p>
-          </div>
+        <div class="mb-5">
+          <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+            Tabella Supabase: public.workshops
+          </span>
+          <h2 class="text-xl md:text-2xl font-extrabold text-slate-900 mt-1">
+            Crea e Gestisci i Workshop
+          </h2>
+          <p class="text-xs md:text-sm text-slate-500 mt-0.5">
+            Scegli se il Workshop è rivolto a personale di <strong>🏗️ Cantiere</strong> o di <strong>🏢 Ufficio / Sede (HQ)</strong>: i partecipanti riceveranno domande calibrate sul loro contesto ma con risultati 100% sovrapponibili.
+          </p>
         </div>
 
         <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5">
-          <h3 id="wsCreateHeader" class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-4">
-            + Registra un Nuovo Workshop nel Database
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-4">
+            + Registra un Nuovo Workshop su Supabase
           </h3>
-<div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
-              <label id="lblWsName" class="block text-xs font-bold text-slate-700 mb-1">Nome del Workshop *</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nome del Workshop *</label>
               <input id="inputWsName" type="text" placeholder="Es. Workshop Engineering HQ"
                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
             </div>
             <div>
-              <label id="lblWsDate" class="block text-xs font-bold text-slate-700 mb-1">Data del Workshop *</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Data del Workshop *</label>
               <input id="inputWsDate" type="date"
                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
             </div>
             <div>
-              <label id="lblWsSite" class="block text-xs font-bold text-slate-700 mb-1">Cantiere / Sede (cantieri.txt) *</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Cantiere / Sede *</label>
               <select id="selectWsSite"
                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500">
               </select>
             </div>
             <div>
-              <label id="lblWsLevel" class="block text-xs font-bold text-slate-700 mb-1">Livello del Workshop *</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Livello del Workshop *</label>
               <select id="selectWsLevel"
                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500">
                 <option value="Top manager">Top manager</option>
@@ -451,7 +402,7 @@
               </select>
             </div>
             <div>
-              <label id="lblWsTarget" class="block text-xs font-bold text-slate-700 mb-1"> Scenari & Linguaggio *</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Profilo Partecipanti *</label>
               <select id="selectWsTarget"
                 class="w-full px-3.5 py-2.5 rounded-xl border border-amber-400 text-xs font-bold bg-amber-50/50 focus:outline-none focus:border-amber-600">
                 <option value="site">🏗️ Cantiere / Site</option>
@@ -461,9 +412,9 @@
           </div>
 
           <div class="flex items-center justify-end mt-4 pt-3 border-t border-slate-200">
-            <button onclick="createNewWorkshop()" id="btnCreateWs"
+            <button onclick="createNewWorkshop()"
               class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs md:text-sm shadow-sm transition">
-              + Crea Workshop e Salva nel Database
+              + Crea Workshop su Supabase
             </button>
           </div>
         </div>
@@ -471,19 +422,17 @@
         <div id="wsFeedbackBanner" class="hidden mt-4 rounded-xl p-3.5 text-xs font-bold border"></div>
       </div>
 
-      <!-- Elenco Workshop Attivi con Link Copiabile e QR Code -->
+      <!-- Tabella Workshop Attivi -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-        <h3 id="wsListHeader" class="font-bold text-slate-900 text-lg mb-4">
-          Elenco Workshop Registrati nel Database
-        </h3>
-        <div id="workshopsTableContainer" class="overflow-x-auto">
+        <h3 class="font-bold text-slate-900 text-lg mb-4">Elenco Workshop Registrati</h3>
+        <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
               <tr class="border-b-2 border-slate-200 uppercase text-slate-500 bg-slate-50">
                 <th class="py-3 px-3">Codice ID</th>
-                <th class="py-3 px-3">Nome Workshop</th>
+                <th class="py-3 px-3">Nome Workshop & Profilo</th>
                 <th class="py-3 px-3">Data</th>
-                <th class="py-3 px-3">Cantiere (cantieri.txt)</th>
+                <th class="py-3 px-3">Cantiere / Sede</th>
                 <th class="py-3 px-3">Livello</th>
                 <th class="py-3 px-3 text-center">Stato Link</th>
                 <th class="py-3 px-3 text-center">Questionari</th>
@@ -495,70 +444,61 @@
           </table>
         </div>
       </div>
-
     </section>
 
-    <!-- 4. SCHEDA C: GESTIONE LISTE .TXT SU GITHUB -->
+    <!-- 4. SCHEDA C: GESTIONE LISTE SU SUPABASE -->
     <section id="screen-lists" class="hidden space-y-6 no-print">
-
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-2.5 mb-1">
-            <span id="txtSourceStatusBadge" class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
-              Lettura file .txt...
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+              Tabella Supabase: public.app_config
             </span>
             <span id="unsavedChangesBadge" class="hidden px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold animate-pulse">
-              Modifiche non salvate su GitHub *
+              Modifiche non salvate *
             </span>
           </div>
-          <h2 id="lstMainTitle" class="text-xl md:text-2xl font-extrabold text-slate-900">
-            Gestione Liste (aziende.txt, ruoli.txt, cantieri.txt)
+          <h2 class="text-xl md:text-2xl font-extrabold text-slate-900">
+            Gestione Liste nel Database (Aziende, Ruoli, Cantieri/Sedi)
           </h2>
-          <p id="lstMainSub" class="text-xs md:text-sm text-slate-500 mt-0.5">
-            Aggiungi o rimuovi le voci e clicca su <strong>Salva direttamente su GitHub</strong>. La lista <code>cantieri.txt</code> alimenta anche la creazione dei Workshop.
+          <p class="text-xs md:text-sm text-slate-500 mt-0.5">
+            Ogni modifica salvata su Supabase è immediatamente visibile a tutti i partecipanti su <code>index.html</code> (0 secondi di attesa).
           </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
-          <button onclick="loadListsAndWorkshops()" id="btnReloadTxt"
+          <button onclick="downloadAllTxtFiles()"
             class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
-            ↻ Ricarica
+            ⬇ Backup .txt
           </button>
-          <button onclick="downloadAllTxtFiles()" id="btnDownloadAllTxt"
-            class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
-            ⬇ Scarica copia .txt
-          </button>
-          <button onclick="saveListsToGitHub()" id="btnSaveGitHub"
+          <button onclick="saveListsToSupabase()" id="btnSaveSbLists"
             class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs md:text-sm shadow-sm transition">
-            🚀 Salva direttamente su GitHub
+            💾 Salva Liste su Supabase
           </button>
         </div>
       </div>
 
-      <div id="githubSaveBanner" class="hidden rounded-xl p-4 text-xs font-bold border"></div>
+      <div id="listsSaveBanner" class="hidden rounded-xl p-4 text-xs font-bold border"></div>
 
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- COLONNA 1: AZIENDE -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
           <div>
             <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
-              <div>
-                <h3 id="colCompTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">1. Aziende</h3>
-                <p class="text-[11px] text-slate-400 font-mono">aziende.txt</p>
-              </div>
+              <h3 class="font-extrabold text-sm uppercase tracking-wider text-amber-400">1. Aziende</h3>
               <span id="countCompaniesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
             </div>
             <div id="listContainer-companies" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
           </div>
           <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
-            <div class="text-xs font-bold text-slate-700" id="addCompLabel">Aggiungi nuova Azienda:</div>
+            <div class="text-xs font-bold text-slate-700">Aggiungi nuova Azienda:</div>
             <input id="newCompIT" type="text" placeholder="Nome Azienda (es. Rossi SpA)"
               onkeydown="if(event.key==='Enter') addListItem('companies')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white" />
             <input id="newCompEN" type="text" placeholder="Traduzione EN opzionale"
               onkeydown="if(event.key==='Enter') addListItem('companies')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-amber-500" />
-            <button onclick="addListItem('companies')" id="btnAddComp"
+              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white" />
+            <button onclick="addListItem('companies')"
               class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
               + Aggiungi Azienda
             </button>
@@ -569,52 +509,46 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
           <div>
             <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
-              <div>
-                <h3 id="colRoleTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">2. Ruoli / Funzioni</h3>
-                <p class="text-[11px] text-slate-400 font-mono">ruoli.txt</p>
-              </div>
+              <h3 class="font-extrabold text-sm uppercase tracking-wider text-amber-400">2. Ruoli / Funzioni</h3>
               <span id="countRolesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
             </div>
             <div id="listContainer-roles" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
           </div>
           <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
-            <div class="text-xs font-bold text-slate-700" id="addRoleLabel">Aggiungi nuovo Ruolo:</div>
-            <input id="newRoleIT" type="text" placeholder="Ruolo IT (es. Preposto)"
+            <div class="text-xs font-bold text-slate-700">Aggiungi nuovo Ruolo:</div>
+            <input id="newRoleIT" type="text" placeholder="Ruolo IT (es. Preposto / Buyer)"
               onkeydown="if(event.key==='Enter') addListItem('roles')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
-            <input id="newRoleEN" type="text" placeholder="Ruolo EN opzionale (es. Supervisor)"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white" />
+            <input id="newRoleEN" type="text" placeholder="Ruolo EN opzionale"
               onkeydown="if(event.key==='Enter') addListItem('roles')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-amber-500" />
-            <button onclick="addListItem('roles')" id="btnAddRole"
+              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white" />
+            <button onclick="addListItem('roles')"
               class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
               + Aggiungi Ruolo
             </button>
           </div>
         </div>
 
-        <!-- COLONNA 3: CANTIERI -->
+        <!-- COLONNA 3: CANTIERI / SEDI -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
           <div>
             <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
-              <div>
-                <h3 id="colSiteTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">3. Cantieri / Progetti</h3>
-                <p class="text-[11px] text-slate-400 font-mono">cantieri.txt</p>
-              </div>
+              <h3 class="font-extrabold text-sm uppercase tracking-wider text-amber-400">3. Cantieri / Sedi</h3>
               <span id="countSitesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
             </div>
             <div id="listContainer-sites" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
           </div>
           <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
-            <div class="text-xs font-bold text-slate-700" id="addSiteLabel">Aggiungi nuovo Cantiere:</div>
-            <input id="newSiteIT" type="text" placeholder="Cantiere IT (es. Lotto Nord)"
+            <div class="text-xs font-bold text-slate-700">Aggiungi nuovo Cantiere o Sede:</div>
+            <input id="newSiteIT" type="text" placeholder="Sede/Cantiere IT (es. Sede Milano)"
               onkeydown="if(event.key==='Enter') addListItem('sites')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
-            <input id="newSiteEN" type="text" placeholder="Cantiere EN opzionale (es. North Lot)"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white" />
+            <input id="newSiteEN" type="text" placeholder="Sede/Cantiere EN opzionale"
               onkeydown="if(event.key==='Enter') addListItem('sites')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-amber-500" />
-            <button onclick="addListItem('sites')" id="btnAddSite"
+              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white" />
+            <button onclick="addListItem('sites')"
               class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
-              + Aggiungi Cantiere
+              + Aggiungi Cantiere / Sede
             </button>
           </div>
         </div>
@@ -634,11 +568,9 @@
       <p id="qrModalMeta" class="text-xs text-slate-500 mb-4">Data • Cantiere</p>
       <div id="qrCodeCanvasBox" class="p-4 border-4 border-slate-900 rounded-2xl inline-block bg-white mb-4"></div>
       <p id="qrModalLinkText" class="text-[11px] font-mono text-slate-500 break-all bg-slate-50 p-2.5 rounded-lg border border-slate-200 mb-4"></p>
-      <div class="flex justify-center gap-2">
-        <button onclick="copyModalWsLink()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs">
-          📋 Copia Link Workshop
-        </button>
-      </div>
+      <button onclick="copyModalWsLink()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs">
+        📋 Copia Link Workshop
+      </button>
     </div>
   </div>
 
@@ -647,12 +579,12 @@
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 md:p-8 border border-slate-200 max-h-[90vh] overflow-y-auto">
       <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
         <div>
-          <span id="modalCompanyBadge" class="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 text-xs font-bold">Azienda</span>
+          <span id="modalCompanyBadge" class="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 text-xs font-bold">Workshop</span>
           <h3 id="modalPersonName" class="text-xl font-extrabold text-slate-900 mt-1">Nome Partecipante</h3>
           <p id="modalPersonMeta" class="text-xs text-slate-500 mt-0.5">Ruolo • Cantiere • Data</p>
         </div>
         <div class="flex items-center gap-2">
-          <button id="btnModalDelete" onclick="deleteCurrentModalParticipant()"
+          <button onclick="deleteCurrentModalParticipant()"
             class="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs border border-red-200 transition">
             🗑️ Elimina Test
           </button>
@@ -678,12 +610,10 @@
 
   <script>
     // =========================================================================
-    // 1. COSTANTI E CONFIGURAZIONE
+    // CONFIGURAZIONE SUPABASE (Puoi incollare qui URL e ANON KEY del tuo progetto)
     // =========================================================================
-    const COMPANIES_TXT_URL = "./aziende.txt";
-    const ROLES_TXT_URL = "./ruoli.txt";
-    const SITES_TXT_URL = "./cantieri.txt";
-    const MANAGE_API_ENDPOINT = "/.netlify/functions/manage-lists";
+    const DEFAULT_SUPABASE_URL = "https://axiilxpcvevqlctjfpjj.supabase.co/rest/v1/";      // es. "https://xyzabcdef.supabase.co"
+    const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_kypghYzsvahiepG2ocyDoQ_Njwz0saG"; // es. "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
 
     const AREA_KEYS = [
       { id: "VISION", name: "Vision", csvPct: "vision_pct", color: "#2563eb" },
@@ -695,26 +625,18 @@
       { id: "FEEDBACK", name: "Feedback", csvPct: "feedback_pct", color: "#4f46e5" }
     ];
 
-    let currentLang = "it";
-    let currentAdminView = "analytics"; // 'analytics' | 'workshops' | 'lists'
-    let activeConnectionMode = null;
-    let savedAdminPassword = "";
-    let autoRefreshTimer = null;
+    let supabaseClient = null;
+    let currentAdminView = "analytics";
+    let activeConnectionMode = null; // 'supabase' | 'csv' | 'demo'
 
     let allRecords = [];
     let filteredRecords = [];
     let selectedRecordIds = new Set();
     let currentModalRecordId = null;
 
-    // Database Workshop & Assegnazioni (memorizzati su Netlify Blobs)
     let workshopsDB = [];
-    let workshopAssignments = {}; // mappa submission_id -> { workshopId, workshopName, workshopDate, workshopLevel, workshopSite }
     let currentQrModalUrl = "";
-
-    // Liste lette esclusivamente dai 3 file .txt
     let editableLists = { companies: [], roles: [], sites: [] };
-    let txtLoadState = "loading";
-    let missingTxtFiles = [];
     let hasUnsavedListChanges = false;
 
     let aggRadarInstance = null;
@@ -723,7 +645,107 @@
     let modalRadarInstance = null;
 
     // =========================================================================
-    // 2. NAVIGAZIONE TRA LE 3 SCHEDE ADMIN
+    // 1. CONNESSIONE A SUPABASE E AUTENTICAZIONE ADMIN
+    // =========================================================================
+    function showError(msg) {
+      const errEl = document.getElementById("uploadError");
+      errEl.textContent = msg;
+      errEl.classList.remove("hidden");
+    }
+
+    async function connectToSupabase() {
+      const urlVal = (document.getElementById("inputSbUrl").value || DEFAULT_SUPABASE_URL).trim();
+      const keyVal = (document.getElementById("inputSbKey").value || DEFAULT_SUPABASE_ANON_KEY).trim();
+      const pwdVal = document.getElementById("inputAdminPassword").value.trim();
+
+      if (!urlVal || !keyVal) {
+        showError("Inserisci sia il Supabase Project URL sia la Anon Public Key.");
+        return;
+      }
+      if (!pwdVal) {
+        showError("Inserisci la Password Admin.");
+        return;
+      }
+
+      const btn = document.getElementById("btnConnectSb");
+      btn.textContent = "Connessione a Supabase...";
+      btn.disabled = true;
+      document.getElementById("uploadError").classList.add("hidden");
+
+      try {
+        supabaseClient = window.supabase.createClient(urlVal, keyVal);
+
+        // 1. Legge configurazione e verifica la Password Admin
+        const { data: cfg, error: cfgErr } = await supabaseClient
+          .from("app_config")
+          .select("*")
+          .eq("id", 1)
+          .single();
+
+        if (cfgErr) throw new Error("Errore lettura tabella app_config: " + cfgErr.message);
+
+        if (cfg.admin_password && cfg.admin_password !== pwdVal) {
+          throw new Error("Password Admin errata.");
+        }
+
+        if (document.getElementById("chkRememberSb").checked) {
+          localStorage.setItem("sl_sb_url", urlVal);
+          localStorage.setItem("sl_sb_key", keyVal);
+        }
+
+        editableLists.companies = Array.isArray(cfg.companies) ? cfg.companies : [];
+        editableLists.roles = Array.isArray(cfg.roles) ? cfg.roles : [];
+        editableLists.sites = Array.isArray(cfg.sites) ? cfg.sites : [];
+
+        // 2. Carica Workshop e Risultati da Supabase
+        await fetchWorkshopsAndSubmissionsFromSupabase();
+
+        activeConnectionMode = "supabase";
+        document.getElementById("liveControls").classList.remove("hidden");
+        document.getElementById("liveControls").classList.add("flex");
+        initDashboardWithData(false);
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.textContent = "Connetti a Supabase →";
+        btn.disabled = false;
+      }
+    }
+
+    async function fetchWorkshopsAndSubmissionsFromSupabase() {
+      const [wsRes, subRes] = await Promise.all([
+        supabaseClient.from("workshops").select("*").order("created_at", { ascending: false }),
+        supabaseClient.from("submissions").select("*").order("created_at", { ascending: false })
+      ]);
+
+      if (wsRes.error) throw new Error(wsRes.error.message);
+      if (subRes.error) throw new Error(subRes.error.message);
+
+      workshopsDB = (wsRes.data || []).map(w => ({
+        id: w.id,
+        name: w.name,
+        date: w.date,
+        site: w.site,
+        level: w.level,
+        targetType: w.target_type || "site",
+        active: w.active !== false
+      }));
+
+      allRecords = normalizeRows(subRes.data || []);
+      document.getElementById("lastSyncText").textContent = `Sync: ${new Date().toLocaleTimeString("it-IT")}`;
+    }
+
+    async function refreshFromSupabase() {
+      if (activeConnectionMode !== "supabase" || !supabaseClient) return;
+      await fetchWorkshopsAndSubmissionsFromSupabase();
+      populateFilterDropdowns(true);
+      applyFilters();
+      renderWorkshopsTable();
+    }
+
+    // =========================================================================
+    // 2. NAVIGAZIONE SCHEDE ADMIN
     // =========================================================================
     function switchAdminView(viewName) {
       currentAdminView = viewName;
@@ -754,13 +776,13 @@
     }
 
     // =========================================================================
-    // 3. GESTIONE WORKSHOP NEL DATABASE NETLIFY BLOBS
+    // 3. GESTIONE WORKSHOP SU SUPABASE (CANTIERE vs UFFICIO, APERTO/CHIUSO)
     // =========================================================================
     function populateWorkshopSiteDropdown() {
       const sel = document.getElementById("selectWsSite");
       if (!sel) return;
       if (editableLists.sites.length === 0) {
-        sel.innerHTML = `<option value="">-- Nessun cantiere in cantieri.txt --</option>`;
+        sel.innerHTML = `<option value="">-- Aggiungi prima un Cantiere/Sede nella scheda Liste --</option>`;
         return;
       }
       sel.innerHTML = editableLists.sites.map(s => {
@@ -775,13 +797,12 @@
       return `${loc.origin}${basePath.endsWith("/") ? basePath : basePath + "/"}index.html`;
     }
 
-// Crea un nuovo workshop impostandolo di default come APERTO (active: true)
-async function createNewWorkshop() {
+    async function createNewWorkshop() {
       const nameVal = document.getElementById("inputWsName").value.trim();
       const dateVal = document.getElementById("inputWsDate").value;
       const siteVal = document.getElementById("selectWsSite").value;
       const levelVal = document.getElementById("selectWsLevel").value;
-      const targetVal = document.getElementById("selectWsTarget") ? document.getElementById("selectWsTarget").value : "site";
+      const targetVal = document.getElementById("selectWsTarget").value;
       const banner = document.getElementById("wsFeedbackBanner");
 
       if (!nameVal || !dateVal || !siteVal) {
@@ -797,177 +818,90 @@ async function createNewWorkshop() {
         date: dateVal,
         site: siteVal,
         level: levelVal,
-        targetType: targetVal, // 'site' oppure 'office'
-        active: true,
-        createdAt: new Date().toISOString()
+        targetType: targetVal,
+        active: true
       };
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        const { error } = await supabaseClient.from("workshops").insert([{
+          id: newWs.id,
+          name: newWs.name,
+          date: newWs.date,
+          site: newWs.site,
+          level: newWs.level,
+          target_type: newWs.targetType,
+          active: true
+        }]);
+        if (error) {
+          alert("Errore salvataggio Workshop su Supabase: " + error.message);
+          return;
+        }
+      }
 
       workshopsDB.unshift(newWs);
       document.getElementById("inputWsName").value = "";
 
-      const typeLabel = targetVal === "office" ? "Ufficio / Sede (HQ)" : "Cantiere / Site";
-      await persistWorkshopsToDatabase(`✓ Workshop creato (Profilo: ${typeLabel}) e salvato nel database Netlify!`);
+      const typeLabel = targetVal === "office" ? "🏢 Ufficio / Sede (HQ)" : "🏗️ Cantiere / Site";
+      banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
+      banner.textContent = `✓ Workshop "${newWs.name}" (${typeLabel}) salvato! Copia il link qui sotto per i partecipanti.`;
+      banner.classList.remove("hidden");
+
       renderWorkshopsTable();
       populateFilterDropdowns(true);
       renderParticipantsTable();
     }
-    
-    // Commuta lo stato Aperto / Chiuso di un Workshop e salva subito nel database Netlify
+
     async function toggleWorkshopActive(wsId) {
       const ws = workshopsDB.find(w => w.id === wsId);
       if (!ws) return;
+      ws.active = !(ws.active !== false);
 
-      // Se 'active' non era definito sui workshop creati in precedenza, lo considera true e lo passa a false
-      const currentlyOpen = ws.active !== false;
-      ws.active = !currentlyOpen;
-
-      const statusLabel = ws.active ? "APERTO (Link attivo)" : "CHIUSO (Link disattivato)";
-      await persistWorkshopsToDatabase(`✓ Stato del workshop "${ws.name}" aggiornato a: ${statusLabel}`);
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        await supabaseClient.from("workshops").update({ active: ws.active }).eq("id", wsId);
+      }
       renderWorkshopsTable();
     }
-    
+
     async function deleteWorkshopRecord(wsId) {
       const target = workshopsDB.find(w => w.id === wsId);
       if (!target) return;
-      if (!window.confirm(`Vuoi davvero eliminare il workshop "${target.name}" dal database?`)) return;
+      if (!window.confirm(`Vuoi davvero eliminare il workshop "${target.name}"?`)) return;
 
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        await supabaseClient.from("workshops").delete().eq("id", wsId);
+      }
       workshopsDB = workshopsDB.filter(w => w.id !== wsId);
-      await persistWorkshopsToDatabase(`✓ Workshop "${target.name}" rimosso dal database.`);
       renderWorkshopsTable();
       populateFilterDropdowns(true);
       renderParticipantsTable();
     }
 
-    async function persistWorkshopsToDatabase(successMsg) {
-      const banner = document.getElementById("wsFeedbackBanner");
-      localStorage.setItem("sl_workshops_db_backup", JSON.stringify(workshopsDB));
-
-      let pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
-      if (!pwd && activeConnectionMode !== "demo") {
-        pwd = window.prompt("Inserisci la tua ADMIN_PASSWORD per salvare nel database Netlify:") || "";
-        savedAdminPassword = pwd.trim();
-      }
-
-      try {
-        const res = await fetch(MANAGE_API_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-admin-password": pwd
-          },
-          body: JSON.stringify({
-            action: "save_workshops",
-            workshops: workshopsDB
-          })
-        });
-
-        if (res.ok) {
-          banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
-          banner.textContent = successMsg;
-          banner.classList.remove("hidden");
-        } else {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || `HTTP ${res.status}`);
-        }
-      } catch (e) {
-        banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-amber-50 border-amber-200 text-amber-900";
-        banner.textContent = `${successMsg} (Salvato in cache locale: ${e.message})`;
-        banner.classList.remove("hidden");
-      }
-    }
-
-// 1. In assignRecordToWorkshop: aggiorna anche il profilo Target quando cambi il Workshop a un test esistente
-    async function assignRecordToWorkshop(recordId, newWorkshopId) {
-      const rec = allRecords.find(r => r.id === recordId);
-      if (!rec) return;
-
-      const wsObj = workshopsDB.find(w => w.id === newWorkshopId);
-      if (wsObj) {
-        const isOff = wsObj.targetType === "office";
-        rec.workshopId = wsObj.id;
-        rec.workshopName = wsObj.name;
-        rec.workshopDate = wsObj.date;
-        rec.workshopLevel = wsObj.level;
-        rec.workshopTarget = isOff ? "Office / HQ" : "Site / Field";
-        workshopAssignments[recordId] = {
-          workshopId: wsObj.id,
-          workshopName: wsObj.name,
-          workshopDate: wsObj.date,
-          workshopLevel: wsObj.level,
-          workshopSite: wsObj.site,
-          workshopTarget: wsObj.targetType || "site"
-        };
-      } else {
-        rec.workshopId = "";
-        rec.workshopName = "Non assegnato";
-        rec.workshopDate = "-";
-        rec.workshopLevel = "Non assegnato";
-        rec.workshopTarget = "Site / Field";
-        delete workshopAssignments[recordId];
-      }
-
-      localStorage.setItem("sl_ws_assignments_backup", JSON.stringify(workshopAssignments));
-      populateFilterDropdowns(true);
-      applyFilters();
-
-      const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
-      if (pwd) {
-        try {
-          await fetch(MANAGE_API_ENDPOINT, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-admin-password": pwd
-            },
-            body: JSON.stringify({
-              action: "assign_submission",
-              submissionId: recordId,
-              workshopId: wsObj ? wsObj.id : null,
-              workshopName: wsObj ? wsObj.name : "",
-              workshopDate: wsObj ? wsObj.date : "",
-              workshopLevel: wsObj ? wsObj.level : "",
-              workshopSite: wsObj ? wsObj.site : "",
-              workshopTarget: wsObj ? (wsObj.targetType || "site") : "site"
-            })
-          });
-        } catch (e) {
-          console.warn("Salvataggio assegnazione workshop:", e);
-        }
-      }
-    }
-// Passa alla scheda Analisi Risultati e filtra tutti i grafici sul singolo Workshop selezionato
     function viewWorkshopReport(wsId) {
       const ws = workshopsDB.find(w => w.id === wsId);
       if (!ws) return;
 
-      // 1. Azzera tutti gli altri filtri per mostrare l'intero gruppo di quel Workshop
+      document.getElementById("filterTarget").value = "ALL";
       document.getElementById("filterLevel").value = "ALL";
       document.getElementById("filterCompany").value = "ALL";
       document.getElementById("filterSite").value = "ALL";
       document.getElementById("filterRole").value = "ALL";
       document.getElementById("filterSearch").value = "";
 
-      // 2. Assicura che i menu a discesa dei filtri siano aggiornati e seleziona il Workshop
       populateFilterDropdowns(false);
-      const selW = document.getElementById("filterWorkshop");
-      selW.value = ws.name;
+      document.getElementById("filterWorkshop").value = ws.name;
+      document.getElementById("selectGroupBy").value = "ruolo";
 
-      // 3. Imposta la Heatmap per raggruppare per "Ruolo" (utile quando si guarda un singolo Workshop)
-      const selGroup = document.getElementById("selectGroupBy");
-      if (selGroup) selGroup.value = "ruolo";
-
-      // 4. Passa alla scheda "Analisi Risultati", ricalcola i grafici e scorre in cima
       switchAdminView("analytics");
       applyFilters();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-function renderWorkshopsTable() {
+    function renderWorkshopsTable() {
       const tbody = document.getElementById("workshopsTableBody");
       if (!tbody) return;
 
       if (workshopsDB.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 italic">Nessun Workshop registrato. Creane uno con il modulo qui sopra per generare il link per i partecipanti.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 italic">Nessun Workshop registrato. Creane uno qui sopra per generare il link per i partecipanti.</td></tr>`;
         return;
       }
 
@@ -992,20 +926,14 @@ function renderWorkshopsTable() {
         return `
           <tr class="hover:bg-slate-50 transition ${!isOpen ? 'opacity-65 bg-slate-50/60' : ''}">
             <td class="py-3 px-3 font-mono text-[11px] font-bold text-slate-500">${ws.id}</td>
-            <td class="py-3 px-3 font-extrabold text-slate-900">
-              ${ws.name}
-              ${targetBadge}
-            </td>
+            <td class="py-3 px-3 font-extrabold text-slate-900">${ws.name} ${targetBadge}</td>
             <td class="py-3 px-3 text-slate-600 whitespace-nowrap">${ws.date}</td>
             <td class="py-3 px-3 text-slate-700 font-medium">${siteLabel}</td>
             <td class="py-3 px-3">
-              <span class="px-2.5 py-0.5 rounded-full border font-bold text-[11px] ${levelBadgeColor}">
-                ${ws.level}
-              </span>
+              <span class="px-2.5 py-0.5 rounded-full border font-bold text-[11px] ${levelBadgeColor}">${ws.level}</span>
             </td>
             <td class="py-3 px-3 text-center">
               <button onclick="toggleWorkshopActive('${ws.id}')"
-                title="Clicca per aprire o chiudere le compilazioni del Workshop"
                 class="inline-flex items-center gap-2 px-3 py-1 rounded-full font-extrabold text-[11px] border transition ${
                   isOpen
                     ? 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200'
@@ -1016,25 +944,19 @@ function renderWorkshopsTable() {
               </button>
             </td>
             <td class="py-3 px-3 text-center">
-              <span class="px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-extrabold text-xs">
-                ${linkedCount}
-              </span>
+              <span class="px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-extrabold text-xs">${linkedCount}</span>
             </td>
             <td class="py-3 px-3">
               <div class="flex flex-wrap items-center gap-1.5">
                 <button onclick="copyWorkshopLink('${wsLink}')" ${!isOpen ? 'disabled' : ''}
                   class="px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition ${
-                    isOpen
-                      ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
-                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    isOpen ? 'bg-amber-500 hover:bg-amber-600 text-slate-950' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                   }">
                   📋 Copia Link
                 </button>
                 <button onclick="openWorkshopQrModal('${ws.id}')" ${!isOpen ? 'disabled' : ''}
                   class="px-2.5 py-1 rounded-lg font-bold text-[11px] transition ${
-                    isOpen
-                      ? 'bg-slate-900 hover:bg-slate-800 text-white'
-                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    isOpen ? 'bg-slate-900 hover:bg-slate-800 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                   }">
                   📱 QR Code
                 </button>
@@ -1072,25 +994,17 @@ function renderWorkshopsTable() {
     function openWorkshopQrModal(wsId) {
       const ws = workshopsDB.find(w => w.id === wsId);
       if (!ws) return;
-
       const wsLink = `${getParticipantTestBaseUrl()}?ws=${encodeURIComponent(ws.id)}`;
       currentQrModalUrl = wsLink;
 
-      document.getElementById("qrModalLevelBadge").textContent = ws.level;
+      document.getElementById("qrModalLevelBadge").textContent = `${ws.level} • ${ws.targetType === 'office' ? '🏢 Ufficio/HQ' : '🏗️ Cantiere'}`;
       document.getElementById("qrModalTitle").textContent = ws.name;
       document.getElementById("qrModalMeta").textContent = `${ws.date} • ${ws.site.split("|")[0].trim()}`;
       document.getElementById("qrModalLinkText").textContent = wsLink;
 
       const box = document.getElementById("qrCodeCanvasBox");
       box.innerHTML = "";
-      new QRCode(box, {
-        text: wsLink,
-        width: 200,
-        height: 200,
-        colorDark: "#0f172a",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
-      });
+      new QRCode(box, { text: wsLink, width: 200, height: 200, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
 
       const modal = document.getElementById("workshopQrModal");
       modal.classList.remove("hidden");
@@ -1106,12 +1020,44 @@ function renderWorkshopsTable() {
     function copyModalWsLink() {
       if (!currentQrModalUrl) return;
       navigator.clipboard.writeText(currentQrModalUrl);
-      alert("Link copiato negli appunti:\n" + currentQrModalUrl);
+      alert("Link copiato:\n" + currentQrModalUrl);
     }
 
     // =========================================================================
-    // 4. SELEZIONE MULTIPLA ED ELIMINAZIONE TEST
+    // 4. ASSEGNAZIONE ED ELIMINAZIONE RECORD SU SUPABASE
     // =========================================================================
+    async function assignRecordToWorkshop(recordId, newWorkshopId) {
+      const rec = allRecords.find(r => r.id === recordId);
+      if (!rec) return;
+
+      const wsObj = workshopsDB.find(w => w.id === newWorkshopId);
+      if (wsObj) {
+        rec.workshopId = wsObj.id;
+        rec.workshopName = wsObj.name;
+        rec.workshopDate = wsObj.date;
+        rec.workshopLevel = wsObj.level;
+        rec.workshopTarget = wsObj.targetType === "office" ? "Office / HQ" : "Site / Field";
+      } else {
+        rec.workshopId = "";
+        rec.workshopName = "Non assegnato";
+        rec.workshopDate = "-";
+        rec.workshopLevel = "Non assegnato";
+      }
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        await supabaseClient.from("submissions").update({
+          workshop_id: rec.workshopId,
+          workshop_nome: rec.workshopName,
+          workshop_data: rec.workshopDate,
+          workshop_livello: rec.workshopLevel,
+          workshop_target: rec.workshopTarget
+        }).eq("id", recordId);
+      }
+
+      populateFilterDropdowns(true);
+      applyFilters();
+    }
+
     function toggleRowSelection(recordId, isChecked) {
       if (isChecked) selectedRecordIds.add(recordId);
       else selectedRecordIds.delete(recordId);
@@ -1132,69 +1078,31 @@ function renderWorkshopsTable() {
       for (const id of selectedRecordIds) {
         if (!validIds.has(id)) selectedRecordIds.delete(id);
       }
-
       const count = selectedRecordIds.size;
       const bulkBtn = document.getElementById("btnDeleteSelected");
-      const bulkLbl = document.getElementById("btnDeleteSelectedLabel");
-
       if (count > 0) {
-        bulkLbl.textContent = `Elimina selezionati (${count})`;
+        document.getElementById("btnDeleteSelectedLabel").textContent = `Elimina selezionati (${count})`;
         bulkBtn.classList.remove("hidden");
       } else {
         bulkBtn.classList.add("hidden");
-      }
-
-      const selectAllChk = document.getElementById("chkSelectAllRows");
-      if (selectAllChk) {
-        if (filteredRecords.length === 0) {
-          selectAllChk.checked = false;
-          selectAllChk.indeterminate = false;
-        } else {
-          const selectedInFiltered = filteredRecords.filter(r => selectedRecordIds.has(r.id)).length;
-          selectAllChk.checked = selectedInFiltered === filteredRecords.length;
-          selectAllChk.indeterminate = selectedInFiltered > 0 && selectedInFiltered < filteredRecords.length;
-        }
       }
     }
 
     async function deleteSelectedSubmissions() {
       const idsArray = Array.from(selectedRecordIds);
       if (idsArray.length === 0) return;
-      if (!window.confirm(`Vuoi eliminare definitivamente i ${idsArray.length} test selezionati?`)) return;
+      if (!window.confirm(`Vuoi eliminare definitivamente i ${idsArray.length} test selezionati da Supabase?`)) return;
 
-      const bulkBtn = document.getElementById("btnDeleteSelected");
-      bulkBtn.disabled = true;
-
-      try {
-        if (activeConnectionMode === "function") {
-          const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
-          const res = await fetch("/.netlify/functions/get-results", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json", "x-admin-password": pwd },
-            body: JSON.stringify({ ids: idsArray })
-          });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        } else if (activeConnectionMode === "direct") {
-          const token = document.getElementById("inputDirectToken").value.trim();
-          await Promise.all(idsArray.map(subId =>
-            fetch(`https://api.netlify.com/api/v1/submissions/${encodeURIComponent(subId)}`, {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${token}` }
-            })
-          ));
-        }
-
-        const deletedSet = new Set(idsArray);
-        allRecords = allRecords.filter(r => !deletedSet.has(r.id));
-        selectedRecordIds.clear();
-        populateFilterDropdowns(true);
-        applyFilters();
-      } catch (err) {
-        alert("Errore eliminazione: " + err.message);
-      } finally {
-        bulkBtn.disabled = false;
-        updateBulkSelectionUI();
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        const { error } = await supabaseClient.from("submissions").delete().in("id", idsArray);
+        if (error) { alert("Errore eliminazione: " + error.message); return; }
       }
+
+      const deletedSet = new Set(idsArray);
+      allRecords = allRecords.filter(r => !deletedSet.has(r.id));
+      selectedRecordIds.clear();
+      populateFilterDropdowns(true);
+      applyFilters();
     }
 
     async function deleteSubmissionById(recordId, event) {
@@ -1203,30 +1111,16 @@ function renderWorkshopsTable() {
       if (!targetRec) return;
       if (!window.confirm(`Eliminare definitivamente il test di "${targetRec.name}"?`)) return;
 
-      try {
-        if (activeConnectionMode === "function") {
-          const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
-          const res = await fetch(`/.netlify/functions/get-results?id=${encodeURIComponent(recordId)}`, {
-            method: "DELETE",
-            headers: { "x-admin-password": pwd }
-          });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        } else if (activeConnectionMode === "direct") {
-          const token = document.getElementById("inputDirectToken").value.trim();
-          await fetch(`https://api.netlify.com/api/v1/submissions/${encodeURIComponent(recordId)}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` }
-          });
-        }
-
-        allRecords = allRecords.filter(r => r.id !== recordId);
-        selectedRecordIds.delete(recordId);
-        if (currentModalRecordId === recordId) closeParticipantModal();
-        populateFilterDropdowns(true);
-        applyFilters();
-      } catch (err) {
-        alert("Errore: " + err.message);
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        const { error } = await supabaseClient.from("submissions").delete().eq("id", recordId);
+        if (error) { alert("Errore: " + error.message); return; }
       }
+
+      allRecords = allRecords.filter(r => r.id !== recordId);
+      selectedRecordIds.delete(recordId);
+      if (currentModalRecordId === recordId) closeParticipantModal();
+      populateFilterDropdowns(true);
+      applyFilters();
     }
 
     function deleteCurrentModalParticipant() {
@@ -1235,115 +1129,41 @@ function renderWorkshopsTable() {
     }
 
     // =========================================================================
-    // 5. CARICAMENTO LISTE .TXT E WORKSHOP DAL DATABASE
+    // 5. GESTIONE LISTE SU SUPABASE (AZIENDE, RUOLI, CANTIERI/SEDI)
     // =========================================================================
-    function parsePlainTxtLines(rawText) {
-      if (!rawText) return [];
-      return String(rawText)
-        .split(/\r?\n/)
-        .map(line => line.trim())
-        .filter(line =>
-          line.length > 0 &&
-          !line.startsWith("#") &&
-          !line.startsWith("//") &&
-          !line.toLowerCase().startsWith("<!doctype") &&
-          !line.startsWith("<")
-        );
-    }
-
-    async function fetchRawTxtList(fileUrl) {
-      const response = await fetch(`${fileUrl}?v=${Date.now()}`, { cache: "no-store" });
-      const contentType = response.headers.get("content-type") || "";
-      if (!response.ok || contentType.includes("text/html")) throw new Error(`Missing ${fileUrl}`);
-      const lines = parsePlainTxtLines(await response.text());
-      if (lines.length === 0) throw new Error(`Empty ${fileUrl}`);
-      return lines;
-    }
-
-    async function loadListsAndWorkshops() {
-      editableLists = { companies: [], roles: [], sites: [] };
-      missingTxtFiles = [];
-
-      // 1. Prova a leggere tutto da manage-lists.js (GitHub .txt + Netlify Blobs Workshops)
-      try {
-        const res = await fetch(MANAGE_API_ENDPOINT, { cache: "no-store" });
-        const cType = res.headers.get("content-type") || "";
-        if (res.ok && cType.includes("application/json")) {
-          const data = await res.json();
-          if (data && data.status === "success") {
-            editableLists.companies = Array.isArray(data.companies) ? data.companies : [];
-            editableLists.roles = Array.isArray(data.roles) ? data.roles : [];
-            editableLists.sites = Array.isArray(data.sites) ? data.sites : [];
-            workshopsDB = Array.isArray(data.workshops) ? data.workshops : [];
-            workshopAssignments = data.assignments || {};
-            document.getElementById("txtSourceStatusBadge").textContent = "Sincronizzato con GitHub & DB Netlify ✓";
-            populateWorkshopSiteDropdown();
-            renderWorkshopsTable();
-            renderEditableListsUI();
-            return;
-          }
-        }
-      } catch (_) {}
-
-      // 2. Fallback lettura diretta dei 3 file .txt pubblicati
-      try { editableLists.companies = await fetchRawTxtList(COMPANIES_TXT_URL); } catch (_) { missingTxtFiles.push("aziende.txt"); }
-      try { editableLists.roles = await fetchRawTxtList(ROLES_TXT_URL); } catch (_) { missingTxtFiles.push("ruoli.txt"); }
-      try { editableLists.sites = await fetchRawTxtList(SITES_TXT_URL); } catch (_) { missingTxtFiles.push("cantieri.txt"); }
-
-      const localWs = localStorage.getItem("sl_workshops_db_backup");
-      if (localWs) { try { workshopsDB = JSON.parse(localWs); } catch (_) {} }
-      const localAssign = localStorage.getItem("sl_ws_assignments_backup");
-      if (localAssign) { try { workshopAssignments = JSON.parse(localAssign); } catch (_) {} }
-
-      populateWorkshopSiteDropdown();
-      renderWorkshopsTable();
-      renderEditableListsUI();
-    }
-
-    async function saveListsToGitHub() {
-      const banner = document.getElementById("githubSaveBanner");
-      const btn = document.getElementById("btnSaveGitHub");
-
-      let pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
-      if (!pwd) {
-        pwd = window.prompt("Inserisci la tua Password Admin (ADMIN_PASSWORD) per salvare su GitHub:") || "";
-        if (!pwd) return;
-        savedAdminPassword = pwd.trim();
-      }
-
+    async function saveListsToSupabase() {
+      const banner = document.getElementById("listsSaveBanner");
+      const btn = document.getElementById("btnSaveSbLists");
       btn.disabled = true;
-      btn.textContent = "Salvataggio su GitHub...";
+      btn.textContent = "Salvataggio...";
       banner.classList.add("hidden");
 
       try {
-        const res = await fetch(MANAGE_API_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-admin-password": pwd },
-          body: JSON.stringify({
-            action: "save_txt",
+        if (activeConnectionMode === "supabase" && supabaseClient) {
+          const { error } = await supabaseClient.from("app_config").update({
             companies: editableLists.companies,
             roles: editableLists.roles,
-            sites: editableLists.sites
-          })
-        });
+            sites: editableLists.sites,
+            updated_at: new Date().toISOString()
+          }).eq("id", 1);
 
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+          if (error) throw new Error(error.message);
+        }
 
         hasUnsavedListChanges = false;
         document.getElementById("unsavedChangesBadge").classList.add("hidden");
         populateWorkshopSiteDropdown();
 
         banner.className = "rounded-xl p-4 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
-        banner.textContent = "✓ File aziende.txt, ruoli.txt e cantieri.txt aggiornati direttamente su GitHub!";
+        banner.textContent = "✓ Liste salvate istantaneamente su Supabase! I menu di index.html sono già aggiornati.";
         banner.classList.remove("hidden");
       } catch (err) {
         banner.className = "rounded-xl p-4 text-xs font-bold border bg-red-50 border-red-200 text-red-700";
-        banner.textContent = "Errore salvataggio GitHub: " + err.message;
+        banner.textContent = "Errore salvataggio: " + err.message;
         banner.classList.remove("hidden");
       } finally {
         btn.disabled = false;
-        btn.textContent = "🚀 Salva direttamente su GitHub";
+        btn.textContent = "💾 Salva Liste su Supabase";
       }
     }
 
@@ -1357,7 +1177,7 @@ function renderWorkshopsTable() {
         document.getElementById(countBadgeId).textContent = list.length;
 
         if (list.length === 0) {
-          container.innerHTML = `<p class="text-xs text-slate-400 italic py-6 text-center">Nessuna voce nel file .txt</p>`;
+          container.innerHTML = `<p class="text-xs text-slate-400 italic py-6 text-center">Lista vuota</p>`;
           return;
         }
 
@@ -1435,120 +1255,15 @@ function renderWorkshopsTable() {
     }
 
     // =========================================================================
-    // 6. CONNESSIONE AI RISULTATI E NORMALIZZAZIONE CON CAMPI WORKSHOP
+    // 6. NORMALIZZAZIONE, DEMO E CALCOLO ANALYTICS
     // =========================================================================
-    function switchAuthMode(mode) {
-      document.getElementById("uploadError").classList.add("hidden");
-      document.getElementById("authPanelFunction").classList.toggle("hidden", mode !== "function");
-      document.getElementById("authPanelDirect").classList.toggle("hidden", mode === "function");
-    }
-
-    function showError(msg) {
-      const errEl = document.getElementById("uploadError");
-      errEl.textContent = msg;
-      errEl.classList.remove("hidden");
-    }
-
-    async function connectViaNetlifyFunction(isBackgroundRefresh = false) {
-      const pwd = isBackgroundRefresh ? savedAdminPassword : document.getElementById("inputAdminPassword").value.trim();
-      if (!pwd) { showError("Inserisci la Password Admin."); return; }
-
-      const btn = document.getElementById("btnConnectFunc");
-      if (!isBackgroundRefresh) { btn.textContent = "Connessione..."; btn.disabled = true; }
-
-      try {
-        await loadListsAndWorkshops();
-        const res = await fetch("/.netlify/functions/get-results", {
-          method: "GET",
-          headers: { "x-admin-password": pwd }
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-
-        savedAdminPassword = pwd;
-        activeConnectionMode = "function";
-        allRecords = normalizeNetlifyRows(data.rows || []);
-        updateLastSyncTimestamp();
-        initDashboardWithData(isBackgroundRefresh);
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        btn.textContent = "Accedi alla Console →";
-        btn.disabled = false;
-      }
-    }
-
-    async function connectViaDirectAPI(isBackgroundRefresh = false) {
-      const siteId = document.getElementById("inputDirectSiteId").value.trim();
-      const token = document.getElementById("inputDirectToken").value.trim();
-      if (!siteId || !token) { showError("Inserisci Site ID e Token."); return; }
-
-      if (document.getElementById("chkRememberDirect").checked) {
-        localStorage.setItem("sl_netlify_site_id", siteId);
-        localStorage.setItem("sl_netlify_token", token);
-      }
-
-      try {
-        await loadListsAndWorkshops();
-        const url = `https://api.netlify.com/api/v1/sites/${encodeURIComponent(siteId)}/submissions?per_page=100`;
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const subs = await res.json();
-        const rawRows = subs
-          .filter(s => (!s.form_name || s.form_name === "risultati-safety-leadership") && s.data)
-          .map(s => ({ submission_id: s.id, created_at: s.created_at, ...s.data }));
-
-        activeConnectionMode = "direct";
-        allRecords = normalizeNetlifyRows(rawRows);
-        updateLastSyncTimestamp();
-        initDashboardWithData(isBackgroundRefresh);
-      } catch (err) {
-        showError(err.message);
-      }
-    }
-
-    function refreshLiveData() {
-      if (activeConnectionMode === "function") connectViaNetlifyFunction(true);
-      else if (activeConnectionMode === "direct") connectViaDirectAPI(true);
-    }
-
-    function toggleAutoRefresh() {
-      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-      if (document.getElementById("chkAutoRefresh").checked) {
-        autoRefreshTimer = setInterval(() => refreshLiveData(), 60000);
-      }
-    }
-
-    function updateLastSyncTimestamp() {
-      document.getElementById("lastSyncText").textContent = `Sync: ${new Date().toLocaleTimeString("it-IT")}`;
-      const liveCtrl = document.getElementById("liveControls");
-      liveCtrl.classList.remove("hidden");
-      liveCtrl.classList.add("flex");
-    }
-
-    function handleFileSelect(event) {
-      if (event.target.files && event.target.files.length > 0) {
-        Papa.parse(event.target.files[0], {
-          header: true,
-          skipEmptyLines: true,
-          complete: async function(results) {
-            await loadListsAndWorkshops();
-            allRecords = normalizeNetlifyRows(results.data);
-            activeConnectionMode = "csv";
-            initDashboardWithData(false);
-          }
-        });
-      }
-    }
-
     function parseNumericPct(val) {
-      if (!val) return 0;
+      if (val === undefined || val === null) return 0;
       const num = parseFloat(String(val).replace("%", "").replace(",", ".").trim());
       return isNaN(num) ? 0 : num;
     }
 
-// 2. In normalizeNetlifyRows: legge il campo workshop_target (o lo ricava dal Workshop associato)
-    function normalizeNetlifyRows(rawRows) {
+    function normalizeRows(rawRows) {
       const valid = [];
       rawRows.forEach((row, index) => {
         const norm = {};
@@ -1565,34 +1280,26 @@ function renderWorkshopsTable() {
         if (sumPct === 0) return;
 
         const sortedAreas = [...AREA_KEYS].sort((a, b) => pcts[b.id] - pcts[a.id]);
-        const recordId = String(norm["submission_id"] || norm["id"] || `local_${index}`);
-
-        const override = workshopAssignments[recordId];
-        const wsId = override ? override.workshopId : (norm["workshop_id"] || "");
+        const recordId = String(norm["id"] || norm["submission_id"] || `local_${index}`);
+        const wsId = norm["workshop_id"] || "";
         const wsFromDb = workshopsDB.find(w => w.id === wsId);
 
-        const wsName = override?.workshopName || wsFromDb?.name || norm["workshop_nome"] || "Non assegnato";
-        const wsDate = override?.workshopDate || wsFromDb?.date || norm["workshop_data"] || "-";
-        const wsLevel = override?.workshopLevel || wsFromDb?.level || norm["workshop_livello"] || "Non assegnato";
+        const wsName = wsFromDb?.name || norm["workshop_nome"] || "Non assegnato";
+        const wsDate = wsFromDb?.date || norm["workshop_data"] || "-";
+        const wsLevel = wsFromDb?.level || norm["workshop_livello"] || "Non assegnato";
 
-        // Determina se il questionario appartiene a "Office / HQ" o "Site / Field"
-        let rawTarget = override?.workshopTarget || wsFromDb?.targetType || norm["workshop_target"] || "site";
+        const rawTarget = wsFromDb?.targetType || norm["workshop_target"] || "site";
         const isOffice = String(rawTarget).toLowerCase().includes("office") || String(rawTarget).toLowerCase().includes("hq");
         const wsTarget = isOffice ? "Office / HQ" : "Site / Field";
 
-        let dateFormatted = norm["data_ora"] || norm["created_at"] || "-";
-        if (dateFormatted.includes("T") && dateFormatted.includes("Z")) {
-          try { dateFormatted = new Date(dateFormatted).toLocaleString("it-IT"); } catch (_) {}
-        }
-
         valid.push({
           id: recordId,
-          date: dateFormatted,
+          date: norm["data_ora"] || (norm["created_at"] ? new Date(norm["created_at"]).toLocaleString("it-IT") : "-"),
           workshopId: wsId,
           workshopName: wsName,
           workshopDate: wsDate,
           workshopLevel: wsLevel,
-          workshopTarget: wsTarget, // 'Site / Field' | 'Office / HQ'
+          workshopTarget: wsTarget,
           name: norm["partecipante"] || "Anonimo",
           company: norm["azienda"] || "Non specificata",
           role: norm["ruolo"] || "Non specificato",
@@ -1608,67 +1315,74 @@ function renderWorkshopsTable() {
         });
       });
       return valid;
-    }    // =========================================================================
-    // 7. MODALITÀ DEMO (GENERA ANCHE 3 WORKSHOP DIMOSTRATIVI)
-    // =========================================================================
-    async function loadDemoDataset() {
-      await loadListsAndWorkshops();
+    }
 
-      const sites = editableLists.sites.length > 0
-        ? editableLists.sites.map(x => x.split("|")[0].trim())
-        : ["Cantiere Nord - Lotto 1", "Cantiere Sud - Lotto 2"];
-      const companies = editableLists.companies.length > 0
-        ? editableLists.companies.map(x => x.split("|")[0].trim())
-        : ["General Contractor SpA", "Tech Engineering Srl"];
-      const roles = editableLists.roles.length > 0
-        ? editableLists.roles.map(x => x.split("|")[0].trim())
-        : ["Site Manager", "HSE Manager", "Preposto"];
-
-      if (workshopsDB.length === 0) {
-        workshopsDB = [
-          { id: "ws_top01", name: "Executive Alignment Nord", date: "2026-10-15", site: sites[0], level: "Top manager" },
-          { id: "ws_sec02", name: "Supervisors Safety Bootcamp", date: "2026-10-22", site: sites[0], level: "Second level" },
-          { id: "ws_bas03", name: "Field Safety Kickoff Sud", date: "2026-10-28", site: sites[1 % sites.length], level: "Baseline" }
-        ];
+    function handleFileSelect(event) {
+      if (event.target.files && event.target.files.length > 0) {
+        Papa.parse(event.target.files[0], {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            allRecords = normalizeRows(results.data);
+            activeConnectionMode = "csv";
+            initDashboardWithData(false);
+          }
+        });
       }
+    }
+
+    function loadDemoDataset() {
+      editableLists = {
+        companies: ["General Contractor SpA", "Tech Engineering Srl", "SafeWorks Costruzioni"],
+        roles: ["Project Manager", "Lead Engineer (HQ)", "Procurement Buyer (HQ)", "Site Manager", "HSE Manager", "Preposto"],
+        sites: ["Cantiere Nord - Lotto 1", "Cantiere Sud - Lotto 2", "Sede Ingegneria / Direzione HQ"]
+      };
+
+      workshopsDB = [
+        { id: "ws_hq01", name: "Engineering & PM Leadership HQ", date: "2026-10-15", site: "Sede Ingegneria / Direzione HQ", level: "Top manager", targetType: "office", active: true },
+        { id: "ws_site02", name: "Supervisors Safety Bootcamp Nord", date: "2026-10-22", site: "Cantiere Nord - Lotto 1", level: "Second level", targetType: "site", active: true },
+        { id: "ws_site03", name: "Field Safety Kickoff Sud", date: "2026-10-28", site: "Cantiere Sud - Lotto 2", level: "Baseline", targetType: "site", active: false }
+      ];
 
       const demoRows = [];
       for (let i = 0; i < 25; i++) {
         const ws = workshopsDB[i % workshopsDB.length];
+        const isOff = ws.targetType === "office";
         const raw = {
-          VISION: 10 + ((i * 3) % 9),
-          FOCUS: 12 + ((i * 5) % 10),
+          VISION: 11 + ((i * 3) % 8) + (isOff ? 4 : 0),
+          FOCUS: 12 + ((i * 5) % 9) + (!isOff ? 3 : 0),
           INFLUENCE: 9 + ((i * 7) % 8),
           CREDIBILITY: 13 + ((i * 2) % 9),
           TEAM: 10 + ((i * 4) % 9),
-          COMMUNICATION: 9 + ((i * 6) % 8),
+          COMMUNICATION: 10 + ((i * 6) % 8) + (isOff ? 2 : 0),
           FEEDBACK: 8 + ((i * 3) % 7)
         };
         const tot = Object.values(raw).reduce((a, b) => a + b, 0);
 
         demoRows.push({
-          submission_id: `demo_sub_${i + 1}`,
+          id: `demo_${i + 1}`,
           data_ora: `${10 + (i % 18)}/10/2026`,
           workshop_id: ws.id,
           workshop_nome: ws.name,
           workshop_data: ws.date,
           workshop_livello: ws.level,
+          workshop_target: isOff ? "Office / HQ" : "Site / Field",
           partecipante: i % 2 === 0 ? `Partecipante #${i + 1}` : "Anonimo",
-          azienda: companies[i % companies.length],
-          ruolo: roles[i % roles.length],
-          cantiere: ws.site.split("|")[0].trim(),
-          vision_pct: ((raw.VISION / tot) * 100).toFixed(1) + "%",
-          focus_pct: ((raw.FOCUS / tot) * 100).toFixed(1) + "%",
-          influence_pct: ((raw.INFLUENCE / tot) * 100).toFixed(1) + "%",
-          credibility_pct: ((raw.CREDIBILITY / tot) * 100).toFixed(1) + "%",
-          team_pct: ((raw.TEAM / tot) * 100).toFixed(1) + "%",
-          communication_pct: ((raw.COMMUNICATION / tot) * 100).toFixed(1) + "%",
-          feedback_pct: ((raw.FEEDBACK / tot) * 100).toFixed(1) + "%"
+          azienda: editableLists.companies[i % editableLists.companies.length],
+          ruolo: isOff ? (i % 2 === 0 ? "Lead Engineer (HQ)" : "Procurement Buyer (HQ)") : "Preposto",
+          cantiere: ws.site,
+          vision_pct: ((raw.VISION / tot) * 100).toFixed(1),
+          focus_pct: ((raw.FOCUS / tot) * 100).toFixed(1),
+          influence_pct: ((raw.INFLUENCE / tot) * 100).toFixed(1),
+          credibility_pct: ((raw.CREDIBILITY / tot) * 100).toFixed(1),
+          team_pct: ((raw.TEAM / tot) * 100).toFixed(1),
+          communication_pct: ((raw.COMMUNICATION / tot) * 100).toFixed(1),
+          feedback_pct: ((raw.FEEDBACK / tot) * 100).toFixed(1)
         });
       }
 
       activeConnectionMode = "demo";
-      allRecords = normalizeNetlifyRows(demoRows);
+      allRecords = normalizeRows(demoRows);
       initDashboardWithData(false);
     }
 
@@ -1684,8 +1398,8 @@ function renderWorkshopsTable() {
     }
 
     function logoutAndShowLogin() {
-      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
       selectedRecordIds.clear();
+      document.getElementById("liveControls").classList.add("hidden");
       document.getElementById("adminNavTabs").classList.add("hidden");
       document.getElementById("screen-dashboard").classList.add("hidden");
       document.getElementById("screen-workshops").classList.add("hidden");
@@ -1696,11 +1410,7 @@ function renderWorkshopsTable() {
     }
 
     function populateFilterDropdowns(preserve = false) {
-      const wsNames = [...new Set([
-        ...workshopsDB.map(w => w.name),
-        ...allRecords.map(r => r.workshopName)
-      ])].filter(Boolean).sort();
-
+      const wsNames = [...new Set([...workshopsDB.map(w => w.name), ...allRecords.map(r => r.workshopName)])].filter(Boolean).sort();
       const companies = [...new Set(allRecords.map(r => r.company))].sort();
       const sites = [...new Set(allRecords.map(r => r.site))].sort();
       const roles = [...new Set(allRecords.map(r => r.role))].sort();
@@ -1715,14 +1425,10 @@ function renderWorkshopsTable() {
       const prevS = preserve ? selS.value : "ALL";
       const prevR = preserve ? selR.value : "ALL";
 
-      selW.innerHTML = `<option value="ALL">Tutti i Workshop</option>` +
-        wsNames.map(w => `<option value="${w}">${w}</option>`).join("");
-      selC.innerHTML = `<option value="ALL">Tutte le Aziende</option>` +
-        companies.map(c => `<option value="${c}">${c}</option>`).join("");
-      selS.innerHTML = `<option value="ALL">Tutti i Cantieri</option>` +
-        sites.map(s => `<option value="${s}">${s}</option>`).join("");
-      selR.innerHTML = `<option value="ALL">Tutti i Ruoli</option>` +
-        roles.map(r => `<option value="${r}">${r}</option>`).join("");
+      selW.innerHTML = `<option value="ALL">Tutti i Workshop</option>` + wsNames.map(w => `<option value="${w}">${w}</option>`).join("");
+      selC.innerHTML = `<option value="ALL">Tutte le Aziende</option>` + companies.map(c => `<option value="${c}">${c}</option>`).join("");
+      selS.innerHTML = `<option value="ALL">Tutti i Cantieri/Sedi</option>` + sites.map(s => `<option value="${s}">${s}</option>`).join("");
+      selR.innerHTML = `<option value="ALL">Tutti i Ruoli</option>` + roles.map(r => `<option value="${r}">${r}</option>`).join("");
 
       if (wsNames.includes(prevW)) selW.value = prevW;
       if (companies.includes(prevC)) selC.value = prevC;
@@ -1730,7 +1436,6 @@ function renderWorkshopsTable() {
       if (roles.includes(prevR)) selR.value = prevR;
     }
 
-// 3. In resetFilters, viewWorkshopReport e applyFilters: include il filtro filterTarget
     function resetFilters() {
       document.getElementById("filterWorkshop").value = "ALL";
       document.getElementById("filterTarget").value = "ALL";
@@ -1741,9 +1446,10 @@ function renderWorkshopsTable() {
       document.getElementById("filterSearch").value = "";
       applyFilters();
     }
-function applyFilters() {
+
+    function applyFilters() {
       const wVal = document.getElementById("filterWorkshop").value;
-      const tVal = document.getElementById("filterTarget") ? document.getElementById("filterTarget").value : "ALL";
+      const tVal = document.getElementById("filterTarget").value;
       const lVal = document.getElementById("filterLevel").value;
       const cVal = document.getElementById("filterCompany").value;
       const sVal = document.getElementById("filterSite").value;
@@ -1763,7 +1469,7 @@ function applyFilters() {
 
       renderAllAnalytics();
     }
-    
+
     function computeGroupAverages(records) {
       const avg = {};
       AREA_KEYS.forEach(a => avg[a.id] = 0);
@@ -1774,14 +1480,18 @@ function applyFilters() {
     }
 
     function renderAllAnalytics() {
-      document.getElementById("activeRecordsBadge").textContent =
-        `${filteredRecords.length} di ${allRecords.length} test selezionati`;
+      document.getElementById("activeRecordsBadge").textContent = `${filteredRecords.length} di ${allRecords.length} test selezionati`;
 
       const globalAvg = computeGroupAverages(allRecords);
       const filteredAvg = computeGroupAverages(filteredRecords);
       const sortedAvg = [...AREA_KEYS].sort((a, b) => filteredAvg[b.id] - filteredAvg[a.id]);
 
+      const siteCount = filteredRecords.filter(r => r.workshopTarget === "Site / Field").length;
+      const officeCount = filteredRecords.filter(r => r.workshopTarget === "Office / HQ").length;
+
       document.getElementById("kpi1Value").textContent = filteredRecords.length;
+      document.getElementById("kpi1Sub").textContent = `🏗️ ${siteCount} Cantiere • 🏢 ${officeCount} Ufficio`;
+
       if (filteredRecords.length > 0) {
         document.getElementById("kpi2Value").textContent = sortedAvg[0].name;
         document.getElementById("kpi2Sub").textContent = `Media: ${filteredAvg[sortedAvg[0].id].toFixed(1)}%`;
@@ -1843,7 +1553,7 @@ function applyFilters() {
       renderParticipantsTable();
       updateBulkSelectionUI();
     }
-// 4. In renderGroupComparison: aggiunge la mappatura "target: 'workshopTarget'" per la Heatmap
+
     function renderGroupComparison() {
       const groupField = document.getElementById("selectGroupBy").value;
       const propMap = {
@@ -1911,16 +1621,17 @@ function applyFilters() {
         `;
       }).join("");
     }
+
     function renderParticipantsTable() {
       const tbody = document.getElementById("participantsTableBody");
       tbody.innerHTML = filteredRecords.map((r, idx) => {
         const isChecked = selectedRecordIds.has(r.id);
+        const isOff = r.workshopTarget === "Office / HQ";
 
-        // Costruisce la tendina editabile per assegnare o cambiare il Workshop a qualsiasi record esistente
         const wsOptionsHTML = `<option value="">-- Non assegnato --</option>` +
           workshopsDB.map(w => {
             const selected = (r.workshopId === w.id || r.workshopName === w.name) ? "selected" : "";
-            return `<option value="${w.id}" ${selected}>${w.name} (${w.level})</option>`;
+            return `<option value="${w.id}" ${selected}>${w.name}</option>`;
           }).join("");
 
         return `
@@ -1934,14 +1645,17 @@ function applyFilters() {
             <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${r.date}</td>
             <td class="py-2.5 px-3" onclick="event.stopPropagation()">
               <select onchange="assignRecordToWorkshop('${r.id}', this.value)"
-                class="px-2 py-1 rounded-lg border border-slate-300 text-[11px] font-bold bg-white text-slate-800 focus:border-amber-500">
+                class="px-2 py-1 rounded-lg border border-slate-300 text-[11px] font-bold bg-white text-slate-800">
                 ${wsOptionsHTML}
               </select>
             </td>
-            <td class="py-2.5 px-3">
-              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[11px]">
-                ${r.workshopLevel}
+            <td class="py-2.5 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${isOff ? 'bg-indigo-100 text-indigo-900' : 'bg-amber-100 text-amber-900'}">
+                ${isOff ? '🏢 Ufficio' : '🏗️ Cantiere'}
               </span>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[11px]">${r.workshopLevel}</span>
             </td>
             <td class="py-2.5 px-3 font-bold text-slate-900">${r.name}</td>
             <td class="py-2.5 px-3 text-slate-700">${r.company}</td>
@@ -1968,7 +1682,7 @@ function applyFilters() {
       const r = filteredRecords[filteredIdx];
       if (!r) return;
       currentModalRecordId = r.id;
-      document.getElementById("modalCompanyBadge").textContent = `${r.workshopName} • ${r.workshopLevel}`;
+      document.getElementById("modalCompanyBadge").textContent = `${r.workshopName} • ${r.workshopTarget}`;
       document.getElementById("modalPersonName").textContent = r.name;
       document.getElementById("modalPersonMeta").textContent = `${r.company} • ${r.role} • ${r.site}`;
       document.getElementById("modalChoicesLog").textContent = r.choicesLog;
@@ -2015,11 +1729,12 @@ function applyFilters() {
       const rows = filteredRecords.map(r => ({
         Data: r.date,
         Workshop: r.workshopName,
+        Profilo: r.workshopTarget,
         Livello_Workshop: r.workshopLevel,
         Partecipante: r.name,
         Azienda: r.company,
         Ruolo: r.role,
-        Cantiere: r.site,
+        Cantiere_Sede: r.site,
         Area_Dominante_1: `${r.top1Name} (${r.top1Val.toFixed(1)}%)`,
         Area_Gap_7: `${r.low7Name} (${r.low7Val.toFixed(1)}%)`,
         Vision_Pct: r.pct.VISION.toFixed(1),
@@ -2035,20 +1750,17 @@ function applyFilters() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "report-workshop-safety-leadership.csv";
+      a.download = "report-safety-leadership-supabase.csv";
       a.click();
       URL.revokeObjectURL(url);
     }
 
-    function toggleLanguage() {
-      currentLang = currentLang === "it" ? "en" : "it";
-      document.getElementById("langLabel").textContent = currentLang === "it" ? "Italiano 🇮🇹" : "English 🇬🇧";
-      if (allRecords.length > 0) renderAllAnalytics();
-    }
-
     window.addEventListener("DOMContentLoaded", () => {
       document.getElementById("inputWsDate").valueAsDate = new Date();
-      loadListsAndWorkshops();
+      const savedUrl = localStorage.getItem("sl_sb_url") || DEFAULT_SUPABASE_URL;
+      const savedKey = localStorage.getItem("sl_sb_key") || DEFAULT_SUPABASE_ANON_KEY;
+      if (savedUrl) document.getElementById("inputSbUrl").value = savedUrl;
+      if (savedKey) document.getElementById("inputSbKey").value = savedKey;
     });
   </script>
 </body>
