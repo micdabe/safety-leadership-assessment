@@ -21,13 +21,16 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
   <!-- ========================================================================
-       SCHEMA DATABASE NETLIFY FORMS
-       Serve a Netlify per registrare i risultati nella sezione "Forms".
+       SCHEMA DATABASE NETLIFY FORMS (Include ora i campi del Workshop)
        ======================================================================== -->
   <form name="risultati-safety-leadership" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="hidden" hidden>
     <input type="hidden" name="form-name" value="risultati-safety-leadership" />
     <input type="text" name="bot-field" />
     <input type="text" name="data_ora" />
+    <input type="text" name="workshop_id" />
+    <input type="text" name="workshop_nome" />
+    <input type="text" name="workshop_data" />
+    <input type="text" name="workshop_livello" />
     <input type="text" name="partecipante" />
     <input type="text" name="consenso_privacy" />
     <input type="text" name="azienda" />
@@ -71,7 +74,7 @@
         <button onclick="toggleLanguage()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
           <span id="langSwitchPrefix">Lingua:</span> <span id="langLabel" class="text-amber-400 font-bold">Italiano 🇮🇹</span>
         </button>
-        <button id="btnResetHdr" onclick="resetApp()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
+        <button id="btnResetHdr" onclick="resetApp()" class="hidden px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
           Ricomincia
         </button>
       </div>
@@ -81,9 +84,48 @@
   <!-- Main Content -->
   <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8">
 
-    <!-- 1. SCHERMATA INIZIALE -->
-    <section id="screen-welcome" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-10">
+    <!-- 0. SCHERMATA DI BLOCCO SE MANCA IL LINK DEL WORKSHOP -->
+    <section id="screen-locked" class="hidden bg-white rounded-2xl shadow-sm border-2 border-red-200 p-8 md:p-12 text-center max-w-2xl mx-auto my-8">
+      <div class="w-16 h-16 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-5 text-3xl font-extrabold">
+        🔒
+      </div>
+      <span id="lockBadge" class="inline-block px-3 py-1 rounded-full bg-red-100 text-red-800 text-xs font-bold uppercase tracking-wider mb-3">
+        Link Workshop Richiesto
+      </span>
+      <h2 id="lockTitle" class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-3">
+        Accesso consentito solo tramite Link o QR Code di un Workshop attivo
+      </h2>
+      <p id="lockDesc" class="text-slate-600 text-sm md:text-base leading-relaxed mb-6">
+        Questo questionario può essere compilato esclusivamente dai partecipanti a una sessione <strong>Workshop</strong> programmata. Utilizza il <strong>link specifico</strong> o inquadra il <strong>QR Code</strong> fornito dal coordinatore del tuo Workshop.
+      </p>
+      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500">
+        <span id="lockHint">Se sei il coordinatore, accedi alla Dashboard Admin → scheda "Gestione Workshop" per generare il link o il QR Code dell'evento.</span>
+      </div>
+    </section>
+
+    <!-- 1. SCHERMATA INIZIALE (VISIBILE SOLO CON LINK WORKSHOP VALIDO) -->
+    <section id="screen-welcome" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-10">
       <div class="max-w-3xl mx-auto">
+
+        <!-- Banner Evento Workshop Attivo -->
+        <div class="bg-slate-900 text-white rounded-2xl p-5 mb-7 border-l-8 border-amber-500 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+            <span id="wsActiveBadge" class="px-2.5 py-0.5 rounded bg-amber-500 text-slate-950 text-[11px] font-black uppercase tracking-wider">
+              WORKSHOP UFFICIALE
+            </span>
+            <span id="wsBannerLevel" class="px-2.5 py-0.5 rounded bg-slate-800 text-amber-400 border border-slate-700 text-xs font-bold">
+              Livello: -
+            </span>
+          </div>
+          <h3 id="wsBannerName" class="text-xl md:text-2xl font-extrabold text-white">
+            Nome del Workshop
+          </h3>
+          <div class="flex flex-wrap items-center gap-4 mt-2 text-xs text-slate-300">
+            <span>📅 <strong id="wsBannerDate">-</strong></span>
+            <span>📍 <strong id="wsBannerSite">-</strong></span>
+          </div>
+        </div>
+
         <div class="flex flex-wrap gap-2 mb-4">
           <span id="wBadge1" class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">
             12 Scenari Operativi
@@ -142,14 +184,14 @@
               </select>
             </div>
 
-            <!-- 3. Cantiere / Progetto (Da cantieri.txt) -->
+            <!-- 3. Cantiere / Progetto (Pre-impostato dal Workshop) -->
             <div>
               <label id="lblUserSite" for="selectUserSite" class="block text-xs font-bold text-slate-700 mb-1">
-                Cantiere / Progetto *
+                Cantiere / Progetto (Associato al Workshop) *
               </label>
-              <select id="selectUserSite" onchange="clearFormError()"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-amber-500">
-                <option value="">-- Seleziona il cantiere / progetto --</option>
+              <select id="selectUserSite" onchange="clearFormError()" disabled
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-slate-100 text-slate-700 font-semibold cursor-not-allowed focus:outline-none">
+                <option value="">-- Cantiere del Workshop --</option>
               </select>
             </div>
 
@@ -186,7 +228,7 @@
             </div>
 
             <div id="privacyDetailsBox" class="hidden mt-3 pt-2.5 border-t border-slate-200 text-[11px] text-slate-500 leading-relaxed">
-              Il conferimento del nominativo è facoltativo. In assenza del nome, i dati statistici aggregati (Azienda, Ruolo, Cantiere e punteggi nelle 7 aree) vengono raccolti in forma totalmente anonima nel database Netlify per finalità di analisi organizzativa e formazione sulla sicurezza. Inserendo il nome, i dati saranno associati all'interessato esclusivamente per attività di feedback e coaching individuale, nel pieno rispetto del Regolamento UE 2016/679 (GDPR).
+              Il conferimento del nominativo è facoltativo. In assenza del nome, i dati statistici aggregati (Workshop, Azienda, Ruolo, Cantiere e punteggi nelle 7 aree) vengono raccolti in forma totalmente anonima nel database Netlify per finalità di analisi organizzativa e formazione sulla sicurezza. Inserendo il nome, i dati saranno associati all'interessato esclusivamente per attività di feedback e coaching individuale, nel pieno rispetto del Regolamento UE 2016/679 (GDPR).
             </div>
           </div>
 
@@ -228,9 +270,6 @@
         <div class="flex flex-wrap items-center gap-4">
           <button id="btnStart" onclick="startAssessment()" class="px-7 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition">
             Inizia il Test →
-          </button>
-          <button id="btnDemo" onclick="simulateDemo()" class="px-5 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition">
-            Visualizza Report Demo
           </button>
         </div>
       </div>
@@ -513,11 +552,13 @@
 
   <script>
     // =========================================================================
-    // FILE DI TESTO UNICI PER POPOLARE I MENU A DISCESA (NESSUNA LISTA INTERNA)
+    // ENDPOINT E FILE DI CONFIGURAZIONE (.TXT E WORKSHOPS.JSON)
     // =========================================================================
+    const GITHUB_API_ENDPOINT = "/.netlify/functions/manage-lists";
     const COMPANIES_TXT_URL = "./aziende.txt";
     const ROLES_TXT_URL = "./ruoli.txt";
     const SITES_TXT_URL = "./cantieri.txt";
+    const WORKSHOPS_JSON_URL = "./workshops.json";
     const NETLIFY_FORM_NAME = "risultati-safety-leadership";
 
     // =========================================================================
@@ -530,6 +571,12 @@
         langSwitchPrefix: "Lingua:",
         langLabel: "Italiano 🇮🇹",
         btnResetHdr: "Ricomincia",
+        lockBadge: "Link Workshop Richiesto",
+        lockTitle: "Accesso consentito solo tramite Link o QR Code di un Workshop attivo",
+        lockDesc: "Questo questionario può essere compilato esclusivamente dai partecipanti a una sessione <strong>Workshop</strong> programmata. Utilizza il <strong>link specifico</strong> o inquadra il <strong>QR Code</strong> fornito dal coordinatore del tuo Workshop.",
+        lockHint: "Se sei il coordinatore, accedi alla Dashboard Admin → scheda 'Gestione Workshop' per generare il link o il QR Code dell'evento.",
+        wsActiveBadge: "WORKSHOP UFFICIALE",
+        wsLevelPrefix: "Livello:",
         wBadge1: "12 Scenari Operativi",
         wBadge2: "7 Aree di Competenza",
         wBadge3: "Report & Executive Coaching",
@@ -544,7 +591,7 @@
         phSelectCompany: "-- Seleziona l'azienda --",
         lblUserRole: "Ruolo / Funzione *",
         phSelectRole: "-- Seleziona il tuo ruolo --",
-        lblUserSite: "Cantiere / Progetto *",
+        lblUserSite: "Cantiere / Progetto (Associato al Workshop) *",
         phSelectSite: "-- Seleziona il cantiere / progetto --",
         lblUserName: "Nome e Cognome (Opzionale)",
         phUserName: "Lascia vuoto per test anonimo",
@@ -554,7 +601,7 @@
         privacyOptionalBadge: "Non richiesto per test anonimo",
         btnPrivacyInfoOpen: "[Leggi informativa]",
         btnPrivacyInfoClose: "[Chiudi informativa]",
-        privacyDetailsText: "Il conferimento del nominativo è facoltativo. In assenza del nome, i dati statistici aggregati (Azienda, Ruolo, Cantiere e punteggi nelle 7 aree) vengono raccolti in forma totalmente anonima nel database Netlify per finalità di analisi organizzativa e formazione sulla sicurezza. Inserendo il nome, i dati saranno associati all'interessato esclusivamente per attività di feedback e coaching individuale, nel pieno rispetto del Regolamento UE 2016/679 (GDPR).",
+        privacyDetailsText: "Il conferimento del nominativo è facoltativo. In assenza del nome, i dati statistici aggregati (Workshop, Azienda, Ruolo, Cantiere e punteggi nelle 7 aree) vengono raccolti in forma totalmente anonima nel database Netlify per finalità di analisi organizzativa e formazione sulla sicurezza. Inserendo il nome, i dati saranno associati all'interessato esclusivamente per attività di feedback e coaching individuale, nel pieno rispetto del Regolamento UE 2016/679 (GDPR).",
         errMissingDropdowns: "Seleziona tutti i campi obbligatori: Azienda, Ruolo e Cantiere / Progetto.",
         errMissingPrivacy: "Hai inserito il tuo Nome: per proseguire è obbligatorio spuntare la casella di accettazione dei termini di Privacy (oppure cancella il nome per procedere in forma anonima).",
         privacyAcceptedLog: "Accettato (GDPR)",
@@ -567,7 +614,6 @@
         wStep3Title: "Ottieni il tuo Report",
         wStep3Desc: "Al termine visualizzerai la distribuzione delle tue abilità nelle 7 aree e i consigli di coaching personalizzati.",
         btnStart: "Inizia il Test →",
-        btnDemo: "Visualizza Report Demo",
         scenarioWord: "Scenario",
         ofWord: "di",
         contextPrefix: "Contesto:",
@@ -586,10 +632,10 @@
         btnRetrySync: "Riprova salvataggio",
         resMainTitle: "Profilo delle tue Abilità di Safety Leadership",
         resMainSub: "Distribuzione percentuale delle tue competenze nelle 7 aree in base alle priorità espresse negli scenari.",
-        participantSummary: (name, company, role, site) =>
-          `Azienda: ${company} • Ruolo: ${role} • Cantiere/Progetto: ${site} • Partecipante: ${name}`,
+        participantSummary: (wsName, wsLevel, name, company, role, site) =>
+          `Workshop: ${wsName} (${wsLevel}) • Azienda: ${company} • Ruolo: ${role} • Cantiere: ${site} • Partecipante: ${name}`,
         btnPrint: "Stampa / PDF",
-        btnNewTest: "Nuovo Test",
+        btnNewTest: "Ricomincia",
         kpiTop1Label: "Area Dominante (#1)",
         kpiTop2Label: "Area Co-Dominante (#2)",
         kpiLowLabel: "Area Meno Presidiata (#7)",
@@ -657,6 +703,12 @@
         langSwitchPrefix: "Language:",
         langLabel: "English 🇬🇧",
         btnResetHdr: "Restart",
+        lockBadge: "Workshop Link Required",
+        lockTitle: "Access allowed only via an active Workshop Link or QR Code",
+        lockDesc: "This assessment can only be completed by participants of a scheduled <strong>Workshop</strong> session. Please use the <strong>dedicated link</strong> or scan the <strong>QR Code</strong> provided by your Workshop coordinator.",
+        lockHint: "If you are the coordinator, open the Admin Dashboard → 'Manage Workshops' tab to generate the event link or QR Code.",
+        wsActiveBadge: "OFFICIAL WORKSHOP",
+        wsLevelPrefix: "Level:",
         wBadge1: "12 Operational Scenarios",
         wBadge2: "7 Leadership Areas",
         wBadge3: "Report & Executive Coaching",
@@ -671,7 +723,7 @@
         phSelectCompany: "-- Select company --",
         lblUserRole: "Role / Job Title *",
         phSelectRole: "-- Select your role --",
-        lblUserSite: "Site / Project *",
+        lblUserSite: "Site / Project (Linked to Workshop) *",
         phSelectSite: "-- Select site / project --",
         lblUserName: "Full Name (Optional)",
         phUserName: "Leave blank for anonymous assessment",
@@ -681,7 +733,7 @@
         privacyOptionalBadge: "Not required for anonymous test",
         btnPrivacyInfoOpen: "[Read privacy notice]",
         btnPrivacyInfoClose: "[Hide privacy notice]",
-        privacyDetailsText: "Providing your name is optional. If left blank, aggregated statistical data (Company, Role, Site, and scores across the 7 areas) are collected anonymously in the Netlify database for organizational safety analysis and training. If you enter your name, your data will be linked to your profile solely for individual feedback and coaching, in full compliance with EU Regulation 2016/679 (GDPR).",
+        privacyDetailsText: "Providing your name is optional. If left blank, aggregated statistical data (Workshop, Company, Role, Site, and scores across the 7 areas) are collected anonymously in the Netlify database for organizational safety analysis and training. If you enter your name, your data will be linked to your profile solely for individual feedback and coaching, in full compliance with EU Regulation 2016/679 (GDPR).",
         errMissingDropdowns: "Please select all required dropdown fields: Company, Role, and Site / Project.",
         errMissingPrivacy: "You entered your Name: you must check the Privacy Terms acceptance box to proceed (or clear the Name field to take the test anonymously).",
         privacyAcceptedLog: "Accepted (GDPR)",
@@ -694,7 +746,6 @@
         wStep3Title: "Get Your Report",
         wStep3Desc: "At the end, you will see your skill distribution across the 7 areas and tailored executive coaching advice.",
         btnStart: "Start Assessment →",
-        btnDemo: "View Demo Report",
         scenarioWord: "Scenario",
         ofWord: "of",
         contextPrefix: "Context:",
@@ -713,10 +764,10 @@
         btnRetrySync: "Retry saving",
         resMainTitle: "Your Safety Leadership Skills Profile",
         resMainSub: "Percentage distribution of your competencies across the 7 areas based on the priorities expressed in the scenarios.",
-        participantSummary: (name, company, role, site) =>
-          `Company: ${company} • Role: ${role} • Site/Project: ${site} • Participant: ${name}`,
+        participantSummary: (wsName, wsLevel, name, company, role, site) =>
+          `Workshop: ${wsName} (${wsLevel}) • Company: ${company} • Role: ${role} • Site: ${site} • Participant: ${name}`,
         btnPrint: "Print / PDF",
-        btnNewTest: "New Assessment",
+        btnNewTest: "Restart",
         kpiTop1Label: "Dominant Area (#1)",
         kpiTop2Label: "Co-Dominant Area (#2)",
         kpiLowLabel: "Least Covered Area (#7)",
@@ -781,17 +832,19 @@
     };
 
     // =========================================================================
-    // 2. CARICAMENTO ESCLUSIVO DAI 3 FILE .TXT (aziende.txt, ruoli.txt, cantieri.txt)
+    // 2. VERIFICA OBBLIGATORIA DEL LINK WORKSHOP (?ws=...) E CARICAMENTO .TXT
     // =========================================================================
+    let activeWorkshop = null; // Oggetto workshop attivo { id, name, date, site, level }
     let parsedCompaniesList = [];
     let parsedRolesList = [];
     let parsedSitesList = [];
-    let listsSourceState = "loading"; // 'loading' | 'loaded' | 'error'
+    let listsSourceState = "loading";
     let missingFilesList = [];
 
     function parseLineItem(line) {
       const parts = String(line).split("|").map(p => p.trim());
       return {
+        raw: String(line).trim(),
         it: parts[0],
         en: parts[1] || parts[0]
       };
@@ -802,7 +855,6 @@
       return String(rawText)
         .split(/\r?\n/)
         .map(line => line.trim())
-        // Ignora righe vuote, commenti o pagine di errore HTML 404
         .filter(line =>
           line.length > 0 &&
           !line.startsWith("#") &&
@@ -844,7 +896,16 @@
       return parsed;
     }
 
-    async function loadDropdownListsFromTxtOnly() {
+    async function initWorkshopAndLists() {
+      const params = new URLSearchParams(window.location.search);
+      const wsIdParam = (params.get("ws") || "").trim();
+
+      // Se nell'URL non c'è ?ws=..., blocca immediatamente l'avvio
+      if (!wsIdParam) {
+        showLockedScreen();
+        return;
+      }
+
       parsedCompaniesList = [];
       parsedRolesList = [];
       parsedSitesList = [];
@@ -852,33 +913,77 @@
       listsSourceState = "loading";
       updateListsSourceBadge();
 
-      // 1. Carica aziende.txt
+      let workshopsList = [];
+
+      // 1. Prova a leggere in tempo reale da GitHub tramite manage-lists.js (evita ritardi di build)
+      let loadedFromGithubAPI = false;
       try {
-        parsedCompaniesList = await fetchSingleTxtFile(COMPANIES_TXT_URL);
-      } catch (e) {
-        console.error(e);
-        missingFilesList.push("aziende.txt");
+        const resGH = await fetch(GITHUB_API_ENDPOINT, { cache: "no-store" });
+        const cType = resGH.headers.get("content-type") || "";
+        if (resGH.ok && cType.includes("application/json")) {
+          const data = await resGH.json();
+          if (data && data.status === "success") {
+            parsedCompaniesList = (data.companies || []).map(parseLineItem);
+            parsedRolesList = (data.roles || []).map(parseLineItem);
+            parsedSitesList = (data.sites || []).map(parseLineItem);
+            workshopsList = Array.isArray(data.workshops) ? data.workshops : [];
+            loadedFromGithubAPI = true;
+          }
+        }
+      } catch (_) {}
+
+      // 2. Se la funzione non è raggiungibile, legge direttamente i file statici (.txt e workshops.json)
+      if (!loadedFromGithubAPI) {
+        try { parsedCompaniesList = await fetchSingleTxtFile(COMPANIES_TXT_URL); } catch (_) { missingFilesList.push("aziende.txt"); }
+        try { parsedRolesList = await fetchSingleTxtFile(ROLES_TXT_URL); } catch (_) { missingFilesList.push("ruoli.txt"); }
+        try { parsedSitesList = await fetchSingleTxtFile(SITES_TXT_URL); } catch (_) { missingFilesList.push("cantieri.txt"); }
+        try {
+          const resW = await fetch(`${WORKSHOPS_JSON_URL}?v=${Date.now()}`, { cache: "no-store" });
+          if (resW.ok) workshopsList = await resW.json();
+        } catch (_) {}
+      } else {
+        if (parsedCompaniesList.length === 0) missingFilesList.push("aziende.txt");
+        if (parsedRolesList.length === 0) missingFilesList.push("ruoli.txt");
+        if (parsedSitesList.length === 0) missingFilesList.push("cantieri.txt");
       }
 
-      // 2. Carica ruoli.txt
-      try {
-        parsedRolesList = await fetchSingleTxtFile(ROLES_TXT_URL);
-      } catch (e) {
-        console.error(e);
-        missingFilesList.push("ruoli.txt");
+      // 3. Cerca il Workshop corrispondente al parametro ?ws=...
+      const foundWs = workshopsList.find(w => String(w.id) === wsIdParam);
+      if (!foundWs) {
+        showLockedScreen();
+        return;
       }
 
-      // 3. Carica cantieri.txt
-      try {
-        parsedSitesList = await fetchSingleTxtFile(SITES_TXT_URL);
-      } catch (e) {
-        console.error(e);
-        missingFilesList.push("cantieri.txt");
-      }
-
+      activeWorkshop = foundWs;
       listsSourceState = missingFilesList.length === 0 ? "loaded" : "error";
+
+      // Sblocca la schermata iniziale del test e mostra i dati del Workshop
+      document.getElementById("screen-locked").classList.add("hidden");
+      document.getElementById("screen-welcome").classList.remove("hidden");
+      document.getElementById("btnResetHdr").classList.remove("hidden");
+
       populateDropdowns();
+      updateWorkshopBannerUI();
       updateListsSourceBadge();
+    }
+
+    function showLockedScreen() {
+      document.getElementById("screen-welcome").classList.add("hidden");
+      document.getElementById("screen-quiz").classList.add("hidden");
+      document.getElementById("screen-results").classList.add("hidden");
+      document.getElementById("btnResetHdr").classList.add("hidden");
+      document.getElementById("screen-locked").classList.remove("hidden");
+    }
+
+    function updateWorkshopBannerUI() {
+      if (!activeWorkshop) return;
+      const t = UI_TEXT[currentLang];
+      const siteItem = parseLineItem(activeWorkshop.site || "");
+
+      document.getElementById("wsBannerName").textContent = activeWorkshop.name;
+      document.getElementById("wsBannerDate").textContent = activeWorkshop.date || "-";
+      document.getElementById("wsBannerSite").textContent = siteItem[currentLang] || activeWorkshop.site;
+      document.getElementById("wsBannerLevel").textContent = `${t.wsLevelPrefix} ${activeWorkshop.level}`;
     }
 
     function populateDropdowns() {
@@ -889,7 +994,6 @@
 
       const prevCompanyIdx = companySelect.selectedIndex;
       const prevRoleIdx = roleSelect.selectedIndex;
-      const prevSiteIdx = siteSelect.selectedIndex;
 
       companySelect.innerHTML = `<option value="">${t.phSelectCompany}</option>` +
         parsedCompaniesList.map((item, idx) => `<option value="${idx}">${item[currentLang]}</option>`).join("");
@@ -902,7 +1006,23 @@
 
       if (prevCompanyIdx > 0 && prevCompanyIdx <= parsedCompaniesList.length) companySelect.selectedIndex = prevCompanyIdx;
       if (prevRoleIdx > 0 && prevRoleIdx <= parsedRolesList.length) roleSelect.selectedIndex = prevRoleIdx;
-      if (prevSiteIdx > 0 && prevSiteIdx <= parsedSitesList.length) siteSelect.selectedIndex = prevSiteIdx;
+
+      // Pre-seleziona e blocca automaticamente il Cantiere associato al Workshop attivo
+      if (activeWorkshop && activeWorkshop.site) {
+        const wsSiteItem = parseLineItem(activeWorkshop.site);
+        let matchedIdx = parsedSitesList.findIndex(s =>
+          s.raw === activeWorkshop.site || s.it === wsSiteItem.it || s.en === wsSiteItem.en
+        );
+        if (matchedIdx === -1) {
+          // Se il cantiere del workshop è presente, lo garantisce nella tendina
+          parsedSitesList.push(wsSiteItem);
+          matchedIdx = parsedSitesList.length - 1;
+          siteSelect.innerHTML = `<option value="">${t.phSelectSite}</option>` +
+            parsedSitesList.map((item, idx) => `<option value="${idx}">${item[currentLang]}</option>`).join("");
+        }
+        siteSelect.value = String(matchedIdx);
+        siteSelect.disabled = true;
+      }
     }
 
     function handleNameInput() {
@@ -1752,8 +1872,11 @@
     function toggleLanguage() {
       currentLang = currentLang === "it" ? "en" : "it";
       applyStaticTranslations();
-      populateDropdowns();
-      updateListsSourceBadge();
+      if (activeWorkshop) {
+        populateDropdowns();
+        updateWorkshopBannerUI();
+        updateListsSourceBadge();
+      }
 
       if (!document.getElementById("screen-quiz").classList.contains("hidden")) {
         updateQuizTexts();
@@ -1774,6 +1897,12 @@
       document.getElementById("langLabel").textContent = t.langLabel;
       document.getElementById("btnResetHdr").textContent = t.btnResetHdr;
 
+      document.getElementById("lockBadge").textContent = t.lockBadge;
+      document.getElementById("lockTitle").textContent = t.lockTitle;
+      document.getElementById("lockDesc").innerHTML = t.lockDesc;
+      document.getElementById("lockHint").textContent = t.lockHint;
+
+      document.getElementById("wsActiveBadge").textContent = t.wsActiveBadge;
       document.getElementById("wBadge1").textContent = t.wBadge1;
       document.getElementById("wBadge2").textContent = t.wBadge2;
       document.getElementById("wBadge3").textContent = t.wBadge3;
@@ -1803,7 +1932,6 @@
       document.getElementById("wStep3Title").textContent = t.wStep3Title;
       document.getElementById("wStep3Desc").textContent = t.wStep3Desc;
       document.getElementById("btnStart").textContent = t.btnStart;
-      document.getElementById("btnDemo").textContent = t.btnDemo;
 
       document.getElementById("validationWarning").textContent = t.validationWarning;
 
@@ -1854,6 +1982,11 @@
     }
 
     function startAssessment() {
+      if (!activeWorkshop) {
+        showLockedScreen();
+        return;
+      }
+
       const t = UI_TEXT[currentLang];
       const companyVal = document.getElementById("selectUserCompany").value;
       const roleVal = document.getElementById("selectUserRole").value;
@@ -1867,7 +2000,6 @@
         errEl.classList.remove("hidden");
         if (companyVal === "") document.getElementById("selectUserCompany").focus();
         else if (roleVal === "") document.getElementById("selectUserRole").focus();
-        else document.getElementById("selectUserSite").focus();
         return;
       }
 
@@ -2000,7 +2132,7 @@
         currentRoundIndex === totalRounds - 1 ? t.btnFinishRound : t.btnNextRound;
     }
 
-    function renderScenarioOptions() {
+function renderScenarioOptions() {
       const t = UI_TEXT[currentLang];
       document.getElementById("selectionCounterBadge").textContent = t.chosenCounter(currentSelectedIds.length);
 
@@ -2049,14 +2181,9 @@
 
     function toggleOption(optionId) {
       document.getElementById("validationWarning").classList.add("hidden");
-
       const idx = currentSelectedIds.indexOf(optionId);
-      if (idx !== -1) {
-        currentSelectedIds.splice(idx, 1);
-      } else {
-        if (currentSelectedIds.length >= 3) return;
-        currentSelectedIds.push(optionId);
-      }
+      if (idx !== -1) currentSelectedIds.splice(idx, 1);
+      else if (currentSelectedIds.length < 3) currentSelectedIds.push(optionId);
       renderScenarioOptions();
     }
 
@@ -2108,14 +2235,10 @@
       }
     }
 
-    // =========================================================================
-    // 7. SALVATAGGIO DIRETTO NEL DATABASE INTERNO DI NETLIFY (NETLIFY FORMS)
-    // =========================================================================
     function updateSyncBadgeUI() {
       const t = UI_TEXT[currentLang];
       const badge = document.getElementById("syncStatusBadge");
       const retryBtn = document.getElementById("btnRetrySync");
-
       retryBtn.classList.add("hidden");
 
       if (lastSyncState === "sending") {
@@ -2135,7 +2258,7 @@
     }
 
     async function sendResultsToNetlifyDB() {
-      if (!lastComputedResults) return;
+      if (!lastComputedResults || !activeWorkshop) return;
 
       if (!window.location.protocol.startsWith("http")) {
         lastSyncState = "local_preview";
@@ -2179,6 +2302,10 @@
       const formPayload = new URLSearchParams({
         "form-name": NETLIFY_FORM_NAME,
         "data_ora": new Date().toLocaleString("it-IT"),
+        "workshop_id": activeWorkshop.id,
+        "workshop_nome": activeWorkshop.name,
+        "workshop_data": activeWorkshop.date,
+        "workshop_livello": activeWorkshop.level,
         "partecipante": participantInfo.name || t.anonymousLabel,
         "consenso_privacy": privacyStatus,
         "azienda": resolvedCompany || "-",
@@ -2211,26 +2338,16 @@
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formPayload.toString()
         });
-
-        if (res.ok) {
-          lastSyncState = "success";
-        } else {
-          lastSyncState = "error";
-        }
+        lastSyncState = res.ok ? "success" : "error";
         updateSyncBadgeUI();
       } catch (err) {
-        console.error("Netlify DB save error:", err);
         lastSyncState = "error";
         updateSyncBadgeUI();
       }
     }
 
-    // =========================================================================
-    // 8. CALCOLO DISTRIBUZIONE FINALE, COACHING E DASHBOARD
-    // =========================================================================
     function showFinalResults() {
       let totalWeightedPoints = 0;
-
       const results = AREAS.map(area => {
         const pool = areaPools[area.id];
         const totalAreaScore = pool.scoreFirstAppearance + pool.scoreCarryOver;
@@ -2262,9 +2379,7 @@
       const domProfile = COACHING_PROFILES[topArea.id][currentLang];
       const weakProfile = COACHING_PROFILES[lowArea.id][currentLang];
 
-      document.getElementById("coachingHeaderBadge").textContent =
-        `${topArea.name} (#1) → ${lowArea.name} (#7)`;
-
+      document.getElementById("coachingHeaderBadge").textContent = `${topArea.name} (#1) → ${lowArea.name} (#7)`;
       document.getElementById("coachDomPct").textContent = `${topArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
       document.getElementById("coachDomTitle").textContent = `${t.coachDomTitlePrefix} "${topArea.name}"`;
       document.getElementById("coachDomArchetype").textContent = `${t.coachArchetypePrefix} ${domProfile.archetype}`;
@@ -2275,8 +2390,7 @@
       document.getElementById("coachWeakTitle").textContent = `${t.coachWeakTitlePrefix} "${lowArea.name}"`;
       document.getElementById("coachWeakRisk").textContent = weakProfile.weakRisk;
 
-      const actionsUl = document.getElementById("coachWeakActions");
-      actionsUl.innerHTML = weakProfile.actions.map((act, idx) => `
+      document.getElementById("coachWeakActions").innerHTML = weakProfile.actions.map((act, idx) => `
         <li class="flex items-start gap-2">
           <span class="w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-extrabold text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</span>
           <span class="leading-snug">${act}</span>
@@ -2290,8 +2404,8 @@
 
       const lowAreaObj = AREAS.find(a => a.id === lowArea.id);
       const pool = areaPools[lowArea.id];
-
       let targetBehaviors = [];
+
       if (pool && pool.carryOverQueue && pool.carryOverQueue.length > 0) {
         const uniqueIndices = [...new Set(pool.carryOverQueue.map(item => item.behaviorIdx))].slice(0, 4);
         targetBehaviors = uniqueIndices.map(idx => ({
@@ -2299,7 +2413,6 @@
           skippedCount: pool.carryOverQueue.find(i => i.behaviorIdx === idx)?.timesSkipped || 1
         }));
       }
-
       if (targetBehaviors.length === 0) {
         targetBehaviors = lowAreaObj.behaviors.slice(0, 4).map((b, i) => ({
           text: b[currentLang],
@@ -2307,110 +2420,17 @@
         }));
       }
 
-      const skippedContainer = document.getElementById("skippedBehaviorsList");
-      skippedContainer.innerHTML = targetBehaviors.map(tb => `
+      document.getElementById("skippedBehaviorsList").innerHTML = targetBehaviors.map(tb => `
         <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
           <div class="flex items-center justify-between gap-2 mb-1.5">
             <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase">
               ${t.skippedCardBadge} • ${lowArea.name}
             </span>
-            <span class="text-[11px] text-slate-400 font-semibold">
-              ${t.skippedCountLabel(tb.skippedCount)}
-            </span>
+            <span class="text-[11px] text-slate-400 font-semibold">${t.skippedCountLabel(tb.skippedCount)}</span>
           </div>
           <p class="text-xs text-slate-700 font-medium leading-relaxed">${tb.text}</p>
         </div>
       `).join("");
-    }
-
-    function simulateDemo() {
-      const companyVal = document.getElementById("selectUserCompany").value;
-      const roleVal = document.getElementById("selectUserRole").value;
-      const siteVal = document.getElementById("selectUserSite").value;
-      const nameVal = document.getElementById("inputUserName").value.trim();
-
-      const cIdx = companyVal !== "" ? parseInt(companyVal, 10) : 0;
-      const rIdx = roleVal !== "" ? parseInt(roleVal, 10) : 0;
-      const sIdx = siteVal !== "" ? parseInt(siteVal, 10) : 0;
-
-      participantInfo = {
-        name: nameVal,
-        privacyAccepted: true,
-        companyIdx: cIdx,
-        roleIdx: rIdx,
-        siteIdx: sIdx,
-        companyText: parsedCompaniesList[cIdx]?.[currentLang] || "-",
-        roleText: parsedRolesList[rIdx]?.[currentLang] || "-",
-        siteText: parsedSitesList[sIdx]?.[currentLang] || "-"
-      };
-
-      areaPools = {};
-      const demoData = [
-        { id: "VISION", scoreFirst: 3.00, scoreCarry: 0.65, countFirst: 3, countCarry: 1 },
-        { id: "FOCUS", scoreFirst: 3.85, scoreCarry: 1.10, countFirst: 4, countCarry: 2 },
-        { id: "INFLUENCE", scoreFirst: 2.00, scoreCarry: 0.90, countFirst: 2, countCarry: 2 },
-        { id: "CREDIBILITY", scoreFirst: 4.55, scoreCarry: 0.65, countFirst: 5, countCarry: 1 },
-        { id: "TEAM", scoreFirst: 2.70, scoreCarry: 1.30, countFirst: 3, countCarry: 2 },
-        { id: "COMMUNICATION", scoreFirst: 1.85, scoreCarry: 0.95, countFirst: 2, countCarry: 2 },
-        { id: "FEEDBACK", scoreFirst: 1.00, scoreCarry: 0.35, countFirst: 1, countCarry: 1 }
-      ];
-
-      let totalPts = 0;
-      const results = AREAS.map((area, i) => {
-        const d = demoData[i];
-        const tot = d.scoreFirst + d.scoreCarry;
-        totalPts += tot;
-        areaPools[area.id] = {
-          carryOverQueue: [
-            { behaviorIdx: 0, timesSkipped: 2 },
-            { behaviorIdx: 2, timesSkipped: 2 },
-            { behaviorIdx: 5, timesSkipped: 1 },
-            { behaviorIdx: 9, timesSkipped: 1 }
-          ]
-        };
-        return {
-          id: area.id,
-          name: area.name,
-          color: area.color,
-          scoreFirst: d.scoreFirst,
-          scoreCarry: d.scoreCarry,
-          totalScore: tot,
-          countFirst: d.countFirst,
-          countCarry: d.countCarry,
-          distributionPct: 0
-        };
-      });
-
-      results.forEach(r => {
-        r.distributionPct = (r.totalScore / totalPts) * 100;
-      });
-
-      decisionHistory = [
-        {
-          roundIdx: 0,
-          areaName: "Credibility",
-          areaId: "CREDIBILITY",
-          behaviorIdx: 1,
-          timesSkipped: 0,
-          appearanceWeight: 1.00,
-          rankOrder: 1,
-          earnedPoints: 1.00
-        },
-        {
-          roundIdx: 1,
-          areaName: "Focus",
-          areaId: "FOCUS",
-          behaviorIdx: 5,
-          timesSkipped: 1,
-          appearanceWeight: 0.65,
-          rankOrder: 2,
-          earnedPoints: 0.55
-        }
-      ];
-
-      lastComputedResults = results;
-      renderDashboard(results, true);
-      sendResultsToNetlifyDB();
     }
 
     function renderDashboard(results, scrollToTop = true) {
@@ -2431,7 +2451,7 @@
       const displayName = participantInfo.name || t.anonymousLabel;
 
       document.getElementById("resParticipantInfo").textContent =
-        t.participantSummary(displayName, displayCompany, displayRole, displaySite);
+        t.participantSummary(activeWorkshop.name, activeWorkshop.level, displayName, displayCompany, displayRole, displaySite);
 
       const sorted = [...results].sort((a, b) => b.distributionPct - a.distributionPct);
       const top1 = sorted[0];
@@ -2440,17 +2460,14 @@
 
       document.getElementById("kpiTop1Name").textContent = `${top1.name} (${top1.distributionPct.toFixed(1)}%)`;
       document.getElementById("kpiTop1Stats").textContent = t.kpiStatsFormat(top1.totalScore.toFixed(2), top1.countFirst, top1.countCarry);
-
       document.getElementById("kpiTop2Name").textContent = `${top2.name} (${top2.distributionPct.toFixed(1)}%)`;
       document.getElementById("kpiTop2Stats").textContent = t.kpiStatsFormat(top2.totalScore.toFixed(2), top2.countFirst, top2.countCarry);
-
       document.getElementById("kpiLowName").textContent = `${low.name} (${low.distributionPct.toFixed(1)}%)`;
       document.getElementById("kpiLowStats").textContent = t.kpiStatsFormat(low.totalScore.toFixed(2), low.countFirst, low.countCarry);
 
       renderCoachingAdvice(top1, top2, low);
 
-      const tbody = document.getElementById("resultsTableBody");
-      tbody.innerHTML = sorted.map(r => {
+      document.getElementById("resultsTableBody").innerHTML = sorted.map(r => {
         const areaObj = AREAS.find(a => a.id === r.id);
         return `
           <tr class="hover:bg-slate-50">
@@ -2463,32 +2480,17 @@
                 </div>
               </div>
             </td>
-            <td class="py-3.5 px-3 font-medium text-emerald-700">
-              ${r.countFirst} ${t.tblChoicesWord} <span class="text-xs text-slate-400">(${r.scoreFirst.toFixed(2)} pt)</span>
-            </td>
-            <td class="py-3.5 px-3 font-medium text-amber-700">
-              ${r.countCarry} ${t.tblCarryWord} <span class="text-xs text-slate-400">(${r.scoreCarry.toFixed(2)} pt)</span>
-            </td>
-            <td class="py-3.5 px-3 font-bold text-slate-800">
-              ${r.totalScore.toFixed(2)} pt
-            </td>
-            <td class="py-3.5 pl-4">
-              <div class="flex items-center gap-2.5">
-                <div class="w-28 h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div class="h-full rounded-full" style="width:${Math.min(100, r.distributionPct * 2.5)}%; background:${r.color}"></div>
-                </div>
-                <span class="font-extrabold text-slate-900">${r.distributionPct.toFixed(1)}%</span>
-              </div>
-            </td>
+            <td class="py-3.5 px-3 font-medium text-emerald-700">${r.countFirst} ${t.tblChoicesWord} (${r.scoreFirst.toFixed(2)} pt)</td>
+            <td class="py-3.5 px-3 font-medium text-amber-700">${r.countCarry} ${t.tblCarryWord} (${r.scoreCarry.toFixed(2)} pt)</td>
+            <td class="py-3.5 px-3 font-bold text-slate-800">${r.totalScore.toFixed(2)} pt</td>
+            <td class="py-3.5 pl-4 font-extrabold text-slate-900">${r.distributionPct.toFixed(1)}%</td>
           </tr>
         `;
       }).join("");
 
-      const logContainer = document.getElementById("decisionLogContainer");
-      logContainer.innerHTML = decisionHistory.map(item => {
+      document.getElementById("decisionLogContainer").innerHTML = decisionHistory.map(item => {
         const scObj = SCENARIOS[item.roundIdx];
         const areaObj = AREAS.find(a => a.id === item.areaId);
-        const behText = areaObj.behaviors[item.behaviorIdx][currentLang];
         return `
           <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-start justify-between gap-2 text-xs">
             <div class="max-w-3xl">
@@ -2496,15 +2498,10 @@
                 <span class="font-bold text-slate-900">${t.scenarioWord} #${item.roundIdx + 1}: ${scObj.title[currentLang]}</span>
                 <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold">${item.areaName}</span>
                 <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">${t.choiceBadge(item.rankOrder)}</span>
-                <span class="px-2 py-0.5 rounded ${item.timesSkipped === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'} font-semibold">
-                  ${item.timesSkipped === 0 ? t.logFirstApp : t.logCarryApp(item.timesSkipped, item.appearanceWeight)}
-                </span>
               </div>
-              <p class="text-slate-600">${behText}</p>
+              <p class="text-slate-600">${areaObj.behaviors[item.behaviorIdx][currentLang]}</p>
             </div>
-            <div class="font-extrabold text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
-              +${item.earnedPoints.toFixed(2)} pt
-            </div>
+            <div class="font-extrabold text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200">+${item.earnedPoints.toFixed(2)} pt</div>
           </div>
         `;
       }).join("");
@@ -2516,35 +2513,11 @@
         data: {
           labels: results.map(r => r.name),
           datasets: [
-            {
-              label: t.chartRadarDataset1,
-              data: results.map(r => Number(r.distributionPct.toFixed(1))),
-              backgroundColor: "rgba(245, 158, 11, 0.22)",
-              borderColor: "#d97706",
-              pointBackgroundColor: "#0f172a",
-              borderWidth: 2
-            },
-            {
-              label: t.chartRadarDataset2,
-              data: results.map(() => 14.3),
-              backgroundColor: "rgba(148, 163, 184, 0.08)",
-              borderColor: "#94a3b8",
-              borderDash: [5, 5],
-              pointRadius: 0,
-              borderWidth: 1.5
-            }
+            { label: t.chartRadarDataset1, data: results.map(r => Number(r.distributionPct.toFixed(1))), backgroundColor: "rgba(245, 158, 11, 0.22)", borderColor: "#d97706", borderWidth: 2 },
+            { label: t.chartRadarDataset2, data: results.map(() => 14.3), borderColor: "#94a3b8", borderDash: [5, 5], pointRadius: 0, borderWidth: 1.5 }
           ]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            r: {
-              beginAtZero: true,
-              suggestedMax: 25
-            }
-          }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, suggestedMax: 25 } } }
       });
 
       const barCtx = document.getElementById("stackedBarChart").getContext("2d");
@@ -2554,44 +2527,27 @@
         data: {
           labels: results.map(r => r.name),
           datasets: [
-            {
-              label: t.chartBarDataset1,
-              data: results.map(r => Number(r.scoreFirst.toFixed(2))),
-              backgroundColor: "#10b981"
-            },
-            {
-              label: t.chartBarDataset2,
-              data: results.map(r => Number(r.scoreCarry.toFixed(2))),
-              backgroundColor: "#f59e0b"
-            }
+            { label: t.chartBarDataset1, data: results.map(r => Number(r.scoreFirst.toFixed(2))), backgroundColor: "#10b981" },
+            { label: t.chartBarDataset2, data: results.map(r => Number(r.scoreCarry.toFixed(2))), backgroundColor: "#f59e0b" }
           ]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { stacked: true },
-            y: { stacked: true, beginAtZero: true }
-          }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
       });
 
-      if (scrollToTop) {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
+      if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function resetApp() {
+      if (!activeWorkshop) { showLockedScreen(); return; }
       document.getElementById("screen-quiz").classList.add("hidden");
       document.getElementById("screen-results").classList.add("hidden");
       document.getElementById("screen-welcome").classList.remove("hidden");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    // All'avvio legge solo i 3 file .txt
     window.addEventListener("DOMContentLoaded", () => {
       applyStaticTranslations();
-      loadDropdownListsFromTxtOnly();
+      initWorkshopAndLists();
     });
   </script>
 </body>

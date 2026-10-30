@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Safety Leadership — Live Admin & List Manager</title>
+  <title>Safety Leadership — Admin, Workshops & Analytics</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
@@ -27,13 +28,12 @@
           SL
         </div>
         <div>
-          <h1 id="hdrTitle" class="font-bold text-lg leading-tight">Safety Leadership — Admin & Config</h1>
-          <p id="hdrSub" class="text-xs text-slate-400">Analisi risultati in tempo reale e gestione file .txt</p>
+          <h1 id="hdrTitle" class="font-bold text-lg leading-tight">Safety Leadership — Admin & Workshop Console</h1>
+          <p id="hdrSub" class="text-xs text-slate-400">Gestione Workshop su Database Netlify, Analisi e Liste .txt</p>
         </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2.5">
-        <!-- Indicatore stato Live & Pulsante Refresh -->
         <div id="liveControls" class="hidden items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span id="lastSyncText" class="text-[11px] text-slate-300 font-medium">Live</span>
@@ -50,7 +50,7 @@
           <span id="langSwitchPrefix">Lingua:</span> <span id="langLabel" class="text-amber-400 font-bold">Italiano 🇮🇹</span>
         </button>
         <button id="btnChangeSource" onclick="logoutAndShowLogin()" class="hidden px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
-          Esci / Cambia Sorgente
+          Esci
         </button>
         <button id="btnPrintReport" onclick="window.print()" class="hidden px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition">
           Stampa / PDF
@@ -58,16 +58,20 @@
       </div>
     </div>
 
-    <!-- Barra di Navigazione Principale Admin -->
+    <!-- Barra di Navigazione a 3 Schede -->
     <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
-      <div class="max-w-7xl mx-auto px-4 flex gap-2 pt-2">
+      <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 pt-2">
         <button id="navTabAnalytics" onclick="switchAdminView('analytics')"
           class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
           <span>📊</span> <span id="navTabAnalyticsLabel">Analisi Risultati</span>
         </button>
+        <button id="navTabWorkshops" onclick="switchAdminView('workshops')"
+          class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+          <span>🎯</span> <span id="navTabWorkshopsLabel">Gestione Workshop (Link & QR)</span>
+        </button>
         <button id="navTabLists" onclick="switchAdminView('lists')"
           class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
-          <span>🗂️</span> <span id="navTabListsLabel">Gestione Liste (aziende.txt, ruoli.txt, cantieri.txt)</span>
+          <span>🗂️</span> <span id="navTabListsLabel">Liste .txt (Aziende, Ruoli, Cantieri)</span>
         </button>
       </div>
     </div>
@@ -75,14 +79,13 @@
 
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
 
-    <!-- 1. SCHERMATA DI ACCESSO E CONNESSIONE LIVE A NETLIFY -->
+    <!-- 1. SCHERMATA DI LOGIN -->
     <section id="screen-upload" class="max-w-3xl mx-auto space-y-6">
-
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="bg-slate-900 text-white px-6 py-5 border-b-4 border-amber-500 flex items-center justify-between">
           <div>
             <span id="loginBadge" class="inline-block px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold uppercase tracking-wider mb-1">
-              Connessione Diretta Database Netlify
+              Database Netlify & Workshop Manager
             </span>
             <h2 id="loginTitle" class="text-xl md:text-2xl font-extrabold">
               Accedi alla Console di Amministrazione
@@ -103,10 +106,9 @@
             </button>
           </div>
 
-          <!-- Modalità A: Tramite Netlify Function -->
           <div id="authPanelFunction" class="space-y-4">
             <p id="funcDesc" class="text-xs text-slate-600 leading-relaxed">
-              Inserisci la password configurata nella variabile <code>ADMIN_PASSWORD</code> su Netlify per visualizzare i grafici in tempo reale, eliminare i test di prova e gestire i file <code>.txt</code> delle liste.
+              Inserisci la tua <code>ADMIN_PASSWORD</code> per gestire i <strong>Workshop</strong> nel database Netlify, generare i link di invito per i partecipanti e analizzare i risultati.
             </p>
             <div class="flex flex-col sm:flex-row gap-3">
               <input id="inputAdminPassword" type="password" placeholder="Inserisci la Password Admin..."
@@ -119,10 +121,9 @@
             </div>
           </div>
 
-          <!-- Modalità B: Connessione Diretta REST API Netlify -->
           <div id="authPanelDirect" class="hidden space-y-4">
             <p id="directDesc" class="text-xs text-slate-600 leading-relaxed">
-              Inserisci il tuo <strong>Site ID</strong> (da <em>Site configuration → General</em>) e il tuo <strong>Personal Access Token</strong> (<code>nfp_...</code>) di Netlify:
+              Inserisci il tuo <strong>Site ID</strong> e il tuo <strong>Personal Access Token</strong> (<code>nfp_...</code>) di Netlify:
             </p>
             <div class="grid sm:grid-cols-2 gap-3">
               <div>
@@ -153,12 +154,11 @@
         </div>
       </div>
 
-      <!-- Card Secondaria: CSV Manuale o Dataset Demo -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 id="altTitle" class="font-bold text-slate-800 text-sm">Modalità Offline: Carica CSV o Apri Demo</h3>
-            <p id="altSub" class="text-xs text-slate-500">Esplora i grafici e la scheda "Gestione Liste" (caricata da aziende.txt, ruoli.txt e cantieri.txt).</p>
+            <p id="altSub" class="text-xs text-slate-500">Prova subito la creazione dei Workshop, il raggruppamento e i grafici con dati dimostrativi.</p>
           </div>
           <div class="flex flex-wrap gap-2.5">
             <button onclick="document.getElementById('csvFileInput').click()" id="btnBrowseCSV"
@@ -168,18 +168,17 @@
             <input id="csvFileInput" type="file" accept=".csv,text/csv" class="hidden" onchange="handleFileSelect(event)" />
             <button id="btnLoadDemo" onclick="loadDemoDataset()"
               class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-              Apri Console Demo (25 Test + Liste .txt) →
+              Apri Console Demo (Workshop + 25 Test) →
             </button>
           </div>
         </div>
       </div>
-
     </section>
 
-    <!-- 2. SCHEDA A: ANALISI RISULTATI (ANALYTICS) -->
+    <!-- 2. SCHEDA A: ANALISI RISULTATI (CON FILTRO E ASSEGNAZIONE WORKSHOP) -->
     <section id="screen-dashboard" class="hidden space-y-6">
 
-      <!-- Barra Filtri Interattivi -->
+      <!-- Barra Filtri Interattivi (Aggiunto Workshop e Livello Workshop) -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 no-print">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div class="flex items-center gap-2">
@@ -195,7 +194,22 @@
           </button>
         </div>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
+          <div>
+            <label id="lblFilterWorkshop" class="block text-xs font-bold text-slate-600 mb-1">Workshop</label>
+            <select id="filterWorkshop" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti i Workshop</option>
+            </select>
+          </div>
+          <div>
+            <label id="lblFilterLevel" class="block text-xs font-bold text-slate-600 mb-1">Livello Workshop</label>
+            <select id="filterLevel" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti i Livelli</option>
+              <option value="Top manager">Top manager</option>
+              <option value="Second level">Second level</option>
+              <option value="Baseline">Baseline</option>
+            </select>
+          </div>
           <div>
             <label id="lblFilterCompany" class="block text-xs font-bold text-slate-600 mb-1">Azienda</label>
             <select id="filterCompany" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
@@ -276,7 +290,7 @@
         </div>
       </div>
 
-      <!-- MATRICE HEATMAP DI CONFRONTO -->
+      <!-- MATRICE HEATMAP DI CONFRONTO (Include ora Raggruppamento per Workshop e Livello) -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
         <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div>
@@ -284,13 +298,15 @@
               Matrice Comparativa (Heatmap) per Gruppo
             </h3>
             <p id="heatmapSub" class="text-xs text-slate-500 mt-0.5">
-              Confronta le percentuali medie delle 7 aree raggruppate per Cantiere, Azienda o Ruolo.
+              Confronta le percentuali medie delle 7 aree raggruppate per Workshop, Livello Workshop, Cantiere, Azienda o Ruolo.
             </p>
           </div>
 
           <div class="flex items-center gap-2 no-print">
             <span id="lblGroupBy" class="text-xs font-bold text-slate-600">Raggruppa per:</span>
             <select id="selectGroupBy" onchange="renderGroupComparison()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:outline-none focus:border-amber-500">
+              <option value="workshop" id="optGroupWorkshop">Workshop</option>
+              <option value="livello" id="optGroupLevel">Livello Workshop</option>
               <option value="cantiere" id="optGroupSite">Cantiere / Progetto</option>
               <option value="azienda" id="optGroupCompany">Azienda</option>
               <option value="ruolo" id="optGroupRole">Ruolo / Funzione</option>
@@ -323,15 +339,15 @@
         </div>
       </div>
 
-      <!-- TABELLA ELENCO PARTECIPANTI CON CASELLE DI SPUNTA ED ELIMINAZIONE MULTIPLA -->
+      <!-- TABELLA ELENCO PARTECIPANTI (CON COLONNA WORKSHOP EDITABILE PER I DATI GIÀ PRESENTI) -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
         <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div>
             <h3 id="partTableTitle" class="font-bold text-slate-900 text-lg">
-              Dettaglio Singoli Test Completati
+              Dettaglio Singoli Test Completati (Con Assegnazione Workshop Editabile)
             </h3>
             <p id="partTableSub" class="text-xs text-slate-500">
-              Seleziona più righe con le caselle di spunta per eliminarle in blocco, oppure clicca su una riga per aprire la scheda grafica individuale.
+              Puoi associare o modificare il Workshop di qualsiasi test già presente usando il menu a discesa nella colonna "Workshop".
             </p>
           </div>
 
@@ -356,16 +372,17 @@
               <tr>
                 <th class="py-3 px-3 w-10 text-center no-print">
                   <input id="chkSelectAllRows" type="checkbox" onchange="toggleSelectAllFiltered(this.checked)"
-                    title="Seleziona / Deseleziona tutti i test visibili"
                     class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
                 </th>
                 <th id="thPDate" class="py-3 px-3">Data</th>
+                <th id="thPWorkshop" class="py-3 px-3">Workshop (Editabile)</th>
+                <th id="thPLevel" class="py-3 px-3">Livello</th>
                 <th id="thPName" class="py-3 px-3">Partecipante</th>
                 <th id="thPComp" class="py-3 px-3">Azienda</th>
                 <th id="thPRole" class="py-3 px-3">Ruolo</th>
                 <th id="thPSite" class="py-3 px-3">Cantiere</th>
-                <th id="thPDom" class="py-3 px-3">Area #1 (Forte)</th>
-                <th id="thPLow" class="py-3 px-3">Area #7 (Gap)</th>
+                <th id="thPDom" class="py-3 px-3">Area #1</th>
+                <th id="thPLow" class="py-3 px-3">Area #7</th>
                 <th id="thPAction" class="py-3 px-3 text-right no-print">Azioni</th>
               </tr>
             </thead>
@@ -376,7 +393,96 @@
 
     </section>
 
-    <!-- 3. SCHEDA B: GESTIONE LISTE (CARICATE ESCLUSIVAMENTE DAI 3 FILE .TXT) -->
+    <!-- 3. SCHEDA B: GESTIONE WORKSHOP (SALVATI NEL DATABASE NETLIFY BLOBS) -->
+    <section id="screen-workshops" class="hidden space-y-6 no-print">
+
+      <!-- Form Creazione Nuovo Workshop -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
+              Database Netlify Blobs
+            </span>
+            <h2 id="wsTabTitle" class="text-xl md:text-2xl font-extrabold text-slate-900 mt-1">
+              Crea e Gestisci i Workshop
+            </h2>
+            <p id="wsTabSub" class="text-xs md:text-sm text-slate-500 mt-0.5">
+              Ogni Workshop genera un <strong>Link univoco</strong> e un <strong>QR Code</strong>: i partecipanti potranno avviare <code>index.html</code> solo tramite il link del Workshop.
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5">
+          <h3 id="wsCreateHeader" class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-4">
+            + Registra un Nuovo Workshop nel Database
+          </h3>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label id="lblWsName" class="block text-xs font-bold text-slate-700 mb-1">Nome del Workshop *</label>
+              <input id="inputWsName" type="text" placeholder="Es. Workshop Leadership Lotto 1"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
+            </div>
+            <div>
+              <label id="lblWsDate" class="block text-xs font-bold text-slate-700 mb-1">Data del Workshop *</label>
+              <input id="inputWsDate" type="date"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
+            </div>
+            <div>
+              <label id="lblWsSite" class="block text-xs font-bold text-slate-700 mb-1">Cantiere (da cantieri.txt) *</label>
+              <select id="selectWsSite"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500">
+              </select>
+            </div>
+            <div>
+              <label id="lblWsLevel" class="block text-xs font-bold text-slate-700 mb-1">Livello del Workshop *</label>
+              <select id="selectWsLevel"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500">
+                <option value="Top manager">Top manager</option>
+                <option value="Second level">Second level</option>
+                <option value="Baseline">Baseline</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end mt-4 pt-3 border-t border-slate-200">
+            <button onclick="createNewWorkshop()" id="btnCreateWs"
+              class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs md:text-sm shadow-sm transition">
+              + Crea Workshop e Salva nel Database
+            </button>
+          </div>
+        </div>
+
+        <div id="wsFeedbackBanner" class="hidden mt-4 rounded-xl p-3.5 text-xs font-bold border"></div>
+      </div>
+
+      <!-- Elenco Workshop Attivi con Link Copiabile e QR Code -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <h3 id="wsListHeader" class="font-bold text-slate-900 text-lg mb-4">
+          Elenco Workshop Registrati nel Database
+        </h3>
+        <div id="workshopsTableContainer" class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b-2 border-slate-200 uppercase text-slate-500 bg-slate-50">
+                <th class="py-3 px-3">Codice ID</th>
+                <th class="py-3 px-3">Nome Workshop</th>
+                <th class="py-3 px-3">Data</th>
+                <th class="py-3 px-3">Cantiere (cantieri.txt)</th>
+                <th class="py-3 px-3">Livello</th>
+                <th class="py-3 px-3 text-center">Stato Link</th>
+                <th class="py-3 px-3 text-center">Questionari</th>
+                <th class="py-3 px-3">Link Partecipanti & QR Code</th>
+                <th class="py-3 px-3 text-right">Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="workshopsTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 4. SCHEDA C: GESTIONE LISTE .TXT SU GITHUB -->
     <section id="screen-lists" class="hidden space-y-6 no-print">
 
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-wrap items-center justify-between gap-4">
@@ -386,33 +492,37 @@
               Lettura file .txt...
             </span>
             <span id="unsavedChangesBadge" class="hidden px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold animate-pulse">
-              Modifiche pronte da esportare *
+              Modifiche non salvate su GitHub *
             </span>
           </div>
           <h2 id="lstMainTitle" class="text-xl md:text-2xl font-extrabold text-slate-900">
             Gestione Liste (aziende.txt, ruoli.txt, cantieri.txt)
           </h2>
           <p id="lstMainSub" class="text-xs md:text-sm text-slate-500 mt-0.5">
-            Le liste vengono caricate esclusivamente dai file <code>aziende.txt</code>, <code>ruoli.txt</code> e <code>cantieri.txt</code>. Aggiungi o rimuovi le voci e scarica i file aggiornati.
+            Aggiungi o rimuovi le voci e clicca su <strong>Salva direttamente su GitHub</strong>. La lista <code>cantieri.txt</code> alimenta anche la creazione dei Workshop.
           </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
-          <button onclick="loadListsFromTxtOnly()" id="btnReloadTxt"
+          <button onclick="loadListsAndWorkshops()" id="btnReloadTxt"
             class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
-            ↻ Ricarica dai file .txt
+            ↻ Ricarica
           </button>
           <button onclick="downloadAllTxtFiles()" id="btnDownloadAllTxt"
+            class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
+            ⬇ Scarica copia .txt
+          </button>
+          <button onclick="saveListsToGitHub()" id="btnSaveGitHub"
             class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs md:text-sm shadow-sm transition">
-            ⬇ Scarica tutti i 3 file .txt aggiornati
+            🚀 Salva direttamente su GitHub
           </button>
         </div>
       </div>
 
-      <!-- 3 Colonne: aziende.txt | ruoli.txt | cantieri.txt -->
-      <div class="grid lg:grid-cols-3 gap-6">
+      <div id="githubSaveBanner" class="hidden rounded-xl p-4 text-xs font-bold border"></div>
 
-        <!-- COLONNA 1: AZIENDE (aziende.txt) -->
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- COLONNA 1: AZIENDE -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
           <div>
             <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
@@ -420,24 +530,16 @@
                 <h3 id="colCompTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">1. Aziende</h3>
                 <p class="text-[11px] text-slate-400 font-mono">aziende.txt</p>
               </div>
-              <div class="flex items-center gap-2">
-                <button onclick="downloadSingleTxtFile('companies')" title="Scarica solo aziende.txt"
-                  class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-bold border border-slate-700 transition">
-                  ⬇ .txt
-                </button>
-                <span id="countCompaniesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
-              </div>
+              <span id="countCompaniesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
             </div>
-
             <div id="listContainer-companies" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
           </div>
-
           <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
             <div class="text-xs font-bold text-slate-700" id="addCompLabel">Aggiungi nuova Azienda:</div>
             <input id="newCompIT" type="text" placeholder="Nome Azienda (es. Rossi SpA)"
               onkeydown="if(event.key==='Enter') addListItem('companies')"
               class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
-            <input id="newCompEN" type="text" placeholder="Traduzione EN opzionale (es. Rossi Corp)"
+            <input id="newCompEN" type="text" placeholder="Traduzione EN opzionale"
               onkeydown="if(event.key==='Enter') addListItem('companies')"
               class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-amber-500" />
             <button onclick="addListItem('companies')" id="btnAddComp"
@@ -447,7 +549,7 @@
           </div>
         </div>
 
-        <!-- COLONNA 2: RUOLI (ruoli.txt) -->
+        <!-- COLONNA 2: RUOLI -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
           <div>
             <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
@@ -455,18 +557,10 @@
                 <h3 id="colRoleTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">2. Ruoli / Funzioni</h3>
                 <p class="text-[11px] text-slate-400 font-mono">ruoli.txt</p>
               </div>
-              <div class="flex items-center gap-2">
-                <button onclick="downloadSingleTxtFile('roles')" title="Scarica solo ruoli.txt"
-                  class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-bold border border-slate-700 transition">
-                  ⬇ .txt
-                </button>
-                <span id="countRolesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
-              </div>
+              <span id="countRolesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
             </div>
-
             <div id="listContainer-roles" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
           </div>
-
           <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
             <div class="text-xs font-bold text-slate-700" id="addRoleLabel">Aggiungi nuovo Ruolo:</div>
             <input id="newRoleIT" type="text" placeholder="Ruolo IT (es. Preposto)"
@@ -482,7 +576,7 @@
           </div>
         </div>
 
-        <!-- COLONNA 3: CANTIERI (cantieri.txt) -->
+        <!-- COLONNA 3: CANTIERI -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
           <div>
             <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
@@ -490,18 +584,10 @@
                 <h3 id="colSiteTitle" class="font-extrabold text-sm uppercase tracking-wider text-amber-400">3. Cantieri / Progetti</h3>
                 <p class="text-[11px] text-slate-400 font-mono">cantieri.txt</p>
               </div>
-              <div class="flex items-center gap-2">
-                <button onclick="downloadSingleTxtFile('sites')" title="Scarica solo cantieri.txt"
-                  class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-bold border border-slate-700 transition">
-                  ⬇ .txt
-                </button>
-                <span id="countSitesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
-              </div>
+              <span id="countSitesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
             </div>
-
             <div id="listContainer-sites" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
           </div>
-
           <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
             <div class="text-xs font-bold text-slate-700" id="addSiteLabel">Aggiungi nuovo Cantiere:</div>
             <input id="newSiteIT" type="text" placeholder="Cantiere IT (es. Lotto Nord)"
@@ -516,11 +602,29 @@
             </button>
           </div>
         </div>
-
       </div>
     </section>
 
   </main>
+
+  <!-- MODALE QR CODE DEL WORKSHOP -->
+  <div id="workshopQrModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 text-center">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <span id="qrModalLevelBadge" class="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 text-xs font-extrabold">Livello</span>
+        <button onclick="closeWorkshopQrModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm">✕</button>
+      </div>
+      <h3 id="qrModalTitle" class="text-lg font-extrabold text-slate-900 mb-1">Nome Workshop</h3>
+      <p id="qrModalMeta" class="text-xs text-slate-500 mb-4">Data • Cantiere</p>
+      <div id="qrCodeCanvasBox" class="p-4 border-4 border-slate-900 rounded-2xl inline-block bg-white mb-4"></div>
+      <p id="qrModalLinkText" class="text-[11px] font-mono text-slate-500 break-all bg-slate-50 p-2.5 rounded-lg border border-slate-200 mb-4"></p>
+      <div class="flex justify-center gap-2">
+        <button onclick="copyModalWsLink()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs">
+          📋 Copia Link Workshop
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODALE ISPEZIONE SINGOLO PARTECIPANTE -->
   <div id="participantModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 no-print">
@@ -558,11 +662,12 @@
 
   <script>
     // =========================================================================
-    // 1. FILE DI TESTO UNICI (NESSUNA LISTA DI DEFAULT NEL CODICE)
+    // 1. COSTANTI E CONFIGURAZIONE
     // =========================================================================
     const COMPANIES_TXT_URL = "./aziende.txt";
     const ROLES_TXT_URL = "./ruoli.txt";
     const SITES_TXT_URL = "./cantieri.txt";
+    const MANAGE_API_ENDPOINT = "/.netlify/functions/manage-lists";
 
     const AREA_KEYS = [
       { id: "VISION", name: "Vision", csvPct: "vision_pct", color: "#2563eb" },
@@ -574,209 +679,8 @@
       { id: "FEEDBACK", name: "Feedback", csvPct: "feedback_pct", color: "#4f46e5" }
     ];
 
-    const UI_TEXT = {
-      it: {
-        hdrTitle: "Safety Leadership — Admin & Config",
-        hdrSub: "Analisi risultati in tempo reale e gestione file .txt",
-        langSwitchPrefix: "Lingua:",
-        langLabel: "Italiano 🇮🇹",
-        btnChangeSource: "Esci / Cambia Sorgente",
-        btnPrintReport: "Stampa / PDF",
-        btnRefreshNow: "↻ Aggiorna ora",
-        navTabAnalyticsLabel: "Analisi Risultati",
-        navTabListsLabel: "Gestione Liste (aziende.txt, ruoli.txt, cantieri.txt)",
-        loginBadge: "Connessione Diretta Database Netlify",
-        loginTitle: "Accedi alla Console di Amministrazione",
-        tabBtnFunc: "1. Tramite Netlify Function (Password Admin)",
-        tabBtnDirect: "2. Connessione Diretta Token API",
-        funcDesc: "Inserisci la password configurata nella variabile <code>ADMIN_PASSWORD</code> su Netlify per visualizzare i grafici in tempo reale, eliminare i test di prova e gestire i file <code>.txt</code> delle liste.",
-        btnConnectFunc: "Accedi alla Console →",
-        directDesc: "Inserisci il tuo <strong>Site ID</strong> (da <em>Site configuration → General</em>) e il tuo <strong>Personal Access Token</strong> (<code>nfp_...</code>) di Netlify:",
-        lblRememberCreds: "Ricorda credenziali in questo browser",
-        btnConnectDirect: "Connetti alle API di Netlify →",
-        altTitle: "Modalità Offline: Carica CSV o Apri Demo",
-        altSub: "Esplora i grafici e la scheda 'Gestione Liste' (caricata da aziende.txt, ruoli.txt e cantieri.txt).",
-        btnBrowseCSV: "Sfoglia file CSV...",
-        btnLoadDemo: "Apri Console Demo (25 Test + Liste .txt) →",
-        fltTitle: "Filtri di Analisi",
-        activeRecords: (n, tot) => `${n} di ${tot} test selezionati`,
-        btnResetFilters: "Azzera filtri",
-        lblFilterCompany: "Azienda",
-        allCompanies: "Tutte le Aziende",
-        lblFilterSite: "Cantiere / Progetto",
-        allSites: "Tutti i Cantieri",
-        lblFilterRole: "Ruolo / Funzione",
-        allRoles: "Tutti i Ruoli",
-        lblFilterSearch: "Cerca Partecipante",
-        phSearch: "Nome o Anonimo...",
-        kpi1Title: "Test Analizzati",
-        kpi1Sub: (anon, named) => `${named} nominativi • ${anon} anonimi`,
-        kpi2Title: "Area Media Dominante (#1)",
-        kpi2Sub: (val) => `Media del gruppo: ${val}% (Target 14.3%)`,
-        kpi3Title: "Gap Formativo Medio (#7)",
-        kpi3Sub: (val) => `Media più bassa: ${val}% (Priorità coaching)`,
-        kpi4Title: "Seconda Leva Media (#2)",
-        kpi4Sub: (val) => `Media del gruppo: ${val}%`,
-        chart1Title: "Profilo Medio delle 7 Aree (Selezione vs Globale)",
-        chart1Sub: "Confronta la media del gruppo filtrato con la media generale e il target bilanciato (14.3%)",
-        dsFilteredAvg: "Media Gruppo Filtrato (%)",
-        dsGlobalAvg: "Media Globale (%)",
-        dsIdealTarget: "Target Equilibrato (14.3%)",
-        chart2Title: "Distribuzione Punti di Forza (#1) vs Bisogni Formativi (#7)",
-        chart2Sub: "Numero di partecipanti per i quali ciascuna area risulta la #1 (Dominante) o la #7 (Meno Presidiata)",
-        dsCountTop1: "N° volte Area Dominante (#1)",
-        dsCountLow7: "N° volte Area Meno Presidiata (#7)",
-        heatmapTitle: "Matrice Comparativa (Heatmap) per Gruppo",
-        heatmapSub: "Confronta le percentuali medie delle 7 aree raggruppate per Cantiere, Azienda o Ruolo.",
-        lblGroupBy: "Raggruppa per:",
-        optGroupSite: "Cantiere / Progetto",
-        optGroupCompany: "Azienda",
-        optGroupRole: "Ruolo / Funzione",
-        thGroupCol: "Gruppo",
-        thGroupCount: "N. Test",
-        thGroupGap: "Area da Potenziare (Media più bassa)",
-        partTableTitle: "Dettaglio Singoli Test Completati",
-        partTableSub: "Seleziona più righe con le caselle di spunta per eliminarle in blocco, oppure clicca su una riga per aprire la scheda grafica individuale.",
-        btnExportFilteredCSV: "Esporta Vista Filtrata (CSV)",
-        btnDeleteSelectedFormat: (n) => `Elimina selezionati (${n})`,
-        btnDeletingBulk: "Eliminazione in corso...",
-        thPDate: "Data",
-        thPName: "Partecipante",
-        thPComp: "Azienda",
-        thPRole: "Ruolo",
-        thPSite: "Cantiere",
-        thPDom: "Area #1 (Forte)",
-        thPLow: "Area #7 (Gap)",
-        thPAction: "Azioni",
-        btnDeleteRow: "🗑️ Elimina",
-        btnDeletingRow: "Eliminazione...",
-        btnModalDelete: "🗑️ Elimina Test",
-        confirmDeleteMsg: (name, date) => `Vuoi davvero eliminare definitivamente il test di "${name}" del ${date}?`,
-        confirmBulkDeleteMsg: (n) => `Vuoi davvero eliminare definitivamente i ${n} test selezionati? L'operazione non può essere annullata.`,
-        deleteSuccessMsg: (name) => `✓ Test di "${name}" eliminato con successo. Tutti i grafici sono stati aggiornati.`,
-        bulkDeleteSuccessMsg: (n) => `✓ ${n} test eliminati con successo. Tutti i grafici e le medie sono stati aggiornati.`,
-        lstMainTitle: "Gestione Liste (aziende.txt, ruoli.txt, cantieri.txt)",
-        lstMainSub: "Le liste vengono caricate esclusivamente dai file aziende.txt, ruoli.txt e cantieri.txt. Aggiungi o rimuovi le voci e scarica i file aggiornati.",
-        btnReloadTxt: "↻ Ricarica dai file .txt",
-        btnDownloadAllTxt: "⬇ Scarica tutti i 3 file .txt aggiornati",
-        txtLoadingBadge: "Lettura file .txt in corso...",
-        txtLoadedOkBadge: "Caricati da aziende.txt, ruoli.txt, cantieri.txt ✓",
-        txtMissingBadge: (missing) => `File .txt non trovati o vuoti: ${missing}`,
-        unsavedChanges: "Modifiche pronte da esportare *",
-        colCompTitle: "1. Aziende",
-        colRoleTitle: "2. Ruoli / Funzioni",
-        colSiteTitle: "3. Cantieri / Progetti",
-        addCompLabel: "Aggiungi nuova Azienda:",
-        addRoleLabel: "Aggiungi nuovo Ruolo:",
-        addSiteLabel: "Aggiungi nuovo Cantiere:",
-        btnAddComp: "+ Aggiungi Azienda",
-        btnAddRole: "+ Aggiungi Ruolo",
-        btnAddSite: "+ Aggiungi Cantiere",
-        emptyListNotice: "Nessuna voce caricata dal file .txt"
-      },
-      en: {
-        hdrTitle: "Safety Leadership — Admin & Config",
-        hdrSub: "Real-time results analytics and .txt list management",
-        langSwitchPrefix: "Language:",
-        langLabel: "English 🇬🇧",
-        btnChangeSource: "Logout / Change Source",
-        btnPrintReport: "Print / PDF",
-        btnRefreshNow: "↻ Refresh now",
-        navTabAnalyticsLabel: "Results Analytics",
-        navTabListsLabel: "Manage Lists (aziende.txt, ruoli.txt, cantieri.txt)",
-        loginBadge: "Direct Netlify Database Connection",
-        loginTitle: "Sign In to Admin Console",
-        tabBtnFunc: "1. Via Netlify Function (Admin Password)",
-        tabBtnDirect: "2. Direct API Token",
-        funcDesc: "Enter the password configured in <code>ADMIN_PASSWORD</code> on Netlify to view live charts, delete test runs, and manage your <code>.txt</code> list files.",
-        btnConnectFunc: "Sign In to Console →",
-        directDesc: "Enter your <strong>Site ID</strong> (from <em>Site configuration → General</em>) and your <strong>Personal Access Token</strong> (<code>nfp_...</code>):",
-        lblRememberCreds: "Remember credentials in this browser",
-        btnConnectDirect: "Connect to Netlify API →",
-        altTitle: "Offline Mode: Upload CSV or Open Demo",
-        altSub: "Explore the analytics charts and the 'Manage Lists' tab (loaded from aziende.txt, ruoli.txt, and cantieri.txt).",
-        btnBrowseCSV: "Browse CSV file...",
-        btnLoadDemo: "Open Demo Console (25 Tests + .txt Lists) →",
-        fltTitle: "Analysis Filters",
-        activeRecords: (n, tot) => `${n} of ${tot} assessments selected`,
-        btnResetFilters: "Reset filters",
-        lblFilterCompany: "Company",
-        allCompanies: "All Companies",
-        lblFilterSite: "Site / Project",
-        allSites: "All Sites",
-        lblFilterRole: "Role / Job Title",
-        allRoles: "All Roles",
-        lblFilterSearch: "Search Participant",
-        phSearch: "Name or Anonymous...",
-        kpi1Title: "Analyzed Assessments",
-        kpi1Sub: (anon, named) => `${named} named • ${anon} anonymous`,
-        kpi2Title: "Avg Dominant Area (#1)",
-        kpi2Sub: (val) => `Group average: ${val}% (Target 14.3%)`,
-        kpi3Title: "Avg Training Gap (#7)",
-        kpi3Sub: (val) => `Lowest average: ${val}% (Coaching focus)`,
-        kpi4Title: "Second Avg Lever (#2)",
-        kpi4Sub: (val) => `Group average: ${val}%`,
-        chart1Title: "Average Profile Across the 7 Areas (Selection vs Global)",
-        chart1Sub: "Compares the filtered group average against the overall average and the balanced target (14.3%)",
-        dsFilteredAvg: "Filtered Group Avg (%)",
-        dsGlobalAvg: "Overall Avg (%)",
-        dsIdealTarget: "Balanced Target (14.3%)",
-        chart2Title: "Distribution of Primary Strengths (#1) vs Training Gaps (#7)",
-        chart2Sub: "Number of participants for whom each area ranked #1 (Dominant) or #7 (Least Covered)",
-        dsCountTop1: "# of times Dominant Area (#1)",
-        dsCountLow7: "# of times Least Covered (#7)",
-        heatmapTitle: "Comparative Group Matrix (Heatmap)",
-        heatmapSub: "Compare average percentages across the 7 areas grouped by Site, Company, or Role.",
-        lblGroupBy: "Group by:",
-        optGroupSite: "Site / Project",
-        optGroupCompany: "Company",
-        optGroupRole: "Role / Job Title",
-        thGroupCol: "Group",
-        thGroupCount: "Count",
-        thGroupGap: "Training Need (Lowest Avg)",
-        partTableTitle: "Individual Completed Assessments",
-        partTableSub: "Check multiple rows to bulk-delete them with one click, or click any row to inspect the individual radar chart.",
-        btnExportFilteredCSV: "Export Filtered View (CSV)",
-        btnDeleteSelectedFormat: (n) => `Delete selected (${n})`,
-        btnDeletingBulk: "Deleting...",
-        thPDate: "Date",
-        thPName: "Participant",
-        thPComp: "Company",
-        thPRole: "Role",
-        thPSite: "Site",
-        thPDom: "Area #1 (Top)",
-        thPLow: "Area #7 (Gap)",
-        thPAction: "Actions",
-        btnDeleteRow: "🗑️ Delete",
-        btnDeletingRow: "Deleting...",
-        btnModalDelete: "🗑️ Delete Test",
-        confirmDeleteMsg: (name, date) => `Are you sure you want to permanently delete the assessment by "${name}" (${date})?`,
-        confirmBulkDeleteMsg: (n) => `Are you sure you want to permanently delete the ${n} selected assessments? This action cannot be undone.`,
-        deleteSuccessMsg: (name) => `✓ Assessment by "${name}" deleted. All charts have been recalculated.`,
-        bulkDeleteSuccessMsg: (n) => `✓ ${n} assessments deleted successfully. All charts and averages have been updated.`,
-        lstMainTitle: "Manage Lists (aziende.txt, ruoli.txt, cantieri.txt)",
-        lstMainSub: "Lists are loaded exclusively from aziende.txt, ruoli.txt, and cantieri.txt. Add or remove items and download the updated files.",
-        btnReloadTxt: "↻ Reload from .txt files",
-        btnDownloadAllTxt: "⬇ Download all 3 updated .txt files",
-        txtLoadingBadge: "Reading .txt files...",
-        txtLoadedOkBadge: "Loaded from aziende.txt, ruoli.txt, cantieri.txt ✓",
-        txtMissingBadge: (missing) => `Missing or empty .txt files: ${missing}`,
-        unsavedChanges: "Changes ready to export *",
-        colCompTitle: "1. Companies",
-        colRoleTitle: "2. Roles / Job Titles",
-        colSiteTitle: "3. Sites / Projects",
-        addCompLabel: "Add new Company:",
-        addRoleLabel: "Add new Role:",
-        addSiteLabel: "Add new Site:",
-        btnAddComp: "+ Add Company",
-        btnAddRole: "+ Add Role",
-        btnAddSite: "+ Add Site",
-        emptyListNotice: "No items loaded from .txt file"
-      }
-    };
-
     let currentLang = "it";
-    let currentAdminView = "analytics";
+    let currentAdminView = "analytics"; // 'analytics' | 'workshops' | 'lists'
     let activeConnectionMode = null;
     let savedAdminPassword = "";
     let autoRefreshTimer = null;
@@ -786,13 +690,14 @@
     let selectedRecordIds = new Set();
     let currentModalRecordId = null;
 
-    // Stato delle 3 liste (inizializzate vuote: vengono popolate SOLO dai 3 file .txt)
-    let editableLists = {
-      companies: [],
-      roles: [],
-      sites: []
-    };
-    let txtLoadState = "loading"; // 'loading' | 'loaded' | 'error'
+    // Database Workshop & Assegnazioni (memorizzati su Netlify Blobs)
+    let workshopsDB = [];
+    let workshopAssignments = {}; // mappa submission_id -> { workshopId, workshopName, workshopDate, workshopLevel, workshopSite }
+    let currentQrModalUrl = "";
+
+    // Liste lette esclusivamente dai 3 file .txt
+    let editableLists = { companies: [], roles: [], sites: [] };
+    let txtLoadState = "loading";
     let missingTxtFiles = [];
     let hasUnsavedListChanges = false;
 
@@ -802,31 +707,347 @@
     let modalRadarInstance = null;
 
     // =========================================================================
-    // 2. NAVIGAZIONE SCHEDE ADMIN
+    // 2. NAVIGAZIONE TRA LE 3 SCHEDE ADMIN
     // =========================================================================
     function switchAdminView(viewName) {
       currentAdminView = viewName;
-      const tabA = document.getElementById("navTabAnalytics");
-      const tabL = document.getElementById("navTabLists");
-      const secA = document.getElementById("screen-dashboard");
-      const secL = document.getElementById("screen-lists");
+      const tabs = {
+        analytics: { btn: "navTabAnalytics", sec: "screen-dashboard" },
+        workshops: { btn: "navTabWorkshops", sec: "screen-workshops" },
+        lists: { btn: "navTabLists", sec: "screen-lists" }
+      };
 
-      if (viewName === "analytics") {
-        tabA.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2";
-        tabL.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2";
-        secL.classList.add("hidden");
-        secA.classList.remove("hidden");
-      } else {
-        tabL.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2";
-        tabA.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2";
-        secA.classList.add("hidden");
-        secL.classList.remove("hidden");
+      Object.keys(tabs).forEach(k => {
+        const b = document.getElementById(tabs[k].btn);
+        const s = document.getElementById(tabs[k].sec);
+        if (k === viewName) {
+          b.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2";
+          s.classList.remove("hidden");
+        } else {
+          b.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2";
+          s.classList.add("hidden");
+        }
+      });
+
+      if (viewName === "workshops") {
+        populateWorkshopSiteDropdown();
+        renderWorkshopsTable();
+      } else if (viewName === "lists") {
         renderEditableListsUI();
       }
     }
 
     // =========================================================================
-    // 3. SELEZIONE MULTIPLA (CHECKBOX) ED ELIMINAZIONE SINGOLA / IN BLOCCO
+    // 3. GESTIONE WORKSHOP NEL DATABASE NETLIFY BLOBS
+    // =========================================================================
+    function populateWorkshopSiteDropdown() {
+      const sel = document.getElementById("selectWsSite");
+      if (!sel) return;
+      if (editableLists.sites.length === 0) {
+        sel.innerHTML = `<option value="">-- Nessun cantiere in cantieri.txt --</option>`;
+        return;
+      }
+      sel.innerHTML = editableLists.sites.map(s => {
+        const label = s.split("|")[0].trim();
+        return `<option value="${s}">${label}</option>`;
+      }).join("");
+    }
+
+    function getParticipantTestBaseUrl() {
+      const loc = window.location;
+      const basePath = loc.pathname.replace(/dashboard-admin\.html.*$/i, "");
+      return `${loc.origin}${basePath.endsWith("/") ? basePath : basePath + "/"}index.html`;
+    }
+
+// Crea un nuovo workshop impostandolo di default come APERTO (active: true)
+    async function createNewWorkshop() {
+      const nameVal = document.getElementById("inputWsName").value.trim();
+      const dateVal = document.getElementById("inputWsDate").value;
+      const siteVal = document.getElementById("selectWsSite").value;
+      const levelVal = document.getElementById("selectWsLevel").value;
+      const banner = document.getElementById("wsFeedbackBanner");
+
+      if (!nameVal || !dateVal || !siteVal) {
+        banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-red-50 border-red-200 text-red-700";
+        banner.textContent = "Compila tutti i campi obbligatori del Workshop: Nome, Data e Cantiere.";
+        banner.classList.remove("hidden");
+        return;
+      }
+
+      const newWs = {
+        id: "ws_" + Math.random().toString(36).substring(2, 8) + Date.now().toString(36).slice(-3),
+        name: nameVal,
+        date: dateVal,
+        site: siteVal,
+        level: levelVal,
+        active: true, // Aperto di default
+        createdAt: new Date().toISOString()
+      };
+
+      workshopsDB.unshift(newWs);
+      document.getElementById("inputWsName").value = "";
+
+      await persistWorkshopsToDatabase("✓ Workshop creato (Stato: Aperto) e salvato nel database Netlify!");
+      renderWorkshopsTable();
+      populateFilterDropdowns(true);
+      renderParticipantsTable();
+    }
+    
+    // Commuta lo stato Aperto / Chiuso di un Workshop e salva subito nel database Netlify
+    async function toggleWorkshopActive(wsId) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+
+      // Se 'active' non era definito sui workshop creati in precedenza, lo considera true e lo passa a false
+      const currentlyOpen = ws.active !== false;
+      ws.active = !currentlyOpen;
+
+      const statusLabel = ws.active ? "APERTO (Link attivo)" : "CHIUSO (Link disattivato)";
+      await persistWorkshopsToDatabase(`✓ Stato del workshop "${ws.name}" aggiornato a: ${statusLabel}`);
+      renderWorkshopsTable();
+    }
+    
+    async function deleteWorkshopRecord(wsId) {
+      const target = workshopsDB.find(w => w.id === wsId);
+      if (!target) return;
+      if (!window.confirm(`Vuoi davvero eliminare il workshop "${target.name}" dal database?`)) return;
+
+      workshopsDB = workshopsDB.filter(w => w.id !== wsId);
+      await persistWorkshopsToDatabase(`✓ Workshop "${target.name}" rimosso dal database.`);
+      renderWorkshopsTable();
+      populateFilterDropdowns(true);
+      renderParticipantsTable();
+    }
+
+    async function persistWorkshopsToDatabase(successMsg) {
+      const banner = document.getElementById("wsFeedbackBanner");
+      localStorage.setItem("sl_workshops_db_backup", JSON.stringify(workshopsDB));
+
+      let pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
+      if (!pwd && activeConnectionMode !== "demo") {
+        pwd = window.prompt("Inserisci la tua ADMIN_PASSWORD per salvare nel database Netlify:") || "";
+        savedAdminPassword = pwd.trim();
+      }
+
+      try {
+        const res = await fetch(MANAGE_API_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": pwd
+          },
+          body: JSON.stringify({
+            action: "save_workshops",
+            workshops: workshopsDB
+          })
+        });
+
+        if (res.ok) {
+          banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
+          banner.textContent = successMsg;
+          banner.classList.remove("hidden");
+        } else {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+      } catch (e) {
+        banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-amber-50 border-amber-200 text-amber-900";
+        banner.textContent = `${successMsg} (Salvato in cache locale: ${e.message})`;
+        banner.classList.remove("hidden");
+      }
+    }
+
+    // Riassegna un questionario già presente in tabella a uno specifico Workshop
+    async function assignRecordToWorkshop(recordId, newWorkshopId) {
+      const rec = allRecords.find(r => r.id === recordId);
+      if (!rec) return;
+
+      const wsObj = workshopsDB.find(w => w.id === newWorkshopId);
+      if (wsObj) {
+        rec.workshopId = wsObj.id;
+        rec.workshopName = wsObj.name;
+        rec.workshopDate = wsObj.date;
+        rec.workshopLevel = wsObj.level;
+        workshopAssignments[recordId] = {
+          workshopId: wsObj.id,
+          workshopName: wsObj.name,
+          workshopDate: wsObj.date,
+          workshopLevel: wsObj.level,
+          workshopSite: wsObj.site
+        };
+      } else {
+        rec.workshopId = "";
+        rec.workshopName = "Non assegnato";
+        rec.workshopDate = "-";
+        rec.workshopLevel = "Non assegnato";
+        delete workshopAssignments[recordId];
+      }
+
+      localStorage.setItem("sl_ws_assignments_backup", JSON.stringify(workshopAssignments));
+      populateFilterDropdowns(true);
+      applyFilters();
+
+      // Salva nel database Netlify Blobs
+      const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
+      if (pwd) {
+        try {
+          await fetch(MANAGE_API_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-admin-password": pwd
+            },
+            body: JSON.stringify({
+              action: "assign_submission",
+              submissionId: recordId,
+              workshopId: wsObj ? wsObj.id : null,
+              workshopName: wsObj ? wsObj.name : "",
+              workshopDate: wsObj ? wsObj.date : "",
+              workshopLevel: wsObj ? wsObj.level : "",
+              workshopSite: wsObj ? wsObj.site : ""
+            })
+          });
+        } catch (e) {
+          console.warn("Salvataggio assegnazione workshop:", e);
+        }
+      }
+    }
+
+function renderWorkshopsTable() {
+      const tbody = document.getElementById("workshopsTableBody");
+      if (!tbody) return;
+
+      if (workshopsDB.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 italic">Nessun Workshop registrato. Creane uno con il modulo qui sopra per generare il link per i partecipanti.</td></tr>`;
+        return;
+      }
+
+      const baseUrl = getParticipantTestBaseUrl();
+
+      tbody.innerHTML = workshopsDB.map(ws => {
+        const isOpen = ws.active !== false; // Default true per retrocompatibilità
+        const wsLink = `${baseUrl}?ws=${encodeURIComponent(ws.id)}`;
+        const siteLabel = String(ws.site || "").split("|")[0].trim();
+        const linkedCount = allRecords.filter(r => r.workshopId === ws.id || r.workshopName === ws.name).length;
+
+        const levelBadgeColor =
+          ws.level === "Top manager" ? "bg-purple-100 text-purple-900 border-purple-200" :
+          ws.level === "Second level" ? "bg-blue-100 text-blue-900 border-blue-200" :
+          "bg-emerald-100 text-emerald-900 border-emerald-200";
+
+        return `
+          <tr class="hover:bg-slate-50 transition ${!isOpen ? 'opacity-65 bg-slate-50/60' : ''}">
+            <td class="py-3 px-3 font-mono text-[11px] font-bold text-slate-500">${ws.id}</td>
+            <td class="py-3 px-3 font-extrabold text-slate-900">${ws.name}</td>
+            <td class="py-3 px-3 text-slate-600 whitespace-nowrap">${ws.date}</td>
+            <td class="py-3 px-3 text-slate-700 font-medium">${siteLabel}</td>
+            <td class="py-3 px-3">
+              <span class="px-2.5 py-0.5 rounded-full border font-bold text-[11px] ${levelBadgeColor}">
+                ${ws.level}
+              </span>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <button onclick="toggleWorkshopActive('${ws.id}')"
+                title="Clicca per aprire o chiudere le compilazioni del Workshop"
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full font-extrabold text-[11px] border transition ${
+                  isOpen
+                    ? 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200'
+                    : 'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300'
+                }">
+                <span class="w-2 h-2 rounded-full ${isOpen ? 'bg-emerald-600 animate-pulse' : 'bg-slate-500'}"></span>
+                <span>${isOpen ? 'APERTO' : 'CHIUSO'}</span>
+              </button>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <span class="px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-extrabold text-xs">
+                ${linkedCount}
+              </span>
+            </td>
+            <td class="py-3 px-3">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button onclick="copyWorkshopLink('${wsLink}')" ${!isOpen ? 'disabled' : ''}
+                  class="px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition ${
+                    isOpen
+                      ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }">
+                  📋 Copia Link
+                </button>
+                <button onclick="openWorkshopQrModal('${ws.id}')" ${!isOpen ? 'disabled' : ''}
+                  class="px-2.5 py-1 rounded-lg font-bold text-[11px] transition ${
+                    isOpen
+                      ? 'bg-slate-900 hover:bg-slate-800 text-white'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }">
+                  📱 QR Code
+                </button>
+                <a href="${wsLink}" target="_blank"
+                  class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                  Verifica ↗
+                </a>
+              </div>
+            </td>
+            <td class="py-3 px-3 text-right">
+              <button onclick="deleteWorkshopRecord('${ws.id}')"
+                class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200">
+                🗑️ Elimina
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function copyWorkshopLink(url) {
+      navigator.clipboard.writeText(url);
+      const banner = document.getElementById("wsFeedbackBanner");
+      banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
+      banner.textContent = `✓ Link del Workshop copiato negli appunti: ${url}`;
+      banner.classList.remove("hidden");
+    }
+
+    function openWorkshopQrModal(wsId) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+
+      const wsLink = `${getParticipantTestBaseUrl()}?ws=${encodeURIComponent(ws.id)}`;
+      currentQrModalUrl = wsLink;
+
+      document.getElementById("qrModalLevelBadge").textContent = ws.level;
+      document.getElementById("qrModalTitle").textContent = ws.name;
+      document.getElementById("qrModalMeta").textContent = `${ws.date} • ${ws.site.split("|")[0].trim()}`;
+      document.getElementById("qrModalLinkText").textContent = wsLink;
+
+      const box = document.getElementById("qrCodeCanvasBox");
+      box.innerHTML = "";
+      new QRCode(box, {
+        text: wsLink,
+        width: 200,
+        height: 200,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      const modal = document.getElementById("workshopQrModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeWorkshopQrModal() {
+      const modal = document.getElementById("workshopQrModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function copyModalWsLink() {
+      if (!currentQrModalUrl) return;
+      navigator.clipboard.writeText(currentQrModalUrl);
+      alert("Link copiato negli appunti:\n" + currentQrModalUrl);
+    }
+
+    // =========================================================================
+    // 4. SELEZIONE MULTIPLA ED ELIMINAZIONE TEST
     // =========================================================================
     function toggleRowSelection(recordId, isChecked) {
       if (isChecked) selectedRecordIds.add(recordId);
@@ -844,7 +1065,6 @@
     }
 
     function updateBulkSelectionUI() {
-      const t = UI_TEXT[currentLang];
       const validIds = new Set(allRecords.map(r => r.id));
       for (const id of selectedRecordIds) {
         if (!validIds.has(id)) selectedRecordIds.delete(id);
@@ -855,7 +1075,7 @@
       const bulkLbl = document.getElementById("btnDeleteSelectedLabel");
 
       if (count > 0) {
-        bulkLbl.textContent = t.btnDeleteSelectedFormat(count);
+        bulkLbl.textContent = `Elimina selezionati (${count})`;
         bulkBtn.classList.remove("hidden");
       } else {
         bulkBtn.classList.add("hidden");
@@ -877,67 +1097,37 @@
     async function deleteSelectedSubmissions() {
       const idsArray = Array.from(selectedRecordIds);
       if (idsArray.length === 0) return;
-
-      const t = UI_TEXT[currentLang];
-      const confirmed = window.confirm(t.confirmBulkDeleteMsg(idsArray.length));
-      if (!confirmed) return;
+      if (!window.confirm(`Vuoi eliminare definitivamente i ${idsArray.length} test selezionati?`)) return;
 
       const bulkBtn = document.getElementById("btnDeleteSelected");
-      const bulkLbl = document.getElementById("btnDeleteSelectedLabel");
       bulkBtn.disabled = true;
-      bulkLbl.textContent = t.btnDeletingBulk;
-
-      const banner = document.getElementById("deleteFeedbackBanner");
-      banner.classList.add("hidden");
 
       try {
         if (activeConnectionMode === "function") {
           const pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
           const res = await fetch("/.netlify/functions/get-results", {
             method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "x-admin-password": pwd
-            },
+            headers: { "Content-Type": "application/json", "x-admin-password": pwd },
             body: JSON.stringify({ ids: idsArray })
           });
-
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.error || `Errore HTTP ${res.status}`);
-          }
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
         } else if (activeConnectionMode === "direct") {
           const token = document.getElementById("inputDirectToken").value.trim();
-          await Promise.all(idsArray.map(async (subId) => {
-            const res = await fetch(`https://api.netlify.com/api/v1/submissions/${encodeURIComponent(subId)}`, {
+          await Promise.all(idsArray.map(subId =>
+            fetch(`https://api.netlify.com/api/v1/submissions/${encodeURIComponent(subId)}`, {
               method: "DELETE",
               headers: { Authorization: `Bearer ${token}` }
-            });
-            if (!res.ok && res.status !== 204) {
-              throw new Error(`Impossibile eliminare ID ${subId} (HTTP ${res.status})`);
-            }
-          }));
+            })
+          ));
         }
 
         const deletedSet = new Set(idsArray);
         allRecords = allRecords.filter(r => !deletedSet.has(r.id));
         selectedRecordIds.clear();
-
-        if (currentModalRecordId && deletedSet.has(currentModalRecordId)) {
-          closeParticipantModal();
-        }
-
         populateFilterDropdowns(true);
         applyFilters();
-
-        banner.className = "mb-4 rounded-xl p-3 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800 no-print";
-        banner.textContent = t.bulkDeleteSuccessMsg(idsArray.length);
-        banner.classList.remove("hidden");
-
       } catch (err) {
-        banner.className = "mb-4 rounded-xl p-3 text-xs font-bold border bg-red-50 border-red-200 text-red-700 no-print";
-        banner.textContent = "Errore durante l'eliminazione multipla: " + err.message;
-        banner.classList.remove("hidden");
+        alert("Errore eliminazione: " + err.message);
       } finally {
         bulkBtn.disabled = false;
         updateBulkSelectionUI();
@@ -946,22 +1136,9 @@
 
     async function deleteSubmissionById(recordId, event) {
       if (event) event.stopPropagation();
-
       const targetRec = allRecords.find(r => r.id === recordId);
       if (!targetRec) return;
-
-      const t = UI_TEXT[currentLang];
-      const confirmed = window.confirm(t.confirmDeleteMsg(targetRec.name, targetRec.date));
-      if (!confirmed) return;
-
-      const btnEl = document.getElementById(`delBtn-${recordId}`);
-      if (btnEl) {
-        btnEl.textContent = t.btnDeletingRow;
-        btnEl.disabled = true;
-      }
-
-      const banner = document.getElementById("deleteFeedbackBanner");
-      banner.classList.add("hidden");
+      if (!window.confirm(`Eliminare definitivamente il test di "${targetRec.name}"?`)) return;
 
       try {
         if (activeConnectionMode === "function") {
@@ -970,45 +1147,22 @@
             method: "DELETE",
             headers: { "x-admin-password": pwd }
           });
-
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.error || `Errore HTTP ${res.status}`);
-          }
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
         } else if (activeConnectionMode === "direct") {
           const token = document.getElementById("inputDirectToken").value.trim();
-          const res = await fetch(`https://api.netlify.com/api/v1/submissions/${encodeURIComponent(recordId)}`, {
+          await fetch(`https://api.netlify.com/api/v1/submissions/${encodeURIComponent(recordId)}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` }
           });
-
-          if (!res.ok && res.status !== 204) {
-            throw new Error(`Impossibile eliminare da API Netlify (HTTP ${res.status})`);
-          }
         }
 
         allRecords = allRecords.filter(r => r.id !== recordId);
         selectedRecordIds.delete(recordId);
-
-        if (currentModalRecordId === recordId) {
-          closeParticipantModal();
-        }
-
+        if (currentModalRecordId === recordId) closeParticipantModal();
         populateFilterDropdowns(true);
         applyFilters();
-
-        banner.className = "mb-4 rounded-xl p-3 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800 no-print";
-        banner.textContent = t.deleteSuccessMsg(targetRec.name);
-        banner.classList.remove("hidden");
-
       } catch (err) {
-        banner.className = "mb-4 rounded-xl p-3 text-xs font-bold border bg-red-50 border-red-200 text-red-700 no-print";
-        banner.textContent = "Errore durante l'eliminazione: " + err.message;
-        banner.classList.remove("hidden");
-        if (btnEl) {
-          btnEl.textContent = t.btnDeleteRow;
-          btnEl.disabled = false;
-        }
+        alert("Errore: " + err.message);
       }
     }
 
@@ -1018,7 +1172,7 @@
     }
 
     // =========================================================================
-    // 4. CARICAMENTO ESCLUSIVO DAI FILE .TXT (aziende.txt, ruoli.txt, cantieri.txt)
+    // 5. CARICAMENTO LISTE .TXT E WORKSHOP DAL DATABASE
     // =========================================================================
     function parsePlainTxtLines(rawText) {
       if (!rawText) return [];
@@ -1037,111 +1191,125 @@
     async function fetchRawTxtList(fileUrl) {
       const response = await fetch(`${fileUrl}?v=${Date.now()}`, { cache: "no-store" });
       const contentType = response.headers.get("content-type") || "";
-      if (!response.ok || contentType.includes("text/html")) {
-        throw new Error(`File non trovato: ${fileUrl}`);
-      }
-      const text = await response.text();
-      const lines = parsePlainTxtLines(text);
-      if (lines.length === 0) {
-        throw new Error(`File vuoto: ${fileUrl}`);
-      }
+      if (!response.ok || contentType.includes("text/html")) throw new Error(`Missing ${fileUrl}`);
+      const lines = parsePlainTxtLines(await response.text());
+      if (lines.length === 0) throw new Error(`Empty ${fileUrl}`);
       return lines;
     }
 
-    function updateTxtSourceBadgeUI() {
-      const t = UI_TEXT[currentLang];
-      const badge = document.getElementById("txtSourceStatusBadge");
-      if (!badge) return;
-
-      if (txtLoadState === "loading") {
-        badge.className = "px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold";
-        badge.textContent = t.txtLoadingBadge;
-      } else if (txtLoadState === "loaded") {
-        badge.className = "px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold";
-        badge.textContent = t.txtLoadedOkBadge;
-      } else {
-        badge.className = "px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 text-xs font-bold";
-        badge.textContent = t.txtMissingBadge(missingTxtFiles.join(", "));
-      }
-    }
-
-    async function loadListsFromTxtOnly() {
+    async function loadListsAndWorkshops() {
       editableLists = { companies: [], roles: [], sites: [] };
       missingTxtFiles = [];
-      txtLoadState = "loading";
-      hasUnsavedListChanges = false;
-      updateUnsavedBadge();
-      updateTxtSourceBadgeUI();
 
-      // 1. Legge aziende.txt
+      // 1. Prova a leggere tutto da manage-lists.js (GitHub .txt + Netlify Blobs Workshops)
       try {
-        editableLists.companies = await fetchRawTxtList(COMPANIES_TXT_URL);
-      } catch (e) {
-        console.error(e);
-        missingTxtFiles.push("aziende.txt");
-      }
+        const res = await fetch(MANAGE_API_ENDPOINT, { cache: "no-store" });
+        const cType = res.headers.get("content-type") || "";
+        if (res.ok && cType.includes("application/json")) {
+          const data = await res.json();
+          if (data && data.status === "success") {
+            editableLists.companies = Array.isArray(data.companies) ? data.companies : [];
+            editableLists.roles = Array.isArray(data.roles) ? data.roles : [];
+            editableLists.sites = Array.isArray(data.sites) ? data.sites : [];
+            workshopsDB = Array.isArray(data.workshops) ? data.workshops : [];
+            workshopAssignments = data.assignments || {};
+            document.getElementById("txtSourceStatusBadge").textContent = "Sincronizzato con GitHub & DB Netlify ✓";
+            populateWorkshopSiteDropdown();
+            renderWorkshopsTable();
+            renderEditableListsUI();
+            return;
+          }
+        }
+      } catch (_) {}
 
-      // 2. Legge ruoli.txt
-      try {
-        editableLists.roles = await fetchRawTxtList(ROLES_TXT_URL);
-      } catch (e) {
-        console.error(e);
-        missingTxtFiles.push("ruoli.txt");
-      }
+      // 2. Fallback lettura diretta dei 3 file .txt pubblicati
+      try { editableLists.companies = await fetchRawTxtList(COMPANIES_TXT_URL); } catch (_) { missingTxtFiles.push("aziende.txt"); }
+      try { editableLists.roles = await fetchRawTxtList(ROLES_TXT_URL); } catch (_) { missingTxtFiles.push("ruoli.txt"); }
+      try { editableLists.sites = await fetchRawTxtList(SITES_TXT_URL); } catch (_) { missingTxtFiles.push("cantieri.txt"); }
 
-      // 3. Legge cantieri.txt
-      try {
-        editableLists.sites = await fetchRawTxtList(SITES_TXT_URL);
-      } catch (e) {
-        console.error(e);
-        missingTxtFiles.push("cantieri.txt");
-      }
+      const localWs = localStorage.getItem("sl_workshops_db_backup");
+      if (localWs) { try { workshopsDB = JSON.parse(localWs); } catch (_) {} }
+      const localAssign = localStorage.getItem("sl_ws_assignments_backup");
+      if (localAssign) { try { workshopAssignments = JSON.parse(localAssign); } catch (_) {} }
 
-      txtLoadState = missingTxtFiles.length === 0 ? "loaded" : "error";
-      updateTxtSourceBadgeUI();
+      populateWorkshopSiteDropdown();
+      renderWorkshopsTable();
       renderEditableListsUI();
     }
 
+    async function saveListsToGitHub() {
+      const banner = document.getElementById("githubSaveBanner");
+      const btn = document.getElementById("btnSaveGitHub");
+
+      let pwd = savedAdminPassword || document.getElementById("inputAdminPassword").value.trim();
+      if (!pwd) {
+        pwd = window.prompt("Inserisci la tua Password Admin (ADMIN_PASSWORD) per salvare su GitHub:") || "";
+        if (!pwd) return;
+        savedAdminPassword = pwd.trim();
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Salvataggio su GitHub...";
+      banner.classList.add("hidden");
+
+      try {
+        const res = await fetch(MANAGE_API_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-admin-password": pwd },
+          body: JSON.stringify({
+            action: "save_txt",
+            companies: editableLists.companies,
+            roles: editableLists.roles,
+            sites: editableLists.sites
+          })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+        hasUnsavedListChanges = false;
+        document.getElementById("unsavedChangesBadge").classList.add("hidden");
+        populateWorkshopSiteDropdown();
+
+        banner.className = "rounded-xl p-4 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
+        banner.textContent = "✓ File aziende.txt, ruoli.txt e cantieri.txt aggiornati direttamente su GitHub!";
+        banner.classList.remove("hidden");
+      } catch (err) {
+        banner.className = "rounded-xl p-4 text-xs font-bold border bg-red-50 border-red-200 text-red-700";
+        banner.textContent = "Errore salvataggio GitHub: " + err.message;
+        banner.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "🚀 Salva direttamente su GitHub";
+      }
+    }
+
     function renderEditableListsUI() {
-      const t = UI_TEXT[currentLang];
       ["companies", "roles", "sites"].forEach(category => {
         const container = document.getElementById(`listContainer-${category}`);
         const list = editableLists[category] || [];
-
         const countBadgeId =
           category === "companies" ? "countCompaniesBadge" :
           category === "roles" ? "countRolesBadge" : "countSitesBadge";
         document.getElementById(countBadgeId).textContent = list.length;
 
         if (list.length === 0) {
-          container.innerHTML = `<p class="text-xs text-slate-400 italic py-6 text-center">${t.emptyListNotice}</p>`;
+          container.innerHTML = `<p class="text-xs text-slate-400 italic py-6 text-center">Nessuna voce nel file .txt</p>`;
           return;
         }
 
         container.innerHTML = list.map((item, idx) => {
           const parts = String(item).split("|").map(p => p.trim());
-          const itLabel = parts[0];
-          const enLabel = parts[1] || "";
-
           return `
-            <div class="py-2.5 px-2 flex items-center justify-between gap-2 hover:bg-slate-50 rounded-lg group">
+            <div class="py-2.5 px-2 flex items-center justify-between gap-2 hover:bg-slate-50 rounded-lg">
               <div class="text-xs leading-snug">
-                <div class="font-bold text-slate-800">${itLabel}</div>
-                ${enLabel && enLabel !== itLabel ? `<div class="text-[11px] text-slate-400">🇬🇧 ${enLabel}</div>` : ""}
+                <div class="font-bold text-slate-800">${parts[0]}</div>
+                ${parts[1] && parts[1] !== parts[0] ? `<div class="text-[11px] text-slate-400">🇬🇧 ${parts[1]}</div>` : ""}
               </div>
               <div class="flex items-center gap-1 shrink-0">
-                <button onclick="moveListItem('${category}', ${idx}, -1)" title="Sposta su"
-                  class="w-6 h-6 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 text-xs font-bold ${idx === 0 ? 'invisible' : ''}">
-                  ↑
-                </button>
-                <button onclick="moveListItem('${category}', ${idx}, 1)" title="Sposta giù"
-                  class="w-6 h-6 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 text-xs font-bold ${idx === list.length - 1 ? 'invisible' : ''}">
-                  ↓
-                </button>
-                <button onclick="removeListItem('${category}', ${idx})" title="Rimuovi voce"
-                  class="w-6 h-6 rounded bg-red-50 hover:bg-red-100 text-red-600 text-xs font-extrabold transition">
-                  ✕
-                </button>
+                <button onclick="moveListItem('${category}', ${idx}, -1)" class="w-6 h-6 rounded hover:bg-slate-200 text-xs font-bold ${idx === 0 ? 'invisible' : ''}">↑</button>
+                <button onclick="moveListItem('${category}', ${idx}, 1)" class="w-6 h-6 rounded hover:bg-slate-200 text-xs font-bold ${idx === list.length - 1 ? 'invisible' : ''}">↓</button>
+                <button onclick="removeListItem('${category}', ${idx})" class="w-6 h-6 rounded bg-red-50 hover:bg-red-100 text-red-600 text-xs font-extrabold">✕</button>
               </div>
             </div>
           `;
@@ -1153,97 +1321,63 @@
       const prefix = category === "companies" ? "newComp" : category === "roles" ? "newRole" : "newSite";
       const inputIT = document.getElementById(`${prefix}IT`);
       const inputEN = document.getElementById(`${prefix}EN`);
-
       const valIT = inputIT.value.trim();
       const valEN = inputEN.value.trim();
+      if (!valIT) { inputIT.focus(); return; }
 
-      if (!valIT) {
-        inputIT.focus();
-        return;
-      }
-
-      const formattedEntry = valEN && valEN !== valIT ? `${valIT} | ${valEN}` : valIT;
-      editableLists[category].push(formattedEntry);
-
+      editableLists[category].push(valEN && valEN !== valIT ? `${valIT} | ${valEN}` : valIT);
       inputIT.value = "";
       inputEN.value = "";
       hasUnsavedListChanges = true;
-      updateUnsavedBadge();
+      document.getElementById("unsavedChangesBadge").classList.remove("hidden");
       renderEditableListsUI();
+      populateWorkshopSiteDropdown();
     }
 
     function removeListItem(category, index) {
       editableLists[category].splice(index, 1);
       hasUnsavedListChanges = true;
-      updateUnsavedBadge();
+      document.getElementById("unsavedChangesBadge").classList.remove("hidden");
       renderEditableListsUI();
+      populateWorkshopSiteDropdown();
     }
 
     function moveListItem(category, index, direction) {
       const list = editableLists[category];
       const targetIdx = index + direction;
       if (targetIdx < 0 || targetIdx >= list.length) return;
-      const temp = list[index];
-      list[index] = list[targetIdx];
-      list[targetIdx] = temp;
+      [list[index], list[targetIdx]] = [list[targetIdx], list[index]];
       hasUnsavedListChanges = true;
-      updateUnsavedBadge();
+      document.getElementById("unsavedChangesBadge").classList.remove("hidden");
       renderEditableListsUI();
     }
 
-    function updateUnsavedBadge() {
-      const badge = document.getElementById("unsavedChangesBadge");
-      if (hasUnsavedListChanges) badge.classList.remove("hidden");
-      else badge.classList.add("hidden");
-    }
-
-    function downloadSingleTxtFile(category) {
-      const fileMap = {
-        companies: { name: "aziende.txt", data: editableLists.companies },
-        roles: { name: "ruoli.txt", data: editableLists.roles },
-        sites: { name: "cantieri.txt", data: editableLists.sites }
-      };
-      const target = fileMap[category];
-      if (!target) return;
-
-      const blob = new Blob([target.data.join("\n") + "\n"], { type: "text/plain;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = target.name;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
     function downloadAllTxtFiles() {
-      downloadSingleTxtFile("companies");
-      setTimeout(() => downloadSingleTxtFile("roles"), 200);
-      setTimeout(() => downloadSingleTxtFile("sites"), 400);
-      hasUnsavedListChanges = false;
-      updateUnsavedBadge();
+      const files = [
+        { name: "aziende.txt", data: editableLists.companies },
+        { name: "ruoli.txt", data: editableLists.roles },
+        { name: "cantieri.txt", data: editableLists.sites }
+      ];
+      files.forEach((f, i) => {
+        setTimeout(() => {
+          const blob = new Blob([f.data.join("\n") + "\n"], { type: "text/plain;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = f.name;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, i * 200);
+      });
     }
 
     // =========================================================================
-    // 5. CONNESSIONE LIVE AI RISULTATI
+    // 6. CONNESSIONE AI RISULTATI E NORMALIZZAZIONE CON CAMPI WORKSHOP
     // =========================================================================
     function switchAuthMode(mode) {
       document.getElementById("uploadError").classList.add("hidden");
-      const btnF = document.getElementById("tabBtnFunc");
-      const btnD = document.getElementById("tabBtnDirect");
-      const panelF = document.getElementById("authPanelFunction");
-      const panelD = document.getElementById("authPanelDirect");
-
-      if (mode === "function") {
-        btnF.className = "pb-3 px-4 border-b-2 border-amber-500 text-slate-900 transition";
-        btnD.className = "pb-3 px-4 border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition";
-        panelF.classList.remove("hidden");
-        panelD.classList.add("hidden");
-      } else {
-        btnD.className = "pb-3 px-4 border-b-2 border-amber-500 text-slate-900 transition";
-        btnF.className = "pb-3 px-4 border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition";
-        panelD.classList.remove("hidden");
-        panelF.classList.add("hidden");
-      }
+      document.getElementById("authPanelFunction").classList.toggle("hidden", mode !== "function");
+      document.getElementById("authPanelDirect").classList.toggle("hidden", mode === "function");
     }
 
     function showError(msg) {
@@ -1253,52 +1387,30 @@
     }
 
     async function connectViaNetlifyFunction(isBackgroundRefresh = false) {
-      const pwd = isBackgroundRefresh
-        ? savedAdminPassword
-        : document.getElementById("inputAdminPassword").value.trim();
-
-      if (!pwd) {
-        showError("Inserisci la Password Admin.");
-        return;
-      }
+      const pwd = isBackgroundRefresh ? savedAdminPassword : document.getElementById("inputAdminPassword").value.trim();
+      if (!pwd) { showError("Inserisci la Password Admin."); return; }
 
       const btn = document.getElementById("btnConnectFunc");
-      const origText = btn.textContent;
-      if (!isBackgroundRefresh) {
-        btn.textContent = "Connessione in corso...";
-        btn.disabled = true;
-        document.getElementById("uploadError").classList.add("hidden");
-      }
+      if (!isBackgroundRefresh) { btn.textContent = "Connessione..."; btn.disabled = true; }
 
       try {
+        await loadListsAndWorkshops();
         const res = await fetch("/.netlify/functions/get-results", {
           method: "GET",
           headers: { "x-admin-password": pwd }
         });
-
-        const contentType = res.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) {
-          throw new Error(
-            "La Netlify Function non è attiva su questo deploy. Usa la scheda '2. Connessione Diretta Token API' oppure apri la Console Demo."
-          );
-        }
-
         const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || `Errore HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
         savedAdminPassword = pwd;
         activeConnectionMode = "function";
         allRecords = normalizeNetlifyRows(data.rows || []);
         updateLastSyncTimestamp();
-        await loadListsFromTxtOnly();
         initDashboardWithData(isBackgroundRefresh);
-
       } catch (err) {
         showError(err.message);
       } finally {
-        btn.textContent = origText;
+        btn.textContent = "Accedi alla Console →";
         btn.disabled = false;
       }
     }
@@ -1306,64 +1418,29 @@
     async function connectViaDirectAPI(isBackgroundRefresh = false) {
       const siteId = document.getElementById("inputDirectSiteId").value.trim();
       const token = document.getElementById("inputDirectToken").value.trim();
-
-      if (!siteId || !token) {
-        showError("Inserisci sia il Netlify Site ID sia il Personal Access Token.");
-        return;
-      }
+      if (!siteId || !token) { showError("Inserisci Site ID e Token."); return; }
 
       if (document.getElementById("chkRememberDirect").checked) {
         localStorage.setItem("sl_netlify_site_id", siteId);
         localStorage.setItem("sl_netlify_token", token);
-      } else {
-        localStorage.removeItem("sl_netlify_site_id");
-        localStorage.removeItem("sl_netlify_token");
-      }
-
-      const btn = document.getElementById("btnConnectDirect");
-      const origText = btn.textContent;
-      if (!isBackgroundRefresh) {
-        btn.textContent = "Scaricamento dati da Netlify...";
-        btn.disabled = true;
-        document.getElementById("uploadError").classList.add("hidden");
       }
 
       try {
-        let allSubs = [];
-        let page = 1;
-        let keepGoing = true;
-
-        while (keepGoing && page <= 10) {
-          const url = `https://api.netlify.com/api/v1/sites/${encodeURIComponent(siteId)}/submissions?per_page=100&page=${page}`;
-          const res = await fetch(url, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-
-          if (!res.ok) {
-            throw new Error(`Impossibile leggere dal Site ID specificato (HTTP ${res.status}). Verifica che il Token inizi con nfp_ e il Site ID sia corretto.`);
-          }
-
-          const batch = await res.json();
-          allSubs = allSubs.concat(batch);
-          if (batch.length < 100) keepGoing = false;
-          else page++;
-        }
-
-        const rawRows = allSubs
+        await loadListsAndWorkshops();
+        const url = `https://api.netlify.com/api/v1/sites/${encodeURIComponent(siteId)}/submissions?per_page=100`;
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const subs = await res.json();
+        const rawRows = subs
           .filter(s => (!s.form_name || s.form_name === "risultati-safety-leadership") && s.data)
           .map(s => ({ submission_id: s.id, created_at: s.created_at, ...s.data }));
 
         activeConnectionMode = "direct";
         allRecords = normalizeNetlifyRows(rawRows);
         updateLastSyncTimestamp();
-        await loadListsFromTxtOnly();
         initDashboardWithData(isBackgroundRefresh);
-
       } catch (err) {
         showError(err.message);
-      } finally {
-        btn.textContent = origText;
-        btn.disabled = false;
       }
     }
 
@@ -1373,16 +1450,14 @@
     }
 
     function toggleAutoRefresh() {
-      const checked = document.getElementById("chkAutoRefresh").checked;
       if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-      if (checked) {
+      if (document.getElementById("chkAutoRefresh").checked) {
         autoRefreshTimer = setInterval(() => refreshLiveData(), 60000);
       }
     }
 
     function updateLastSyncTimestamp() {
-      const now = new Date().toLocaleTimeString("it-IT");
-      document.getElementById("lastSyncText").textContent = `Sync: ${now}`;
+      document.getElementById("lastSyncText").textContent = `Sync: ${new Date().toLocaleTimeString("it-IT")}`;
       const liveCtrl = document.getElementById("liveControls");
       liveCtrl.classList.remove("hidden");
       liveCtrl.classList.add("flex");
@@ -1390,20 +1465,13 @@
 
     function handleFileSelect(event) {
       if (event.target.files && event.target.files.length > 0) {
-        const file = event.target.files[0];
-        Papa.parse(file, {
+        Papa.parse(event.target.files[0], {
           header: true,
           skipEmptyLines: true,
           complete: async function(results) {
-            const parsed = normalizeNetlifyRows(results.data);
-            if (parsed.length === 0) {
-              showError("Il file CSV selezionato non contiene righe valide.");
-              return;
-            }
+            await loadListsAndWorkshops();
+            allRecords = normalizeNetlifyRows(results.data);
             activeConnectionMode = "csv";
-            allRecords = parsed;
-            selectedRecordIds.clear();
-            await loadListsFromTxtOnly();
             initDashboardWithData(false);
           }
         });
@@ -1411,9 +1479,8 @@
     }
 
     function parseNumericPct(val) {
-      if (val === undefined || val === null) return 0;
-      const cleaned = String(val).replace("%", "").replace(",", ".").trim();
-      const num = parseFloat(cleaned);
+      if (!val) return 0;
+      const num = parseFloat(String(val).replace("%", "").replace(",", ".").trim());
       return isNaN(num) ? 0 : num;
     }
 
@@ -1421,9 +1488,7 @@
       const valid = [];
       rawRows.forEach((row, index) => {
         const norm = {};
-        Object.keys(row).forEach(k => {
-          norm[k.toLowerCase().trim()] = row[k];
-        });
+        Object.keys(row).forEach(k => norm[k.toLowerCase().trim()] = row[k]);
 
         const pcts = {};
         let sumPct = 0;
@@ -1436,32 +1501,40 @@
         if (sumPct === 0) return;
 
         const sortedAreas = [...AREA_KEYS].sort((a, b) => pcts[b.id] - pcts[a.id]);
-        const topAreaObj = sortedAreas[0];
-        const lowAreaObj = sortedAreas[sortedAreas.length - 1];
+        const recordId = String(norm["submission_id"] || norm["id"] || `local_${index}`);
+
+        // Controlla se questo questionario è stato riassegnato manualmente a un Workshop dall'admin
+        const override = workshopAssignments[recordId];
+        const wsId = override ? override.workshopId : (norm["workshop_id"] || "");
+        const wsFromDb = workshopsDB.find(w => w.id === wsId);
+
+        const wsName = override?.workshopName || wsFromDb?.name || norm["workshop_nome"] || "Non assegnato";
+        const wsDate = override?.workshopDate || wsFromDb?.date || norm["workshop_data"] || "-";
+        const wsLevel = override?.workshopLevel || wsFromDb?.level || norm["workshop_livello"] || "Non assegnato";
 
         let dateFormatted = norm["data_ora"] || norm["created_at"] || "-";
         if (dateFormatted.includes("T") && dateFormatted.includes("Z")) {
           try { dateFormatted = new Date(dateFormatted).toLocaleString("it-IT"); } catch (_) {}
         }
 
-        const recordId = norm["submission_id"] || norm["id"] || `local_${index}_${Date.now()}`;
-
         valid.push({
-          id: String(recordId),
+          id: recordId,
           date: dateFormatted,
+          workshopId: wsId,
+          workshopName: wsName,
+          workshopDate: wsDate,
+          workshopLevel: wsLevel,
           name: norm["partecipante"] || "Anonimo",
-          privacy: norm["consenso_privacy"] || "-",
           company: norm["azienda"] || "Non specificata",
           role: norm["ruolo"] || "Non specificato",
           site: norm["cantiere"] || "Non specificato",
-          lang: norm["lingua"] || "IT",
           pct: pcts,
-          top1Id: topAreaObj.id,
-          top1Name: topAreaObj.name,
-          top1Val: pcts[topAreaObj.id],
-          low7Id: lowAreaObj.id,
-          low7Name: lowAreaObj.name,
-          low7Val: pcts[lowAreaObj.id],
+          top1Id: sortedAreas[0].id,
+          top1Name: sortedAreas[0].name,
+          top1Val: pcts[sortedAreas[0].id],
+          low7Id: sortedAreas[6].id,
+          low7Name: sortedAreas[6].name,
+          low7Val: pcts[sortedAreas[6].id],
           choicesLog: norm["riepilogo_scelte"] || "-"
         });
       });
@@ -1469,37 +1542,32 @@
     }
 
     // =========================================================================
-    // 6. DATASET DEMO RISULTATI (E CARICAMENTO LISTE REALE DAI FILE .TXT)
+    // 7. MODALITÀ DEMO (GENERA ANCHE 3 WORKSHOP DIMOSTRATIVI)
     // =========================================================================
     async function loadDemoDataset() {
-      await loadListsFromTxtOnly();
+      await loadListsAndWorkshops();
 
-      // Usa le voci reali lette dai tuoi file .txt (se disponibili) per generare i 25 test demo
-      const companies = editableLists.companies.length > 0
-        ? editableLists.companies.map(x => x.split("|")[0].trim())
-        : ["Azienda 1", "Azienda 2"];
       const sites = editableLists.sites.length > 0
         ? editableLists.sites.map(x => x.split("|")[0].trim())
-        : ["Cantiere 1", "Cantiere 2"];
+        : ["Cantiere Nord - Lotto 1", "Cantiere Sud - Lotto 2"];
+      const companies = editableLists.companies.length > 0
+        ? editableLists.companies.map(x => x.split("|")[0].trim())
+        : ["General Contractor SpA", "Tech Engineering Srl"];
       const roles = editableLists.roles.length > 0
         ? editableLists.roles.map(x => x.split("|")[0].trim())
-        : ["Ruolo 1", "Ruolo 2"];
+        : ["Site Manager", "HSE Manager", "Preposto"];
 
-      const names = [
-        "Marco Bianchi (Test Prova #1)", "Anonimo (Test Prova #2)", "Luca Verdi", "Anonimo", "Alessandro Neri",
-        "Giulia Rusconi", "Anonimo", "Matteo Ferri", "Davide Galli", "Anonimo",
-        "Roberto Costa", "Elena Fontana", "Anonimo", "Stefano Moretti", "Anonimo",
-        "Paolo Barbieri", "Andrea Colombo", "Anonimo", "Simone Rinaldi", "Nicola Serra",
-        "Anonimo", "Federico Longo", "Lorenzo Marini", "Anonimo", "Valerio Conti"
-      ];
+      if (workshopsDB.length === 0) {
+        workshopsDB = [
+          { id: "ws_top01", name: "Executive Alignment Nord", date: "2026-10-15", site: sites[0], level: "Top manager" },
+          { id: "ws_sec02", name: "Supervisors Safety Bootcamp", date: "2026-10-22", site: sites[0], level: "Second level" },
+          { id: "ws_bas03", name: "Field Safety Kickoff Sud", date: "2026-10-28", site: sites[1 % sites.length], level: "Baseline" }
+        ];
+      }
 
       const demoRows = [];
       for (let i = 0; i < 25; i++) {
-        const comp = companies[i % companies.length];
-        const site = sites[i % sites.length];
-        const role = roles[i % roles.length];
-        const name = names[i];
-
+        const ws = workshopsDB[i % workshopsDB.length];
         const raw = {
           VISION: 10 + ((i * 3) % 9),
           FOCUS: 12 + ((i * 5) % 10),
@@ -1513,27 +1581,27 @@
 
         demoRows.push({
           submission_id: `demo_sub_${i + 1}`,
-          data_ora: `${10 + (i % 18)}/10/2026, ${9 + (i % 8)}:${15 + (i % 40)}`,
-          partecipante: name,
-          consenso_privacy: name.startsWith("Anonimo") ? "Anonimo (Non richiesto)" : "Accettato (GDPR)",
-          azienda: comp,
-          ruolo: role,
-          cantiere: site,
-          lingua: i % 4 === 0 ? "EN" : "IT",
+          data_ora: `${10 + (i % 18)}/10/2026`,
+          workshop_id: ws.id,
+          workshop_nome: ws.name,
+          workshop_data: ws.date,
+          workshop_livello: ws.level,
+          partecipante: i % 2 === 0 ? `Partecipante #${i + 1}` : "Anonimo",
+          azienda: companies[i % companies.length],
+          ruolo: roles[i % roles.length],
+          cantiere: ws.site.split("|")[0].trim(),
           vision_pct: ((raw.VISION / tot) * 100).toFixed(1) + "%",
           focus_pct: ((raw.FOCUS / tot) * 100).toFixed(1) + "%",
           influence_pct: ((raw.INFLUENCE / tot) * 100).toFixed(1) + "%",
           credibility_pct: ((raw.CREDIBILITY / tot) * 100).toFixed(1) + "%",
           team_pct: ((raw.TEAM / tot) * 100).toFixed(1) + "%",
           communication_pct: ((raw.COMMUNICATION / tot) * 100).toFixed(1) + "%",
-          feedback_pct: ((raw.FEEDBACK / tot) * 100).toFixed(1) + "%",
-          riepilogo_scelte: "S1:CREDIBILITY(#1,w=1,+1.00) | S2:FOCUS(#1,w=1,+1.00) | S3:VISION(#2,w=0.65,+0.55)"
+          feedback_pct: ((raw.FEEDBACK / tot) * 100).toFixed(1) + "%"
         });
       }
 
       activeConnectionMode = "demo";
       allRecords = normalizeNetlifyRows(demoRows);
-      selectedRecordIds.clear();
       initDashboardWithData(false);
     }
 
@@ -1551,10 +1619,9 @@
     function logoutAndShowLogin() {
       if (autoRefreshTimer) clearInterval(autoRefreshTimer);
       selectedRecordIds.clear();
-      document.getElementById("chkAutoRefresh").checked = false;
-      document.getElementById("liveControls").classList.add("hidden");
       document.getElementById("adminNavTabs").classList.add("hidden");
       document.getElementById("screen-dashboard").classList.add("hidden");
+      document.getElementById("screen-workshops").classList.add("hidden");
       document.getElementById("screen-lists").classList.add("hidden");
       document.getElementById("btnChangeSource").classList.add("hidden");
       document.getElementById("btnPrintReport").classList.add("hidden");
@@ -1562,32 +1629,43 @@
     }
 
     function populateFilterDropdowns(preserve = false) {
-      const t = UI_TEXT[currentLang];
+      const wsNames = [...new Set([
+        ...workshopsDB.map(w => w.name),
+        ...allRecords.map(r => r.workshopName)
+      ])].filter(Boolean).sort();
+
       const companies = [...new Set(allRecords.map(r => r.company))].sort();
       const sites = [...new Set(allRecords.map(r => r.site))].sort();
       const roles = [...new Set(allRecords.map(r => r.role))].sort();
 
+      const selW = document.getElementById("filterWorkshop");
       const selC = document.getElementById("filterCompany");
       const selS = document.getElementById("filterSite");
       const selR = document.getElementById("filterRole");
 
+      const prevW = preserve ? selW.value : "ALL";
       const prevC = preserve ? selC.value : "ALL";
       const prevS = preserve ? selS.value : "ALL";
       const prevR = preserve ? selR.value : "ALL";
 
-      selC.innerHTML = `<option value="ALL">${t.allCompanies}</option>` +
+      selW.innerHTML = `<option value="ALL">Tutti i Workshop</option>` +
+        wsNames.map(w => `<option value="${w}">${w}</option>`).join("");
+      selC.innerHTML = `<option value="ALL">Tutte le Aziende</option>` +
         companies.map(c => `<option value="${c}">${c}</option>`).join("");
-      selS.innerHTML = `<option value="ALL">${t.allSites}</option>` +
+      selS.innerHTML = `<option value="ALL">Tutti i Cantieri</option>` +
         sites.map(s => `<option value="${s}">${s}</option>`).join("");
-      selR.innerHTML = `<option value="ALL">${t.allRoles}</option>` +
+      selR.innerHTML = `<option value="ALL">Tutti i Ruoli</option>` +
         roles.map(r => `<option value="${r}">${r}</option>`).join("");
 
+      if (wsNames.includes(prevW)) selW.value = prevW;
       if (companies.includes(prevC)) selC.value = prevC;
       if (sites.includes(prevS)) selS.value = prevS;
       if (roles.includes(prevR)) selR.value = prevR;
     }
 
     function resetFilters() {
+      document.getElementById("filterWorkshop").value = "ALL";
+      document.getElementById("filterLevel").value = "ALL";
       document.getElementById("filterCompany").value = "ALL";
       document.getElementById("filterSite").value = "ALL";
       document.getElementById("filterRole").value = "ALL";
@@ -1596,12 +1674,16 @@
     }
 
     function applyFilters() {
+      const wVal = document.getElementById("filterWorkshop").value;
+      const lVal = document.getElementById("filterLevel").value;
       const cVal = document.getElementById("filterCompany").value;
       const sVal = document.getElementById("filterSite").value;
       const rVal = document.getElementById("filterRole").value;
       const qVal = document.getElementById("filterSearch").value.trim().toLowerCase();
 
       filteredRecords = allRecords.filter(rec => {
+        if (wVal !== "ALL" && rec.workshopName !== wVal) return false;
+        if (lVal !== "ALL" && rec.workshopLevel !== lVal) return false;
         if (cVal !== "ALL" && rec.company !== cVal) return false;
         if (sVal !== "ALL" && rec.site !== sVal) return false;
         if (rVal !== "ALL" && rec.role !== rVal) return false;
@@ -1616,53 +1698,27 @@
       const avg = {};
       AREA_KEYS.forEach(a => avg[a.id] = 0);
       if (records.length === 0) return avg;
-
-      records.forEach(r => {
-        AREA_KEYS.forEach(a => {
-          avg[a.id] += r.pct[a.id];
-        });
-      });
-
-      AREA_KEYS.forEach(a => {
-        avg[a.id] = avg[a.id] / records.length;
-      });
+      records.forEach(r => AREA_KEYS.forEach(a => avg[a.id] += r.pct[a.id]));
+      AREA_KEYS.forEach(a => avg[a.id] = avg[a.id] / records.length);
       return avg;
     }
 
     function renderAllAnalytics() {
-      const t = UI_TEXT[currentLang];
       document.getElementById("activeRecordsBadge").textContent =
-        t.activeRecords(filteredRecords.length, allRecords.length);
+        `${filteredRecords.length} di ${allRecords.length} test selezionati`;
 
       const globalAvg = computeGroupAverages(allRecords);
       const filteredAvg = computeGroupAverages(filteredRecords);
-
-      const sortedAvgAreas = [...AREA_KEYS].sort((a, b) => filteredAvg[b.id] - filteredAvg[a.id]);
-      const top1Area = sortedAvgAreas[0];
-      const top2Area = sortedAvgAreas[1];
-      const low7Area = sortedAvgAreas[sortedAvgAreas.length - 1];
-
-      const anonCount = filteredRecords.filter(r =>
-        r.name.toLowerCase().startsWith("anonimo") || r.name.toLowerCase().startsWith("anonymous")
-      ).length;
-      const namedCount = filteredRecords.length - anonCount;
+      const sortedAvg = [...AREA_KEYS].sort((a, b) => filteredAvg[b.id] - filteredAvg[a.id]);
 
       document.getElementById("kpi1Value").textContent = filteredRecords.length;
-      document.getElementById("kpi1Sub").textContent = t.kpi1Sub(anonCount, namedCount);
-
       if (filteredRecords.length > 0) {
-        document.getElementById("kpi2Value").textContent = top1Area.name;
-        document.getElementById("kpi2Sub").textContent = t.kpi2Sub(filteredAvg[top1Area.id].toFixed(1));
-
-        document.getElementById("kpi3Value").textContent = low7Area.name;
-        document.getElementById("kpi3Sub").textContent = t.kpi3Sub(filteredAvg[low7Area.id].toFixed(1));
-
-        document.getElementById("kpi4Value").textContent = top2Area.name;
-        document.getElementById("kpi4Sub").textContent = t.kpi4Sub(filteredAvg[top2Area.id].toFixed(1));
-      } else {
-        ["kpi2Value", "kpi2Sub", "kpi3Value", "kpi3Sub", "kpi4Value", "kpi4Sub"].forEach(id => {
-          document.getElementById(id).textContent = "-";
-        });
+        document.getElementById("kpi2Value").textContent = sortedAvg[0].name;
+        document.getElementById("kpi2Sub").textContent = `Media: ${filteredAvg[sortedAvg[0].id].toFixed(1)}%`;
+        document.getElementById("kpi3Value").textContent = sortedAvg[6].name;
+        document.getElementById("kpi3Sub").textContent = `Media: ${filteredAvg[sortedAvg[6].id].toFixed(1)}%`;
+        document.getElementById("kpi4Value").textContent = sortedAvg[1].name;
+        document.getElementById("kpi4Sub").textContent = `Media: ${filteredAvg[sortedAvg[1].id].toFixed(1)}%`;
       }
 
       const radarCtx = document.getElementById("aggRadarChart").getContext("2d");
@@ -1673,36 +1729,22 @@
           labels: AREA_KEYS.map(a => a.name),
           datasets: [
             {
-              label: t.dsFilteredAvg,
+              label: "Media Selezione (%)",
               data: AREA_KEYS.map(a => Number(filteredAvg[a.id].toFixed(1))),
               backgroundColor: "rgba(245, 158, 11, 0.25)",
               borderColor: "#d97706",
-              pointBackgroundColor: "#0f172a",
               borderWidth: 2.5
             },
             {
-              label: t.dsGlobalAvg,
+              label: "Media Globale (%)",
               data: AREA_KEYS.map(a => Number(globalAvg[a.id].toFixed(1))),
               backgroundColor: "rgba(37, 99, 235, 0.08)",
               borderColor: "#2563eb",
               borderWidth: 1.5
-            },
-            {
-              label: t.dsIdealTarget,
-              data: AREA_KEYS.map(() => 14.3),
-              backgroundColor: "transparent",
-              borderColor: "#94a3b8",
-              borderDash: [5, 5],
-              pointRadius: 0,
-              borderWidth: 1.5
             }
           ]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { r: { beginAtZero: true, suggestedMax: 22 } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, suggestedMax: 22 } } }
       });
 
       const domCounts = {};
@@ -1720,25 +1762,11 @@
         data: {
           labels: AREA_KEYS.map(a => a.name),
           datasets: [
-            {
-              label: t.dsCountTop1,
-              data: AREA_KEYS.map(a => domCounts[a.id]),
-              backgroundColor: "#10b981",
-              borderRadius: 6
-            },
-            {
-              label: t.dsCountLow7,
-              data: AREA_KEYS.map(a => lowCounts[a.id]),
-              backgroundColor: "#f59e0b",
-              borderRadius: 6
-            }
+            { label: "Area Dominante (#1)", data: AREA_KEYS.map(a => domCounts[a.id]), backgroundColor: "#10b981", borderRadius: 6 },
+            { label: "Area Meno Presidiata (#7)", data: AREA_KEYS.map(a => lowCounts[a.id]), backgroundColor: "#f59e0b", borderRadius: 6 }
           ]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
       });
 
       renderGroupComparison();
@@ -1748,28 +1776,27 @@
 
     function renderGroupComparison() {
       const groupField = document.getElementById("selectGroupBy").value;
-      const propMap = { cantiere: "site", azienda: "company", ruolo: "role" };
-      const recKey = propMap[groupField];
+      const propMap = {
+        workshop: "workshopName",
+        livello: "workshopLevel",
+        cantiere: "site",
+        azienda: "company",
+        ruolo: "role"
+      };
+      const recKey = propMap[groupField] || "workshopName";
 
       const groupsMap = {};
       filteredRecords.forEach(r => {
-        const gName = r[recKey] || "-";
+        const gName = r[recKey] || "Non assegnato";
         if (!groupsMap[gName]) groupsMap[gName] = [];
         groupsMap[gName].push(r);
       });
 
-      const groupNames = Object.keys(groupsMap).sort();
-      const groupStats = groupNames.map(gName => {
+      const groupStats = Object.keys(groupsMap).sort().map(gName => {
         const recs = groupsMap[gName];
         const avg = computeGroupAverages(recs);
         const sorted = [...AREA_KEYS].sort((a, b) => avg[a.id] - avg[b.id]);
-        return {
-          groupName: gName,
-          count: recs.length,
-          avg: avg,
-          lowestArea: sorted[0].name,
-          lowestVal: avg[sorted[0].id]
-        };
+        return { groupName: gName, count: recs.length, avg, lowestArea: sorted[0].name, lowestVal: avg[sorted[0].id] };
       });
 
       const ctx = document.getElementById("groupComparisonChart").getContext("2d");
@@ -1784,30 +1811,23 @@
             backgroundColor: area.color
           }))
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: { beginAtZero: true, title: { display: true, text: "%" } }
-          }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
       });
 
-      const tbody = document.getElementById("heatmapTableBody");
-      tbody.innerHTML = groupStats.map(g => {
-        const cellsHTML = AREA_KEYS.map(a => {
+      document.getElementById("heatmapTableBody").innerHTML = groupStats.map(g => {
+        const cells = AREA_KEYS.map(a => {
           const val = g.avg[a.id];
-          let bgClass = "bg-slate-50 text-slate-700";
-          if (val >= 16.0) bgClass = "bg-emerald-100 text-emerald-900 font-extrabold";
-          else if (val <= 12.5) bgClass = "bg-amber-100 text-amber-900 font-extrabold";
-          return `<td class="py-2.5 px-2 text-center"><span class="inline-block px-2 py-1 rounded ${bgClass}">${val.toFixed(1)}%</span></td>`;
+          let cls = "bg-slate-50 text-slate-700";
+          if (val >= 16.0) cls = "bg-emerald-100 text-emerald-900 font-extrabold";
+          else if (val <= 12.5) cls = "bg-amber-100 text-amber-900 font-extrabold";
+          return `<td class="py-2.5 px-2 text-center"><span class="inline-block px-2 py-1 rounded ${cls}">${val.toFixed(1)}%</span></td>`;
         }).join("");
 
         return `
           <tr class="hover:bg-slate-50">
             <td class="py-3 px-3 font-bold text-slate-900">${g.groupName}</td>
             <td class="py-3 px-2 text-center font-semibold text-slate-600">${g.count}</td>
-            ${cellsHTML}
+            ${cells}
             <td class="py-3 px-3">
               <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-[11px]">
                 ${g.lowestArea} (${g.lowestVal.toFixed(1)}%)
@@ -1819,37 +1839,51 @@
     }
 
     function renderParticipantsTable() {
-      const t = UI_TEXT[currentLang];
       const tbody = document.getElementById("participantsTableBody");
       tbody.innerHTML = filteredRecords.map((r, idx) => {
         const isChecked = selectedRecordIds.has(r.id);
+
+        // Costruisce la tendina editabile per assegnare o cambiare il Workshop a qualsiasi record esistente
+        const wsOptionsHTML = `<option value="">-- Non assegnato --</option>` +
+          workshopsDB.map(w => {
+            const selected = (r.workshopId === w.id || r.workshopName === w.name) ? "selected" : "";
+            return `<option value="${w.id}" ${selected}>${w.name} (${w.level})</option>`;
+          }).join("");
+
         return `
           <tr onclick="openParticipantModal(${idx})"
-            class="cursor-pointer transition ${isChecked ? 'bg-amber-50/80 hover:bg-amber-100/70' : 'hover:bg-amber-50/50'}">
+            class="cursor-pointer transition ${isChecked ? 'bg-amber-50/80' : 'hover:bg-amber-50/40'}">
             <td class="py-2.5 px-3 text-center no-print" onclick="event.stopPropagation()">
               <input type="checkbox" ${isChecked ? "checked" : ""}
                 onchange="toggleRowSelection('${r.id}', this.checked)"
                 class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
             </td>
             <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${r.date}</td>
+            <td class="py-2.5 px-3" onclick="event.stopPropagation()">
+              <select onchange="assignRecordToWorkshop('${r.id}', this.value)"
+                class="px-2 py-1 rounded-lg border border-slate-300 text-[11px] font-bold bg-white text-slate-800 focus:border-amber-500">
+                ${wsOptionsHTML}
+              </select>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[11px]">
+                ${r.workshopLevel}
+              </span>
+            </td>
             <td class="py-2.5 px-3 font-bold text-slate-900">${r.name}</td>
             <td class="py-2.5 px-3 text-slate-700">${r.company}</td>
             <td class="py-2.5 px-3 text-slate-700">${r.role}</td>
             <td class="py-2.5 px-3 text-slate-700">${r.site}</td>
             <td class="py-2.5 px-3">
-              <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
-                ${r.top1Name} (${r.top1Val.toFixed(1)}%)
-              </span>
+              <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">${r.top1Name} (${r.top1Val.toFixed(1)}%)</span>
             </td>
             <td class="py-2.5 px-3">
-              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
-                ${r.low7Name} (${r.low7Val.toFixed(1)}%)
-              </span>
+              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">${r.low7Name} (${r.low7Val.toFixed(1)}%)</span>
             </td>
             <td class="py-2.5 px-3 text-right no-print">
-              <button id="delBtn-${r.id}" onclick="deleteSubmissionById('${r.id}', event)"
-                class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200 transition">
-                ${t.btnDeleteRow}
+              <button onclick="deleteSubmissionById('${r.id}', event)"
+                class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200">
+                🗑️ Elimina
               </button>
             </td>
           </tr>
@@ -1860,16 +1894,15 @@
     function openParticipantModal(filteredIdx) {
       const r = filteredRecords[filteredIdx];
       if (!r) return;
-
       currentModalRecordId = r.id;
-      document.getElementById("modalCompanyBadge").textContent = r.company;
+      document.getElementById("modalCompanyBadge").textContent = `${r.workshopName} • ${r.workshopLevel}`;
       document.getElementById("modalPersonName").textContent = r.name;
-      document.getElementById("modalPersonMeta").textContent = `${r.role} • ${r.site} • ${r.date}`;
+      document.getElementById("modalPersonMeta").textContent = `${r.company} • ${r.role} • ${r.site}`;
       document.getElementById("modalChoicesLog").textContent = r.choicesLog;
 
       const sorted = [...AREA_KEYS].sort((a, b) => r.pct[b.id] - r.pct[a.id]);
       document.getElementById("modalAreaBreakdown").innerHTML = sorted.map((a, i) => `
-        <div class="flex items-center justify-between p-2 rounded-lg ${i === 0 ? 'bg-emerald-50 border border-emerald-200' : i === 6 ? 'bg-amber-50 border border-amber-200' : 'bg-slate-50'}">
+        <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
           <span class="font-bold text-slate-800">#${i + 1} ${a.name}</span>
           <span class="font-extrabold text-slate-900">${r.pct[a.id].toFixed(1)}%</span>
         </div>
@@ -1890,15 +1923,10 @@
             data: AREA_KEYS.map(a => Number(r.pct[a.id].toFixed(1))),
             backgroundColor: "rgba(245, 158, 11, 0.25)",
             borderColor: "#d97706",
-            pointBackgroundColor: "#0f172a",
             borderWidth: 2
           }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { r: { beginAtZero: true, suggestedMax: 25 } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, suggestedMax: 25 } } }
       });
     }
 
@@ -1912,8 +1940,9 @@
     function exportFilteredCSV() {
       if (filteredRecords.length === 0) return;
       const rows = filteredRecords.map(r => ({
-        ID: r.id,
         Data: r.date,
+        Workshop: r.workshopName,
+        Livello_Workshop: r.workshopLevel,
         Partecipante: r.name,
         Azienda: r.company,
         Ruolo: r.role,
@@ -1929,68 +1958,24 @@
         Feedback_Pct: r.pct.FEEDBACK.toFixed(1)
       }));
 
-      const csvContent = Papa.unparse(rows);
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob([Papa.unparse(rows)], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "report-safety-leadership-filtrato.csv";
+      a.download = "report-workshop-safety-leadership.csv";
       a.click();
       URL.revokeObjectURL(url);
     }
 
     function toggleLanguage() {
       currentLang = currentLang === "it" ? "en" : "it";
-      applyTranslations();
-      updateTxtSourceBadgeUI();
-      renderEditableListsUI();
-      if (allRecords.length > 0) {
-        populateFilterDropdowns(true);
-        renderAllAnalytics();
-      }
-    }
-
-    function applyTranslations() {
-      const t = UI_TEXT[currentLang];
-      document.documentElement.lang = currentLang;
-
-      const ids = [
-        "hdrTitle", "hdrSub", "langSwitchPrefix", "langLabel", "btnChangeSource", "btnPrintReport",
-        "btnRefreshNow", "navTabAnalyticsLabel", "navTabListsLabel",
-        "loginBadge", "loginTitle", "tabBtnFunc", "tabBtnDirect",
-        "btnConnectFunc", "lblRememberCreds", "btnConnectDirect", "altTitle", "altSub",
-        "btnBrowseCSV", "btnLoadDemo", "fltTitle", "btnResetFilters",
-        "lblFilterCompany", "lblFilterSite", "lblFilterRole", "lblFilterSearch",
-        "kpi1Title", "kpi2Title", "kpi3Title", "kpi4Title",
-        "chart1Title", "chart1Sub", "chart2Title", "chart2Sub",
-        "heatmapTitle", "heatmapSub", "lblGroupBy", "optGroupSite", "optGroupCompany", "optGroupRole",
-        "thGroupCol", "thGroupCount", "thGroupGap",
-        "partTableTitle", "partTableSub", "btnExportFilteredCSV",
-        "thPDate", "thPName", "thPComp", "thPRole", "thPSite", "thPDom", "thPLow", "thPAction",
-        "btnModalDelete",
-        "lstMainTitle", "lstMainSub", "btnReloadTxt", "btnDownloadAllTxt",
-        "colCompTitle", "colRoleTitle", "colSiteTitle",
-        "addCompLabel", "addRoleLabel", "addSiteLabel",
-        "btnAddComp", "btnAddRole", "btnAddSite"
-      ];
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el && t[id]) el.textContent = t[id];
-      });
-      document.getElementById("funcDesc").innerHTML = t.funcDesc;
-      document.getElementById("directDesc").innerHTML = t.directDesc;
-      document.getElementById("filterSearch").placeholder = t.phSearch;
-      document.getElementById("unsavedChangesBadge").textContent = t.unsavedChanges;
-      updateBulkSelectionUI();
+      document.getElementById("langLabel").textContent = currentLang === "it" ? "Italiano 🇮🇹" : "English 🇬🇧";
+      if (allRecords.length > 0) renderAllAnalytics();
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      applyTranslations();
-      loadListsFromTxtOnly();
-      const savedSite = localStorage.getItem("sl_netlify_site_id");
-      const savedTok = localStorage.getItem("sl_netlify_token");
-      if (savedSite) document.getElementById("inputDirectSiteId").value = savedSite;
-      if (savedTok) document.getElementById("inputDirectToken").value = savedTok;
+      document.getElementById("inputWsDate").valueAsDate = new Date();
+      loadListsAndWorkshops();
     });
   </script>
 </body>
