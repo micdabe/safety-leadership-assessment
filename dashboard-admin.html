@@ -913,6 +913,33 @@
       }
     }
 
+// Passa alla scheda Analisi Risultati e filtra tutti i grafici sul singolo Workshop selezionato
+    function viewWorkshopReport(wsId) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+
+      // 1. Azzera tutti gli altri filtri per mostrare l'intero gruppo di quel Workshop
+      document.getElementById("filterLevel").value = "ALL";
+      document.getElementById("filterCompany").value = "ALL";
+      document.getElementById("filterSite").value = "ALL";
+      document.getElementById("filterRole").value = "ALL";
+      document.getElementById("filterSearch").value = "";
+
+      // 2. Assicura che i menu a discesa dei filtri siano aggiornati e seleziona il Workshop
+      populateFilterDropdowns(false);
+      const selW = document.getElementById("filterWorkshop");
+      selW.value = ws.name;
+
+      // 3. Imposta la Heatmap per raggruppare per "Ruolo" (utile quando si guarda un singolo Workshop)
+      const selGroup = document.getElementById("selectGroupBy");
+      if (selGroup) selGroup.value = "ruolo";
+
+      // 4. Passa alla scheda "Analisi Risultati", ricalcola i grafici e scorre in cima
+      switchAdminView("analytics");
+      applyFilters();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
 function renderWorkshopsTable() {
       const tbody = document.getElementById("workshopsTableBody");
       if (!tbody) return;
@@ -987,11 +1014,18 @@ function renderWorkshopsTable() {
                 </a>
               </div>
             </td>
-            <td class="py-3 px-3 text-right">
-              <button onclick="deleteWorkshopRecord('${ws.id}')"
-                class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200">
-                🗑️ Elimina
-              </button>
+            <td class="py-3 px-3 text-right whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5">
+                <button onclick="viewWorkshopReport('${ws.id}')"
+                  title="Filtra la dashboard e mostra i grafici di questo Workshop"
+                  class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[11px] border border-blue-200 transition">
+                  📊 Vedi Report
+                </button>
+                <button onclick="deleteWorkshopRecord('${ws.id}')"
+                  class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200 transition">
+                  🗑️ Elimina
+                </button>
+              </div>
             </td>
           </tr>
         `;
