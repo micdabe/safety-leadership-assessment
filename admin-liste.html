@@ -18,6 +18,23 @@
       .print-break { page-break-inside: avoid; }
     }
   </style>
+  <script>
+    // Pre-check immediato prima del rendering per azzerare qualsiasi flash o glitch tra schede
+    (function() {
+      const authMode = sessionStorage.getItem("sl_auth_mode");
+      if (authMode === "supabase" || authMode === "demo" || authMode === "csv") {
+        document.documentElement.classList.add("is-authenticated");
+      }
+    })();
+  </script>
+  <style>
+    /* Se già autenticato, nasconde istantaneamente il box di login e mostra la barra schede */
+    html.is-authenticated #screen-upload { display: none !important; }
+    html.is-authenticated #adminNavTabs { display: block !important; }
+    html.is-authenticated #btnChangeSource { display: inline-block !important; }
+    html.is-authenticated #btnPrintReport { display: inline-block !important; }
+    html.is-authenticated #screen-dashboard, html.is-authenticated #screen-workshops, html.is-authenticated #screen-lists { display: block !important; }
+  </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
@@ -38,7 +55,7 @@
         <div id="liveControls" class="hidden items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span id="lastSyncText" class="text-[11px] text-slate-300 font-medium">Supabase Live</span>
-          <button onclick="refreshFromSupabase()" class="ml-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] transition">
+          <button onclick="refreshFromSupabase(true)" class="ml-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] transition">
             ↻ Aggiorna ora
           </button>
         </div>
@@ -49,7 +66,7 @@
       </div>
     </div>
 
-    <!-- Barra di Navigazione a 3 Pagina Separate -->
+    <!-- Barra di Navigazione a 3 Pagine Separate -->
     <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
       <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 pt-2">
         <a href="admin-risultati.html" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
@@ -283,7 +300,41 @@
     let groupCompChartInstance = null;
     let modalRadarInstance = null;
 
+    // =========================================================================
+    // CACHE ISTANTANEA IN SESSIONSTORAGE PER CAMBIO SCHEDA SENZA GLITCH
+    // =========================================================================
+    function saveStateToCache() {
+      try {
+        sessionStorage.setItem("sl_cache_lists", JSON.stringify(editableLists));
+        sessionStorage.setItem("sl_cache_workshops", JSON.stringify(workshopsDB));
+        sessionStorage.setItem("sl_cache_records", JSON.stringify(allRecords));
+        sessionStorage.setItem("sl_cache_time", new Date().toLocaleTimeString("it-IT"));
+      } catch (e) {
+        console.warn("Cache storage warning:", e);
+      }
+    }
+
+    function restoreStateFromCache() {
+      try {
+        const cLists = sessionStorage.getItem("sl_cache_lists");
+        const cWs = sessionStorage.getItem("sl_cache_workshops");
+        const cRecs = sessionStorage.getItem("sl_cache_records");
+        if (!cLists || !cWs || !cRecs) return false;
+
+        editableLists = JSON.parse(cLists);
+        workshopsDB = JSON.parse(cWs);
+        allRecords = JSON.parse(cRecs);
+        const cTime = sessionStorage.getItem("sl_cache_time") || new Date().toLocaleTimeString("it-IT");
+        const syncTxt = document.getElementById("lastSyncText");
+        if (syncTxt) syncTxt.textContent = `Sync: ${cTime}`;
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
     function showError(msg) {
+      document.documentElement.classList.remove("is-authenticated");
       const errEl = document.getElementById("uploadError");
       if (!errEl) return;
       errEl.textContent = msg;
@@ -308,6 +359,22 @@
         return;
       }
 
+      supabaseClient = window.supabase.createClient(urlVal, keyVal);
+
+      // Se stiamo cambiando scheda ed esiste già la cache in sessionStorage, mostra subito la UI a 0ms senza flash!
+      if (silentAutoLogin && restoreStateFromCache()) {
+        activeConnectionMode = "supabase";
+        const liveCtrl = document.getElementById("liveControls");
+        if (liveCtrl) {
+          liveCtrl.classList.remove("hidden");
+          liveCtrl.classList.add("flex");
+        }
+        initDashboardWithData(false);
+        // Sincronizza in background silenziosamente senza bloccare o far lampeggiare la pagina
+        refreshFromSupabase(false);
+        return;
+      }
+
       const btn = document.getElementById("btnConnectSb");
       if (btn) {
         btn.textContent = "Connessione a Supabase...";
@@ -317,8 +384,6 @@
       if (errEl) errEl.classList.add("hidden");
 
       try {
-        supabaseClient = window.supabase.createClient(urlVal, keyVal);
-
         const { data: cfg, error: cfgErr } = await supabaseClient
           .from("app_config")
           .select("*")
@@ -337,17 +402,18 @@
           localStorage.setItem("sl_sb_key", keyVal);
         }
 
-        // Salva in sessionStorage per navigare tra le 3 pagine senza rifare login
         sessionStorage.setItem("sl_sb_url", urlVal);
         sessionStorage.setItem("sl_sb_key", keyVal);
         sessionStorage.setItem("sl_sb_pwd", pwdVal);
         sessionStorage.setItem("sl_auth_mode", "supabase");
+        document.documentElement.classList.add("is-authenticated");
 
         editableLists.companies = Array.isArray(cfg.companies) ? cfg.companies : [];
         editableLists.roles = Array.isArray(cfg.roles) ? cfg.roles : [];
         editableLists.sites = Array.isArray(cfg.sites) ? cfg.sites : [];
 
         await fetchWorkshopsAndSubmissionsFromSupabase();
+        saveStateToCache();
 
         activeConnectionMode = "supabase";
         const liveCtrl = document.getElementById("liveControls");
@@ -359,8 +425,7 @@
 
       } catch (err) {
         if (silentAutoLogin) {
-          sessionStorage.removeItem("sl_auth_mode");
-          sessionStorage.removeItem("sl_sb_pwd");
+          logoutAndShowLogin();
         } else {
           showError(err.message);
         }
@@ -392,27 +457,44 @@
       }));
 
       allRecords = normalizeRows(subRes.data || []);
+      const nowStr = new Date().toLocaleTimeString("it-IT");
       const syncTxt = document.getElementById("lastSyncText");
-      if (syncTxt) syncTxt.textContent = `Sync: ${new Date().toLocaleTimeString("it-IT")}`;
+      if (syncTxt) syncTxt.textContent = `Sync: ${nowStr}`;
     }
 
-    async function refreshFromSupabase() {
+    async function refreshFromSupabase(forceRedraw = true) {
       if (activeConnectionMode !== "supabase" || !supabaseClient) return;
-      await fetchWorkshopsAndSubmissionsFromSupabase();
-      if (PAGE_MODE === "analytics") {
-        populateFilterDropdowns(true);
-        applyFilters();
-      } else if (PAGE_MODE === "workshops") {
-        populateWorkshopSiteDropdown();
-        renderWorkshopsTable();
-      } else if (PAGE_MODE === "lists") {
-        const { data: cfg } = await supabaseClient.from("app_config").select("*").eq("id", 1).single();
-        if (cfg) {
-          editableLists.companies = Array.isArray(cfg.companies) ? cfg.companies : [];
-          editableLists.roles = Array.isArray(cfg.roles) ? cfg.roles : [];
-          editableLists.sites = Array.isArray(cfg.sites) ? cfg.sites : [];
+      try {
+        const prevCount = allRecords.length;
+        const prevWsCount = workshopsDB.length;
+
+        const [cfgRes] = await Promise.all([
+          supabaseClient.from("app_config").select("*").eq("id", 1).single(),
+          fetchWorkshopsAndSubmissionsFromSupabase()
+        ]);
+
+        if (cfgRes && cfgRes.data && !hasUnsavedListChanges) {
+          editableLists.companies = Array.isArray(cfgRes.data.companies) ? cfgRes.data.companies : [];
+          editableLists.roles = Array.isArray(cfgRes.data.roles) ? cfgRes.data.roles : [];
+          editableLists.sites = Array.isArray(cfgRes.data.sites) ? cfgRes.data.sites : [];
         }
-        renderEditableListsUI();
+
+        saveStateToCache();
+
+        const dataChanged = (allRecords.length !== prevCount) || (workshopsDB.length !== prevWsCount);
+        if (!forceRedraw && !dataChanged) return;
+
+        if (PAGE_MODE === "analytics") {
+          populateFilterDropdowns(true);
+          applyFilters();
+        } else if (PAGE_MODE === "workshops") {
+          populateWorkshopSiteDropdown();
+          renderWorkshopsTable();
+        } else if (PAGE_MODE === "lists" && !hasUnsavedListChanges) {
+          renderEditableListsUI();
+        }
+      } catch (e) {
+        console.warn("Background sync warning:", e);
       }
     }
 
@@ -423,10 +505,12 @@
         sel.innerHTML = `<option value="">-- Aggiungi prima un Cantiere/Sede nella scheda Liste --</option>`;
         return;
       }
+      const prev = sel.value;
       sel.innerHTML = editableLists.sites.map(s => {
         const label = s.split("|")[0].trim();
         return `<option value="${s}">${label}</option>`;
       }).join("");
+      if (prev && editableLists.sites.includes(prev)) sel.value = prev;
     }
 
     function getParticipantTestBaseUrl() {
@@ -477,6 +561,7 @@
       }
 
       workshopsDB.unshift(newWs);
+      saveStateToCache();
       document.getElementById("inputWsName").value = "";
 
       const typeLabel = targetVal === "office" ? "🏢 Ufficio / Sede (HQ)" : "🏗️ Cantiere / Site";
@@ -491,6 +576,7 @@
       const ws = workshopsDB.find(w => w.id === wsId);
       if (!ws) return;
       ws.active = !(ws.active !== false);
+      saveStateToCache();
 
       if (activeConnectionMode === "supabase" && supabaseClient) {
         await supabaseClient.from("workshops").update({ active: ws.active }).eq("id", wsId);
@@ -507,6 +593,7 @@
         await supabaseClient.from("workshops").delete().eq("id", wsId);
       }
       workshopsDB = workshopsDB.filter(w => w.id !== wsId);
+      saveStateToCache();
       renderWorkshopsTable();
     }
 
@@ -663,6 +750,8 @@
         rec.workshopLevel = "Non assegnato";
       }
 
+      saveStateToCache();
+
       if (activeConnectionMode === "supabase" && supabaseClient) {
         await supabaseClient.from("submissions").update({
           workshop_id: rec.workshopId,
@@ -721,6 +810,7 @@
       const deletedSet = new Set(idsArray);
       allRecords = allRecords.filter(r => !deletedSet.has(r.id));
       selectedRecordIds.clear();
+      saveStateToCache();
       populateFilterDropdowns(true);
       applyFilters();
     }
@@ -738,6 +828,7 @@
 
       allRecords = allRecords.filter(r => r.id !== recordId);
       selectedRecordIds.delete(recordId);
+      saveStateToCache();
       if (currentModalRecordId === recordId) closeParticipantModal();
       populateFilterDropdowns(true);
       applyFilters();
@@ -768,6 +859,7 @@
         }
 
         hasUnsavedListChanges = false;
+        saveStateToCache();
         document.getElementById("unsavedChangesBadge").classList.add("hidden");
 
         banner.className = "rounded-xl p-4 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
@@ -830,6 +922,7 @@
       inputIT.value = "";
       inputEN.value = "";
       hasUnsavedListChanges = true;
+      saveStateToCache();
       document.getElementById("unsavedChangesBadge").classList.remove("hidden");
       renderEditableListsUI();
     }
@@ -837,6 +930,7 @@
     function removeListItem(category, index) {
       editableLists[category].splice(index, 1);
       hasUnsavedListChanges = true;
+      saveStateToCache();
       document.getElementById("unsavedChangesBadge").classList.remove("hidden");
       renderEditableListsUI();
     }
@@ -847,6 +941,7 @@
       if (targetIdx < 0 || targetIdx >= list.length) return;
       [list[index], list[targetIdx]] = [list[targetIdx], list[index]];
       hasUnsavedListChanges = true;
+      saveStateToCache();
       document.getElementById("unsavedChangesBadge").classList.remove("hidden");
       renderEditableListsUI();
     }
@@ -938,6 +1033,9 @@
           complete: function(results) {
             allRecords = normalizeRows(results.data);
             activeConnectionMode = "csv";
+            sessionStorage.setItem("sl_auth_mode", "csv");
+            document.documentElement.classList.add("is-authenticated");
+            saveStateToCache();
             initDashboardWithData(false);
           }
         });
@@ -945,6 +1043,13 @@
     }
 
     function loadDemoDataset() {
+      if (sessionStorage.getItem("sl_auth_mode") === "demo" && restoreStateFromCache()) {
+        activeConnectionMode = "demo";
+        document.documentElement.classList.add("is-authenticated");
+        initDashboardWithData(false);
+        return;
+      }
+
       editableLists = {
         companies: ["General Contractor SpA", "Tech Engineering Srl", "SafeWorks Costruzioni"],
         roles: ["Project Manager", "Lead Engineer (HQ)", "Procurement Buyer (HQ)", "Site Manager", "HSE Manager", "Preposto"],
@@ -996,7 +1101,9 @@
 
       activeConnectionMode = "demo";
       sessionStorage.setItem("sl_auth_mode", "demo");
+      document.documentElement.classList.add("is-authenticated");
       allRecords = normalizeRows(demoRows);
+      saveStateToCache();
       initDashboardWithData(false);
     }
 
@@ -1034,6 +1141,11 @@
       selectedRecordIds.clear();
       sessionStorage.removeItem("sl_auth_mode");
       sessionStorage.removeItem("sl_sb_pwd");
+      sessionStorage.removeItem("sl_cache_lists");
+      sessionStorage.removeItem("sl_cache_workshops");
+      sessionStorage.removeItem("sl_cache_records");
+      document.documentElement.classList.remove("is-authenticated");
+
       const liveCtrl = document.getElementById("liveControls");
       if (liveCtrl) liveCtrl.classList.add("hidden");
       document.getElementById("adminNavTabs").classList.add("hidden");
@@ -1164,7 +1276,7 @@
             }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, suggestedMax: 22 } } }
+        options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, suggestedMax: 22 } } }
       });
 
       const domCounts = {};
@@ -1186,7 +1298,7 @@
             { label: "Area Meno Presidiata (#7)", data: AREA_KEYS.map(a => lowCounts[a.id]), backgroundColor: "#f59e0b", borderRadius: 6 }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+        options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
       });
 
       renderGroupComparison();
@@ -1235,7 +1347,7 @@
             backgroundColor: area.color
           }))
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
       });
 
       document.getElementById("heatmapTableBody").innerHTML = groupStats.map(g => {
@@ -1406,12 +1518,14 @@
       if (savedUrl && document.getElementById("inputSbUrl")) document.getElementById("inputSbUrl").value = savedUrl;
       if (savedKey && document.getElementById("inputSbKey")) document.getElementById("inputSbKey").value = savedKey;
 
-      // Auto-login se già autenticato nella sessione corrente
       const authMode = sessionStorage.getItem("sl_auth_mode");
       if (authMode === "supabase" && sessionStorage.getItem("sl_sb_pwd")) {
         connectToSupabase(true);
       } else if (authMode === "demo") {
         loadDemoDataset();
+      } else if (authMode === "csv" && restoreStateFromCache()) {
+        activeConnectionMode = "csv";
+        initDashboardWithData(false);
       }
     });
   </script>
