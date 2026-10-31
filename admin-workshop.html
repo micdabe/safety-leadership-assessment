@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Safety Leadership — Admin & Workshop Console (Supabase)</title>
+  <title>Safety Leadership — Gestione Workshop (Supabase)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -46,31 +46,24 @@
         <button id="btnChangeSource" onclick="logoutAndShowLogin()" class="hidden px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
           Esci
         </button>
-        <button id="btnPrintReport" onclick="window.print()" class="hidden px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition">
-          Stampa / PDF
-        </button>
       </div>
     </div>
 
-    <!-- Barra di Navigazione a 3 Schede -->
+    <!-- Barra di Navigazione a 3 Pagina Separate -->
     <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
       <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 pt-2">
-        <button id="navTabAnalytics" onclick="switchAdminView('analytics')"
-          class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
+        <a href="admin-risultati.html" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>📊</span> <span>Analisi Risultati</span>
-        </button>
-        <button id="navTabWorkshops" onclick="switchAdminView('workshops')"
-          class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+        </a>
+        <a href="admin-workshop.html" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
           <span>🎯</span> <span>Gestione Workshop (Link & QR)</span>
-        </button>
-        <button id="navTabLists" onclick="switchAdminView('lists')"
-          class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+        </a>
+        <a href="admin-liste.html" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>🗂️</span> <span>Gestione Liste (Aziende, Ruoli, Cantieri)</span>
-        </button>
+        </a>
       </div>
     </div>
   </header>
-
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
 
     <!-- 1. SCHERMATA DI LOGIN SUPABASE -->
@@ -118,7 +111,7 @@
 
           <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer pt-1">
             <input id="chkRememberSb" type="checkbox" checked class="accent-amber-600" />
-            <span>Ricorda URL e Anon Key in questo browser</span>
+            <span>Ricorda URL, Key e Sessione Admin mentre navigo tra le pagine</span>
           </label>
 
           <p id="uploadError" class="hidden mt-4 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-3.5"></p>
@@ -145,214 +138,6 @@
           </div>
         </div>
       </div>
-    </section>
-
-    <!-- 2. SCHEDA A: ANALISI RISULTATI -->
-    <section id="screen-dashboard" class="hidden space-y-6">
-
-      <!-- Barra Filtri Interattivi a 7 Colonne -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 no-print">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <div class="flex items-center gap-2">
-            <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-800">Filtri di Analisi</h2>
-            <span id="activeRecordsBadge" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
-              0 test selezionati
-            </span>
-          </div>
-          <button onclick="resetFilters()" class="text-xs font-bold text-amber-700 hover:underline">
-            Azzera filtri
-          </button>
-        </div>
-
-        <div class="grid sm:grid-cols-2 lg:grid-cols-7 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Workshop</label>
-            <select id="filterWorkshop" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
-              <option value="ALL">Tutti i Workshop</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Profilo (Site / HQ)</label>
-            <select id="filterTarget" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-amber-300 text-xs font-bold bg-amber-50/40 focus:outline-none focus:border-amber-500">
-              <option value="ALL">Tutti (Cantiere + Ufficio)</option>
-              <option value="Site / Field">🏗️ Cantiere / Site</option>
-              <option value="Office / HQ">🏢 Ufficio / Sede (HQ)</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Livello Workshop</label>
-            <select id="filterLevel" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
-              <option value="ALL">Tutti i Livelli</option>
-              <option value="Top manager">Top manager</option>
-              <option value="Second level">Second level</option>
-              <option value="Baseline">Baseline</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Azienda</label>
-            <select id="filterCompany" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
-              <option value="ALL">Tutte le Aziende</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Cantiere / Sede</label>
-            <select id="filterSite" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
-              <option value="ALL">Tutti i Cantieri/Sedi</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Ruolo / Funzione</label>
-            <select id="filterRole" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
-              <option value="ALL">Tutti i Ruoli</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Cerca Partecipante</label>
-            <input id="filterSearch" type="text" oninput="applyFilters()" placeholder="Nome o Anonimo..."
-              class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
-          </div>
-        </div>
-      </div>
-
-      <!-- 4 KPI Cards -->
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 print-break">
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-          <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Test Analizzati</div>
-          <div id="kpi1Value" class="text-2xl font-extrabold text-slate-900">0</div>
-          <div id="kpi1Sub" class="text-xs text-slate-500 mt-1">-</div>
-        </div>
-        <div class="bg-emerald-50 p-5 rounded-2xl shadow-sm border border-emerald-200">
-          <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">Punto di Forza Medio (#1)</div>
-          <div id="kpi2Value" class="text-2xl font-extrabold text-slate-900">-</div>
-          <div id="kpi2Sub" class="text-xs text-emerald-800 mt-1">-</div>
-        </div>
-        <div class="bg-amber-50 p-5 rounded-2xl shadow-sm border border-amber-200">
-          <div class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">Gap Formativo Medio (#7)</div>
-          <div id="kpi3Value" class="text-2xl font-extrabold text-slate-900">-</div>
-          <div id="kpi3Sub" class="text-xs text-amber-900 mt-1">-</div>
-        </div>
-        <div class="bg-blue-50 p-5 rounded-2xl shadow-sm border border-blue-200">
-          <div class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">Seconda Leva Media (#2)</div>
-          <div id="kpi4Value" class="text-2xl font-extrabold text-slate-900">-</div>
-          <div id="kpi4Sub" class="text-xs text-blue-800 mt-1">-</div>
-        </div>
-      </div>
-
-      <!-- Riga Grafici Principali -->
-      <div class="grid lg:grid-cols-2 gap-6 print-break">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h3 class="font-bold text-slate-900 text-base mb-1">Profilo Medio delle 7 Aree (Selezione vs Globale)</h3>
-          <p class="text-xs text-slate-500 mb-4">Confronta la media del gruppo filtrato con la media generale e il target bilanciato (14.3%)</p>
-          <div class="relative h-80 flex items-center justify-center">
-            <canvas id="aggRadarChart"></canvas>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h3 class="font-bold text-slate-900 text-base mb-1">Distribuzione Punti di Forza (#1) vs Bisogni Formativi (#7)</h3>
-          <p class="text-xs text-slate-500 mb-4">Numero di partecipanti per i quali ciascuna area risulta la #1 (Dominante) o la #7 (Meno Presidiata)</p>
-          <div class="relative h-80 flex items-center justify-center">
-            <canvas id="domWeakBarChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- MATRICE HEATMAP DI CONFRONTO (Include Cantiere vs Ufficio) -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
-          <div>
-            <h3 class="font-bold text-slate-900 text-lg">Matrice Comparativa (Heatmap) per Gruppo</h3>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Confronta le percentuali medie delle 7 aree per Workshop, Profilo (🏗️ Cantiere vs 🏢 Ufficio), Livello, Sede o Ruolo.
-            </p>
-          </div>
-
-          <div class="flex items-center gap-2 no-print">
-            <span class="text-xs font-bold text-slate-600">Raggruppa per:</span>
-            <select id="selectGroupBy" onchange="renderGroupComparison()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:outline-none focus:border-amber-500">
-              <option value="workshop">Workshop</option>
-              <option value="target">Profilo (🏗️ Cantiere vs 🏢 Ufficio)</option>
-              <option value="livello">Livello Workshop</option>
-              <option value="cantiere">Cantiere / Sede</option>
-              <option value="azienda">Azienda</option>
-              <option value="ruolo">Ruolo / Funzione</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="relative h-72 mb-6">
-          <canvas id="groupComparisonChart"></canvas>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr class="border-b-2 border-slate-200 uppercase text-slate-500 bg-slate-50">
-                <th class="py-3 px-3">Gruppo</th>
-                <th class="py-3 px-2 text-center">N. Test</th>
-                <th class="py-3 px-2 text-center">Vision</th>
-                <th class="py-3 px-2 text-center">Focus</th>
-                <th class="py-3 px-2 text-center">Influence</th>
-                <th class="py-3 px-2 text-center">Credibility</th>
-                <th class="py-3 px-2 text-center">Team</th>
-                <th class="py-3 px-2 text-center">Comm.</th>
-                <th class="py-3 px-2 text-center">Feedback</th>
-                <th class="py-3 px-3">Priorità Formativa (Gap)</th>
-              </tr>
-            </thead>
-            <tbody id="heatmapTableBody" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TABELLA PARTECIPANTI CON ASSEGNAZIONE WORKSHOP EDITABILE -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <div>
-            <h3 class="font-bold text-slate-900 text-lg">Dettaglio Singoli Test Completati</h3>
-            <p class="text-xs text-slate-500">
-              Usa il menu a discesa nella colonna "Workshop" per associare o spostare qualsiasi test in tempo reale su Supabase.
-            </p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2.5 no-print">
-            <button id="btnDeleteSelected" onclick="deleteSelectedSubmissions()"
-              class="hidden px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-1.5">
-              <span>🗑️</span> <span id="btnDeleteSelectedLabel">Elimina selezionati (0)</span>
-            </button>
-            <button onclick="exportFilteredCSV()"
-              class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-              Esporta Vista Filtrata (CSV)
-            </button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto max-h-96 overflow-y-auto">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead class="sticky top-0 bg-slate-100 text-slate-600 uppercase z-10">
-              <tr>
-                <th class="py-3 px-3 w-10 text-center no-print">
-                  <input id="chkSelectAllRows" type="checkbox" onchange="toggleSelectAllFiltered(this.checked)"
-                    class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
-                </th>
-                <th class="py-3 px-3">Data</th>
-                <th class="py-3 px-3">Workshop (Editabile)</th>
-                <th class="py-3 px-3">Profilo</th>
-                <th class="py-3 px-3">Livello</th>
-                <th class="py-3 px-3">Partecipante</th>
-                <th class="py-3 px-3">Azienda</th>
-                <th class="py-3 px-3">Ruolo</th>
-                <th class="py-3 px-3">Cantiere/Sede</th>
-                <th class="py-3 px-3">Area #1</th>
-                <th class="py-3 px-3">Area #7</th>
-                <th class="py-3 px-3 text-right no-print">Azioni</th>
-              </tr>
-            </thead>
-            <tbody id="participantsTableBody" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </div>
-
     </section>
 
     <!-- 3. SCHEDA B: GESTIONE WORKSHOP SU SUPABASE -->
@@ -445,116 +230,6 @@
         </div>
       </div>
     </section>
-
-    <!-- 4. SCHEDA C: GESTIONE LISTE SU SUPABASE -->
-    <section id="screen-lists" class="hidden space-y-6 no-print">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-2.5 mb-1">
-            <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-              Tabella Supabase: public.app_config
-            </span>
-            <span id="unsavedChangesBadge" class="hidden px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold animate-pulse">
-              Modifiche non salvate *
-            </span>
-          </div>
-          <h2 class="text-xl md:text-2xl font-extrabold text-slate-900">
-            Gestione Liste nel Database (Aziende, Ruoli, Cantieri/Sedi)
-          </h2>
-          <p class="text-xs md:text-sm text-slate-500 mt-0.5">
-            Ogni modifica salvata su Supabase è immediatamente visibile a tutti i partecipanti su <code>index.html</code> (0 secondi di attesa).
-          </p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2.5">
-          <button onclick="downloadAllTxtFiles()"
-            class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
-            ⬇ Backup .txt
-          </button>
-          <button onclick="saveListsToSupabase()" id="btnSaveSbLists"
-            class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs md:text-sm shadow-sm transition">
-            💾 Salva Liste su Supabase
-          </button>
-        </div>
-      </div>
-
-      <div id="listsSaveBanner" class="hidden rounded-xl p-4 text-xs font-bold border"></div>
-
-      <div class="grid lg:grid-cols-3 gap-6">
-        <!-- COLONNA 1: AZIENDE -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
-          <div>
-            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
-              <h3 class="font-extrabold text-sm uppercase tracking-wider text-amber-400">1. Aziende</h3>
-              <span id="countCompaniesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
-            </div>
-            <div id="listContainer-companies" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
-          </div>
-          <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
-            <div class="text-xs font-bold text-slate-700">Aggiungi nuova Azienda:</div>
-            <input id="newCompIT" type="text" placeholder="Nome Azienda (es. Rossi SpA)"
-              onkeydown="if(event.key==='Enter') addListItem('companies')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white" />
-            <input id="newCompEN" type="text" placeholder="Traduzione EN opzionale"
-              onkeydown="if(event.key==='Enter') addListItem('companies')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white" />
-            <button onclick="addListItem('companies')"
-              class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
-              + Aggiungi Azienda
-            </button>
-          </div>
-        </div>
-
-        <!-- COLONNA 2: RUOLI -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
-          <div>
-            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
-              <h3 class="font-extrabold text-sm uppercase tracking-wider text-amber-400">2. Ruoli / Funzioni</h3>
-              <span id="countRolesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
-            </div>
-            <div id="listContainer-roles" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
-          </div>
-          <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
-            <div class="text-xs font-bold text-slate-700">Aggiungi nuovo Ruolo:</div>
-            <input id="newRoleIT" type="text" placeholder="Ruolo IT (es. Preposto / Buyer)"
-              onkeydown="if(event.key==='Enter') addListItem('roles')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white" />
-            <input id="newRoleEN" type="text" placeholder="Ruolo EN opzionale"
-              onkeydown="if(event.key==='Enter') addListItem('roles')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white" />
-            <button onclick="addListItem('roles')"
-              class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
-              + Aggiungi Ruolo
-            </button>
-          </div>
-        </div>
-
-        <!-- COLONNA 3: CANTIERI / SEDI -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
-          <div>
-            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
-              <h3 class="font-extrabold text-sm uppercase tracking-wider text-amber-400">3. Cantieri / Sedi</h3>
-              <span id="countSitesBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">0</span>
-            </div>
-            <div id="listContainer-sites" class="p-4 space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100"></div>
-          </div>
-          <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2.5">
-            <div class="text-xs font-bold text-slate-700">Aggiungi nuovo Cantiere o Sede:</div>
-            <input id="newSiteIT" type="text" placeholder="Sede/Cantiere IT (es. Sede Milano)"
-              onkeydown="if(event.key==='Enter') addListItem('sites')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white" />
-            <input id="newSiteEN" type="text" placeholder="Sede/Cantiere EN opzionale"
-              onkeydown="if(event.key==='Enter') addListItem('sites')"
-              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white" />
-            <button onclick="addListItem('sites')"
-              class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
-              + Aggiungi Cantiere / Sede
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
   </main>
 
   <!-- MODALE QR CODE DEL WORKSHOP -->
@@ -574,46 +249,10 @@
     </div>
   </div>
 
-  <!-- MODALE ISPEZIONE SINGOLO PARTECIPANTE -->
-  <div id="participantModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 no-print">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 md:p-8 border border-slate-200 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
-        <div>
-          <span id="modalCompanyBadge" class="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 text-xs font-bold">Workshop</span>
-          <h3 id="modalPersonName" class="text-xl font-extrabold text-slate-900 mt-1">Nome Partecipante</h3>
-          <p id="modalPersonMeta" class="text-xs text-slate-500 mt-0.5">Ruolo • Cantiere • Data</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="deleteCurrentModalParticipant()"
-            class="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs border border-red-200 transition">
-            🗑️ Elimina Test
-          </button>
-          <button onclick="closeParticipantModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm">
-            ✕
-          </button>
-        </div>
-      </div>
-
-      <div class="grid sm:grid-cols-2 gap-6 my-5 items-center">
-        <div class="h-60 flex items-center justify-center">
-          <canvas id="modalRadarChart"></canvas>
-        </div>
-        <div id="modalAreaBreakdown" class="space-y-2 text-xs"></div>
-      </div>
-
-      <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 text-xs text-slate-600">
-        <strong class="text-slate-800">Log Scelte (12 Scenari):</strong>
-        <p id="modalChoicesLog" class="font-mono text-[11px] text-slate-500 mt-1 break-all">-</p>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // =========================================================================
-    // CONFIGURAZIONE SUPABASE (Puoi incollare qui URL e ANON KEY del tuo progetto)
-    // =========================================================================
-    const DEFAULT_SUPABASE_URL = "https://axiilxpcvevqlctjfpjj.supabase.co";      // es. "https://xyzabcdef.supabase.co"
-    const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4aWlseHBjdmV2cWxjdGpmcGpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzOTM1NzksImV4cCI6MjEwODk2OTU3OX0.m5oHRZA7lo4bl3ys9LnJpGKnpjYZneh-Unxf5CDbA7A"; // es. "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+    const PAGE_MODE = "workshops"; // 'analytics' | 'workshops' | 'lists'
+    const DEFAULT_SUPABASE_URL = "https://axiilxpcvevqlctjfpjj.supabase.co";
+    const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4aWlseHBjdmV2cWxjdGpmcGpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzOTM1NzksImV4cCI6MjEwODk2OTU3OX0.m5oHRZA7lo4bl3ys9LnJpGKnpjYZneh-Unxf5CDbA7A";
 
     const AREA_KEYS = [
       { id: "VISION", name: "Vision", csvPct: "vision_pct", color: "#2563eb" },
@@ -626,7 +265,6 @@
     ];
 
     let supabaseClient = null;
-    let currentAdminView = "analytics";
     let activeConnectionMode = null; // 'supabase' | 'csv' | 'demo'
 
     let allRecords = [];
@@ -644,38 +282,42 @@
     let groupCompChartInstance = null;
     let modalRadarInstance = null;
 
-    // =========================================================================
-    // 1. CONNESSIONE A SUPABASE E AUTENTICAZIONE ADMIN
-    // =========================================================================
     function showError(msg) {
       const errEl = document.getElementById("uploadError");
+      if (!errEl) return;
       errEl.textContent = msg;
       errEl.classList.remove("hidden");
     }
 
-    async function connectToSupabase() {
-      const urlVal = (document.getElementById("inputSbUrl").value || DEFAULT_SUPABASE_URL).trim();
-      const keyVal = (document.getElementById("inputSbKey").value || DEFAULT_SUPABASE_ANON_KEY).trim();
-      const pwdVal = document.getElementById("inputAdminPassword").value.trim();
+    async function connectToSupabase(silentAutoLogin = false) {
+      const urlInput = document.getElementById("inputSbUrl");
+      const keyInput = document.getElementById("inputSbKey");
+      const pwdInput = document.getElementById("inputAdminPassword");
+
+      const urlVal = ((urlInput && urlInput.value) || sessionStorage.getItem("sl_sb_url") || localStorage.getItem("sl_sb_url") || DEFAULT_SUPABASE_URL).trim();
+      const keyVal = ((keyInput && keyInput.value) || sessionStorage.getItem("sl_sb_key") || localStorage.getItem("sl_sb_key") || DEFAULT_SUPABASE_ANON_KEY).trim();
+      const pwdVal = silentAutoLogin ? (sessionStorage.getItem("sl_sb_pwd") || "") : (pwdInput ? pwdInput.value.trim() : "");
 
       if (!urlVal || !keyVal) {
-        showError("Inserisci sia il Supabase Project URL sia la Anon Public Key.");
+        if (!silentAutoLogin) showError("Inserisci sia il Supabase Project URL sia la Anon Public Key.");
         return;
       }
       if (!pwdVal) {
-        showError("Inserisci la Password Admin.");
+        if (!silentAutoLogin) showError("Inserisci la Password Admin.");
         return;
       }
 
       const btn = document.getElementById("btnConnectSb");
-      btn.textContent = "Connessione a Supabase...";
-      btn.disabled = true;
-      document.getElementById("uploadError").classList.add("hidden");
+      if (btn) {
+        btn.textContent = "Connessione a Supabase...";
+        btn.disabled = true;
+      }
+      const errEl = document.getElementById("uploadError");
+      if (errEl) errEl.classList.add("hidden");
 
       try {
         supabaseClient = window.supabase.createClient(urlVal, keyVal);
 
-        // 1. Legge configurazione e verifica la Password Admin
         const { data: cfg, error: cfgErr } = await supabaseClient
           .from("app_config")
           .select("*")
@@ -688,28 +330,44 @@
           throw new Error("Password Admin errata.");
         }
 
-        if (document.getElementById("chkRememberSb").checked) {
+        const chk = document.getElementById("chkRememberSb");
+        if (!chk || chk.checked) {
           localStorage.setItem("sl_sb_url", urlVal);
           localStorage.setItem("sl_sb_key", keyVal);
         }
+
+        // Salva in sessionStorage per navigare tra le 3 pagine senza rifare login
+        sessionStorage.setItem("sl_sb_url", urlVal);
+        sessionStorage.setItem("sl_sb_key", keyVal);
+        sessionStorage.setItem("sl_sb_pwd", pwdVal);
+        sessionStorage.setItem("sl_auth_mode", "supabase");
 
         editableLists.companies = Array.isArray(cfg.companies) ? cfg.companies : [];
         editableLists.roles = Array.isArray(cfg.roles) ? cfg.roles : [];
         editableLists.sites = Array.isArray(cfg.sites) ? cfg.sites : [];
 
-        // 2. Carica Workshop e Risultati da Supabase
         await fetchWorkshopsAndSubmissionsFromSupabase();
 
         activeConnectionMode = "supabase";
-        document.getElementById("liveControls").classList.remove("hidden");
-        document.getElementById("liveControls").classList.add("flex");
+        const liveCtrl = document.getElementById("liveControls");
+        if (liveCtrl) {
+          liveCtrl.classList.remove("hidden");
+          liveCtrl.classList.add("flex");
+        }
         initDashboardWithData(false);
 
       } catch (err) {
-        showError(err.message);
+        if (silentAutoLogin) {
+          sessionStorage.removeItem("sl_auth_mode");
+          sessionStorage.removeItem("sl_sb_pwd");
+        } else {
+          showError(err.message);
+        }
       } finally {
-        btn.textContent = "Connetti a Supabase →";
-        btn.disabled = false;
+        if (btn) {
+          btn.textContent = "Connetti a Supabase →";
+          btn.disabled = false;
+        }
       }
     }
 
@@ -733,51 +391,30 @@
       }));
 
       allRecords = normalizeRows(subRes.data || []);
-      document.getElementById("lastSyncText").textContent = `Sync: ${new Date().toLocaleTimeString("it-IT")}`;
+      const syncTxt = document.getElementById("lastSyncText");
+      if (syncTxt) syncTxt.textContent = `Sync: ${new Date().toLocaleTimeString("it-IT")}`;
     }
 
     async function refreshFromSupabase() {
       if (activeConnectionMode !== "supabase" || !supabaseClient) return;
       await fetchWorkshopsAndSubmissionsFromSupabase();
-      populateFilterDropdowns(true);
-      applyFilters();
-      renderWorkshopsTable();
-    }
-
-    // =========================================================================
-    // 2. NAVIGAZIONE SCHEDE ADMIN
-    // =========================================================================
-    function switchAdminView(viewName) {
-      currentAdminView = viewName;
-      const tabs = {
-        analytics: { btn: "navTabAnalytics", sec: "screen-dashboard" },
-        workshops: { btn: "navTabWorkshops", sec: "screen-workshops" },
-        lists: { btn: "navTabLists", sec: "screen-lists" }
-      };
-
-      Object.keys(tabs).forEach(k => {
-        const b = document.getElementById(tabs[k].btn);
-        const s = document.getElementById(tabs[k].sec);
-        if (k === viewName) {
-          b.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2";
-          s.classList.remove("hidden");
-        } else {
-          b.className = "px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2";
-          s.classList.add("hidden");
-        }
-      });
-
-      if (viewName === "workshops") {
+      if (PAGE_MODE === "analytics") {
+        populateFilterDropdowns(true);
+        applyFilters();
+      } else if (PAGE_MODE === "workshops") {
         populateWorkshopSiteDropdown();
         renderWorkshopsTable();
-      } else if (viewName === "lists") {
+      } else if (PAGE_MODE === "lists") {
+        const { data: cfg } = await supabaseClient.from("app_config").select("*").eq("id", 1).single();
+        if (cfg) {
+          editableLists.companies = Array.isArray(cfg.companies) ? cfg.companies : [];
+          editableLists.roles = Array.isArray(cfg.roles) ? cfg.roles : [];
+          editableLists.sites = Array.isArray(cfg.sites) ? cfg.sites : [];
+        }
         renderEditableListsUI();
       }
     }
 
-    // =========================================================================
-    // 3. GESTIONE WORKSHOP SU SUPABASE (CANTIERE vs UFFICIO, APERTO/CHIUSO)
-    // =========================================================================
     function populateWorkshopSiteDropdown() {
       const sel = document.getElementById("selectWsSite");
       if (!sel) return;
@@ -793,7 +430,7 @@
 
     function getParticipantTestBaseUrl() {
       const loc = window.location;
-      const basePath = loc.pathname.replace(/dashboard-admin\.html.*$/i, "");
+      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-workshop|admin-liste)\.html.*$/i, "");
       return `${loc.origin}${basePath.endsWith("/") ? basePath : basePath + "/"}index.html`;
     }
 
@@ -847,8 +484,6 @@
       banner.classList.remove("hidden");
 
       renderWorkshopsTable();
-      populateFilterDropdowns(true);
-      renderParticipantsTable();
     }
 
     async function toggleWorkshopActive(wsId) {
@@ -872,28 +507,12 @@
       }
       workshopsDB = workshopsDB.filter(w => w.id !== wsId);
       renderWorkshopsTable();
-      populateFilterDropdowns(true);
-      renderParticipantsTable();
     }
 
     function viewWorkshopReport(wsId) {
       const ws = workshopsDB.find(w => w.id === wsId);
       if (!ws) return;
-
-      document.getElementById("filterTarget").value = "ALL";
-      document.getElementById("filterLevel").value = "ALL";
-      document.getElementById("filterCompany").value = "ALL";
-      document.getElementById("filterSite").value = "ALL";
-      document.getElementById("filterRole").value = "ALL";
-      document.getElementById("filterSearch").value = "";
-
-      populateFilterDropdowns(false);
-      document.getElementById("filterWorkshop").value = ws.name;
-      document.getElementById("selectGroupBy").value = "ruolo";
-
-      switchAdminView("analytics");
-      applyFilters();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.location.href = `admin-risultati.html?ws_name=${encodeURIComponent(ws.name)}`;
     }
 
     function renderWorkshopsTable() {
@@ -986,6 +605,7 @@
     function copyWorkshopLink(url) {
       navigator.clipboard.writeText(url);
       const banner = document.getElementById("wsFeedbackBanner");
+      if (!banner) return;
       banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
       banner.textContent = `✓ Link del Workshop copiato negli appunti: ${url}`;
       banner.classList.remove("hidden");
@@ -1013,6 +633,7 @@
 
     function closeWorkshopQrModal() {
       const modal = document.getElementById("workshopQrModal");
+      if (!modal) return;
       modal.classList.add("hidden");
       modal.classList.remove("flex");
     }
@@ -1023,9 +644,6 @@
       alert("Link copiato:\n" + currentQrModalUrl);
     }
 
-    // =========================================================================
-    // 4. ASSEGNAZIONE ED ELIMINAZIONE RECORD SU SUPABASE
-    // =========================================================================
     async function assignRecordToWorkshop(recordId, newWorkshopId) {
       const rec = allRecords.find(r => r.id === recordId);
       if (!rec) return;
@@ -1074,12 +692,13 @@
     }
 
     function updateBulkSelectionUI() {
+      const bulkBtn = document.getElementById("btnDeleteSelected");
+      if (!bulkBtn) return;
       const validIds = new Set(allRecords.map(r => r.id));
       for (const id of selectedRecordIds) {
         if (!validIds.has(id)) selectedRecordIds.delete(id);
       }
       const count = selectedRecordIds.size;
-      const bulkBtn = document.getElementById("btnDeleteSelected");
       if (count > 0) {
         document.getElementById("btnDeleteSelectedLabel").textContent = `Elimina selezionati (${count})`;
         bulkBtn.classList.remove("hidden");
@@ -1128,9 +747,6 @@
       deleteSubmissionById(currentModalRecordId, null);
     }
 
-    // =========================================================================
-    // 5. GESTIONE LISTE SU SUPABASE (AZIENDE, RUOLI, CANTIERI/SEDI)
-    // =========================================================================
     async function saveListsToSupabase() {
       const banner = document.getElementById("listsSaveBanner");
       const btn = document.getElementById("btnSaveSbLists");
@@ -1152,7 +768,6 @@
 
         hasUnsavedListChanges = false;
         document.getElementById("unsavedChangesBadge").classList.add("hidden");
-        populateWorkshopSiteDropdown();
 
         banner.className = "rounded-xl p-4 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
         banner.textContent = "✓ Liste salvate istantaneamente su Supabase! I menu di index.html sono già aggiornati.";
@@ -1170,11 +785,13 @@
     function renderEditableListsUI() {
       ["companies", "roles", "sites"].forEach(category => {
         const container = document.getElementById(`listContainer-${category}`);
+        if (!container) return;
         const list = editableLists[category] || [];
         const countBadgeId =
           category === "companies" ? "countCompaniesBadge" :
           category === "roles" ? "countRolesBadge" : "countSitesBadge";
-        document.getElementById(countBadgeId).textContent = list.length;
+        const badgeEl = document.getElementById(countBadgeId);
+        if (badgeEl) badgeEl.textContent = list.length;
 
         if (list.length === 0) {
           container.innerHTML = `<p class="text-xs text-slate-400 italic py-6 text-center">Lista vuota</p>`;
@@ -1214,7 +831,6 @@
       hasUnsavedListChanges = true;
       document.getElementById("unsavedChangesBadge").classList.remove("hidden");
       renderEditableListsUI();
-      populateWorkshopSiteDropdown();
     }
 
     function removeListItem(category, index) {
@@ -1222,7 +838,6 @@
       hasUnsavedListChanges = true;
       document.getElementById("unsavedChangesBadge").classList.remove("hidden");
       renderEditableListsUI();
-      populateWorkshopSiteDropdown();
     }
 
     function moveListItem(category, index, direction) {
@@ -1254,9 +869,6 @@
       });
     }
 
-    // =========================================================================
-    // 6. NORMALIZZAZIONE, DEMO E CALCOLO ANALYTICS
-    // =========================================================================
     function parseNumericPct(val) {
       if (val === undefined || val === null) return 0;
       const num = parseFloat(String(val).replace("%", "").replace(",", ".").trim());
@@ -1382,6 +994,7 @@
       }
 
       activeConnectionMode = "demo";
+      sessionStorage.setItem("sl_auth_mode", "demo");
       allRecords = normalizeRows(demoRows);
       initDashboardWithData(false);
     }
@@ -1390,32 +1003,57 @@
       document.getElementById("screen-upload").classList.add("hidden");
       document.getElementById("adminNavTabs").classList.remove("hidden");
       document.getElementById("btnChangeSource").classList.remove("hidden");
-      document.getElementById("btnPrintReport").classList.remove("hidden");
+      const btnPrint = document.getElementById("btnPrintReport");
+      if (btnPrint) btnPrint.classList.remove("hidden");
 
-      switchAdminView(currentAdminView);
-      populateFilterDropdowns(preserveFilters);
-      applyFilters();
+      if (PAGE_MODE === "analytics") {
+        const sec = document.getElementById("screen-dashboard");
+        if (sec) sec.classList.remove("hidden");
+        populateFilterDropdowns(preserveFilters);
+        const params = new URLSearchParams(window.location.search);
+        const wsParam = params.get("ws_name");
+        if (wsParam && document.getElementById("filterWorkshop")) {
+          document.getElementById("filterWorkshop").value = wsParam;
+          if (document.getElementById("selectGroupBy")) document.getElementById("selectGroupBy").value = "ruolo";
+        }
+        applyFilters();
+      } else if (PAGE_MODE === "workshops") {
+        const sec = document.getElementById("screen-workshops");
+        if (sec) sec.classList.remove("hidden");
+        populateWorkshopSiteDropdown();
+        renderWorkshopsTable();
+      } else if (PAGE_MODE === "lists") {
+        const sec = document.getElementById("screen-lists");
+        if (sec) sec.classList.remove("hidden");
+        renderEditableListsUI();
+      }
     }
 
     function logoutAndShowLogin() {
       selectedRecordIds.clear();
-      document.getElementById("liveControls").classList.add("hidden");
+      sessionStorage.removeItem("sl_auth_mode");
+      sessionStorage.removeItem("sl_sb_pwd");
+      const liveCtrl = document.getElementById("liveControls");
+      if (liveCtrl) liveCtrl.classList.add("hidden");
       document.getElementById("adminNavTabs").classList.add("hidden");
-      document.getElementById("screen-dashboard").classList.add("hidden");
-      document.getElementById("screen-workshops").classList.add("hidden");
-      document.getElementById("screen-lists").classList.add("hidden");
+      ["screen-dashboard", "screen-workshops", "screen-lists"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      });
       document.getElementById("btnChangeSource").classList.add("hidden");
-      document.getElementById("btnPrintReport").classList.add("hidden");
+      const btnPrint = document.getElementById("btnPrintReport");
+      if (btnPrint) btnPrint.classList.add("hidden");
       document.getElementById("screen-upload").classList.remove("hidden");
     }
 
     function populateFilterDropdowns(preserve = false) {
+      const selW = document.getElementById("filterWorkshop");
+      if (!selW) return;
       const wsNames = [...new Set([...workshopsDB.map(w => w.name), ...allRecords.map(r => r.workshopName)])].filter(Boolean).sort();
       const companies = [...new Set(allRecords.map(r => r.company))].sort();
       const sites = [...new Set(allRecords.map(r => r.site))].sort();
       const roles = [...new Set(allRecords.map(r => r.role))].sort();
 
-      const selW = document.getElementById("filterWorkshop");
       const selC = document.getElementById("filterCompany");
       const selS = document.getElementById("filterSite");
       const selR = document.getElementById("filterRole");
@@ -1448,6 +1086,7 @@
     }
 
     function applyFilters() {
+      if (PAGE_MODE !== "analytics") return;
       const wVal = document.getElementById("filterWorkshop").value;
       const tVal = document.getElementById("filterTarget").value;
       const lVal = document.getElementById("filterLevel").value;
@@ -1624,6 +1263,7 @@
 
     function renderParticipantsTable() {
       const tbody = document.getElementById("participantsTableBody");
+      if (!tbody) return;
       tbody.innerHTML = filteredRecords.map((r, idx) => {
         const isChecked = selectedRecordIds.has(r.id);
         const isOff = r.workshopTarget === "Office / HQ";
@@ -1720,6 +1360,7 @@
     function closeParticipantModal() {
       currentModalRecordId = null;
       const modal = document.getElementById("participantModal");
+      if (!modal) return;
       modal.classList.add("hidden");
       modal.classList.remove("flex");
     }
@@ -1756,11 +1397,21 @@
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("inputWsDate").valueAsDate = new Date();
+      const dateInput = document.getElementById("inputWsDate");
+      if (dateInput) dateInput.valueAsDate = new Date();
+
       const savedUrl = localStorage.getItem("sl_sb_url") || DEFAULT_SUPABASE_URL;
       const savedKey = localStorage.getItem("sl_sb_key") || DEFAULT_SUPABASE_ANON_KEY;
-      if (savedUrl) document.getElementById("inputSbUrl").value = savedUrl;
-      if (savedKey) document.getElementById("inputSbKey").value = savedKey;
+      if (savedUrl && document.getElementById("inputSbUrl")) document.getElementById("inputSbUrl").value = savedUrl;
+      if (savedKey && document.getElementById("inputSbKey")) document.getElementById("inputSbKey").value = savedKey;
+
+      // Auto-login se già autenticato nella sessione corrente
+      const authMode = sessionStorage.getItem("sl_auth_mode");
+      if (authMode === "supabase" && sessionStorage.getItem("sl_sb_pwd")) {
+        connectToSupabase(true);
+      } else if (authMode === "demo") {
+        loadDemoDataset();
+      }
     });
   </script>
 </body>
