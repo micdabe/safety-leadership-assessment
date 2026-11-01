@@ -262,17 +262,17 @@
           <div id="kpi1Sub" class="text-xs text-slate-500 mt-1">-</div>
         </div>
         <div class="bg-emerald-50 p-5 rounded-2xl shadow-sm border border-emerald-200">
-          <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">Punto di Forza Medio (#1)</div>
+          <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">Area Dominante Media</div>
           <div id="kpi2Value" class="text-2xl font-extrabold text-slate-900">-</div>
           <div id="kpi2Sub" class="text-xs text-emerald-800 mt-1">-</div>
         </div>
         <div class="bg-amber-50 p-5 rounded-2xl shadow-sm border border-amber-200">
-          <div class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">Gap Formativo Medio (#7)</div>
+          <div class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">Bisogno Formativo Medio</div>
           <div id="kpi3Value" class="text-2xl font-extrabold text-slate-900">-</div>
           <div id="kpi3Sub" class="text-xs text-amber-900 mt-1">-</div>
         </div>
         <div class="bg-blue-50 p-5 rounded-2xl shadow-sm border border-blue-200">
-          <div class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">Seconda Leva Media (#2)</div>
+          <div class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">Seconda Leva Media</div>
           <div id="kpi4Value" class="text-2xl font-extrabold text-slate-900">-</div>
           <div id="kpi4Sub" class="text-xs text-blue-800 mt-1">-</div>
         </div>
@@ -281,7 +281,7 @@
       <!-- Riga Grafici Principali -->
       <div class="grid lg:grid-cols-2 gap-6 print-break">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h3 class="font-bold text-slate-900 text-base mb-1">Profilo Medio delle 7 Aree (Selezione vs Globale)</h3>
+          <h3 class="font-bold text-slate-900 text-base mb-1">Matrice Comparativa (Heatmap) per Gruppo</h3>
           <p class="text-xs text-slate-500 mb-4">Confronta la media del gruppo filtrato con la media generale e il target bilanciato (14.3%)</p>
           <div class="relative h-80 flex items-center justify-center">
             <canvas id="aggRadarChart"></canvas>
@@ -289,8 +289,8 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h3 class="font-bold text-slate-900 text-base mb-1">Distribuzione Punti di Forza (#1) vs Bisogni Formativi (#7)</h3>
-          <p class="text-xs text-slate-500 mb-4">Numero di partecipanti per i quali ciascuna area risulta la #1 (Dominante) o la #7 (Meno Presidiata)</p>
+          <h3 class="font-bold text-slate-900 text-base mb-1">Distribuzione Punti di Forza vs Bisogni Formativi</h3>
+          <p class="text-xs text-slate-500 mb-4">Numero di partecipanti per i quali ciascuna area risulta Area Dominante o Bisogno Formativo</p>
           <div class="relative h-80 flex items-center justify-center">
             <canvas id="domWeakBarChart"></canvas>
           </div>
@@ -301,7 +301,7 @@
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
         <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div>
-            <h3 class="font-bold text-slate-900 text-lg">Matrice Comparativa (Heatmap) per Gruppo</h3>
+            <h3 class="font-bold text-slate-900 text-lg">Profilo Medio delle 7 Aree (Selezione vs Globale)</h3>
             <p class="text-xs text-slate-500 mt-0.5">
               Confronta le percentuali medie delle 7 aree per Workshop, Profilo (🏗️ Cantiere vs 🏢 Ufficio), Livello, Sede o Ruolo.
             </p>
@@ -383,8 +383,8 @@
                 <th class="py-3 px-3">Azienda</th>
                 <th class="py-3 px-3">Ruolo</th>
                 <th class="py-3 px-3">Cantiere/Sede</th>
-                <th class="py-3 px-3">Area #1</th>
-                <th class="py-3 px-3">Area #7</th>
+                <th class="py-3 px-3">Area Dominante</th>
+                <th class="py-3 px-3">Bisogno Formativo</th>
                 <th class="py-3 px-3 text-right no-print">Azioni</th>
               </tr>
             </thead>
@@ -1208,6 +1208,13 @@
 
         if (sumPct === 0) return;
 
+        // Auto-correzione scala: se la somma delle 7 percentuali è ~10 (es. 3.19 invece di 31.9%), moltiplica per 10
+        if (sumPct > 0 && sumPct <= 15) {
+          AREA_KEYS.forEach(a => {
+            pcts[a.id] = Number((pcts[a.id] * 10).toFixed(1));
+          });
+        }
+
         const sortedAreas = [...AREA_KEYS].sort((a, b) => pcts[b.id] - pcts[a.id]);
         const recordId = String(norm["id"] || norm["submission_id"] || `local_${index}`);
         const wsId = norm["workshop_id"] || "";
@@ -1517,8 +1524,8 @@
         data: {
           labels: AREA_KEYS.map(a => a.name),
           datasets: [
-            { label: "Area Dominante (#1)", data: AREA_KEYS.map(a => domCounts[a.id]), backgroundColor: "#10b981", borderRadius: 6 },
-            { label: "Area Meno Presidiata (#7)", data: AREA_KEYS.map(a => lowCounts[a.id]), backgroundColor: "#f59e0b", borderRadius: 6 }
+            { label: "Area Dominante", data: AREA_KEYS.map(a => domCounts[a.id]), backgroundColor: "#10b981", borderRadius: 6 },
+            { label: "Bisogno Formativo", data: AREA_KEYS.map(a => lowCounts[a.id]), backgroundColor: "#f59e0b", borderRadius: 6 }
           ]
         },
         options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
@@ -1666,7 +1673,7 @@
       const sorted = [...AREA_KEYS].sort((a, b) => r.pct[b.id] - r.pct[a.id]);
       document.getElementById("modalAreaBreakdown").innerHTML = sorted.map((a, i) => `
         <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
-          <span class="font-bold text-slate-800">#${i + 1} ${a.name}</span>
+          <span class="font-bold text-slate-800">${a.name}</span>
           <span class="font-extrabold text-slate-900">${r.pct[a.id].toFixed(1)}%</span>
         </div>
       `).join("");
@@ -1712,8 +1719,8 @@
         Azienda: r.company,
         Ruolo: r.role,
         Cantiere_Sede: r.site,
-        Area_Dominante_1: `${r.top1Name} (${r.top1Val.toFixed(1)}%)`,
-        Area_Gap_7: `${r.low7Name} (${r.low7Val.toFixed(1)}%)`,
+        Area_Dominante: `${r.top1Name} (${r.top1Val.toFixed(1)}%)`,
+        Bisogno_Formativo: `${r.low7Name} (${r.low7Val.toFixed(1)}%)`,
         Vision_Pct: r.pct.VISION.toFixed(1),
         Focus_Pct: r.pct.FOCUS.toFixed(1),
         Influence_Pct: r.pct.INFLUENCE.toFixed(1),
