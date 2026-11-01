@@ -9,6 +9,42 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Ripristina stato da window.name (funziona anche in locale file://) o localStorage/sessionStorage
+    (function() {
+      let isAuth = false;
+      try {
+        if (window.name && window.name.startsWith("SL_STATE:")) {
+          const parsed = JSON.parse(window.name.slice(9));
+          if (parsed && parsed.authMode) {
+            isAuth = true;
+            try {
+              sessionStorage.setItem("sl_auth_mode", parsed.authMode);
+              localStorage.setItem("sl_auth_mode", parsed.authMode);
+              if (parsed.url) { sessionStorage.setItem("sl_sb_url", parsed.url); localStorage.setItem("sl_sb_url", parsed.url); }
+              if (parsed.key) { sessionStorage.setItem("sl_sb_key", parsed.key); localStorage.setItem("sl_sb_key", parsed.key); }
+              if (parsed.pwd) { sessionStorage.setItem("sl_sb_pwd", parsed.pwd); localStorage.setItem("sl_sb_pwd", parsed.pwd); }
+              if (parsed.lists) sessionStorage.setItem("sl_cache_lists", JSON.stringify(parsed.lists));
+              if (parsed.workshops) sessionStorage.setItem("sl_cache_workshops", JSON.stringify(parsed.workshops));
+              if (parsed.records) sessionStorage.setItem("sl_cache_records", JSON.stringify(parsed.records));
+              if (parsed.time) sessionStorage.setItem("sl_cache_time", parsed.time);
+            } catch (err) {}
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const authMode = sessionStorage.getItem("sl_auth_mode") || localStorage.getItem("sl_auth_mode");
+        if (authMode === "supabase" || authMode === "demo" || authMode === "csv") {
+          isAuth = true;
+        }
+      } catch (e) {}
+
+      if (isAuth) {
+        document.documentElement.classList.add("is-authenticated");
+      }
+    })();
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
@@ -17,23 +53,14 @@
       body { background: white !important; }
       .print-break { page-break-inside: avoid; }
     }
-  </style>
-  <script>
-    // Pre-check immediato prima del rendering per azzerare qualsiasi flash o glitch tra schede
-    (function() {
-      const authMode = sessionStorage.getItem("sl_auth_mode");
-      if (authMode === "supabase" || authMode === "demo" || authMode === "csv") {
-        document.documentElement.classList.add("is-authenticated");
-      }
-    })();
-  </script>
-  <style>
-    /* Se già autenticato, nasconde istantaneamente il box di login e mostra la barra schede */
+    /* Regole ad alta priorità per nascondere subito il login quando già autenticati */
     html.is-authenticated #screen-upload { display: none !important; }
     html.is-authenticated #adminNavTabs { display: block !important; }
     html.is-authenticated #btnChangeSource { display: inline-block !important; }
     html.is-authenticated #btnPrintReport { display: inline-block !important; }
-    html.is-authenticated #screen-dashboard, html.is-authenticated #screen-workshops, html.is-authenticated #screen-lists { display: block !important; }
+    html.is-authenticated #screen-dashboard,
+    html.is-authenticated #screen-workshops,
+    html.is-authenticated #screen-lists { display: block !important; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
@@ -69,13 +96,13 @@
     <!-- Barra di Navigazione a 3 Pagine Separate -->
     <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
       <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 pt-2">
-        <a href="admin-risultati.html" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+        <a href="admin-risultati.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>📊</span> <span>Analisi Risultati</span>
         </a>
-        <a href="admin-workshop.html" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+        <a href="admin-workshop.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>🎯</span> <span>Gestione Workshop (Link & QR)</span>
         </a>
-        <a href="admin-liste.html" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
+        <a href="admin-liste.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
           <span>🗂️</span> <span>Gestione Liste (Aziende, Ruoli, Cantieri)</span>
         </a>
       </div>
@@ -301,30 +328,92 @@
     let modalRadarInstance = null;
 
     // =========================================================================
-    // CACHE ISTANTANEA IN SESSIONSTORAGE PER CAMBIO SCHEDA SENZA GLITCH
+    // PERSISTENZA UNIVERSALE (window.name + localStorage + sessionStorage)
+    // Funziona sia su GitHub Pages (https://) sia aprendo i file dal PC (file://)
     // =========================================================================
-    function saveStateToCache() {
+    function getWindowNameData() {
       try {
-        sessionStorage.setItem("sl_cache_lists", JSON.stringify(editableLists));
-        sessionStorage.setItem("sl_cache_workshops", JSON.stringify(workshopsDB));
-        sessionStorage.setItem("sl_cache_records", JSON.stringify(allRecords));
-        sessionStorage.setItem("sl_cache_time", new Date().toLocaleTimeString("it-IT"));
+        if (window.name && window.name.startsWith("SL_STATE:")) {
+          return JSON.parse(window.name.slice(9)) || {};
+        }
+      } catch (e) {}
+      return {};
+    }
+
+    function getStoredVal(key) {
+      try {
+        const sVal = sessionStorage.getItem(key);
+        if (sVal) return sVal;
+      } catch (e) {}
+      try {
+        const lVal = localStorage.getItem(key);
+        if (lVal) return lVal;
+      } catch (e) {}
+      const wn = getWindowNameData();
+      if (key === "sl_auth_mode") return wn.authMode || "";
+      if (key === "sl_sb_url") return wn.url || "";
+      if (key === "sl_sb_key") return wn.key || "";
+      if (key === "sl_sb_pwd") return wn.pwd || "";
+      return "";
+    }
+
+    function setStoredVal(key, val) {
+      try { sessionStorage.setItem(key, val); } catch (e) {}
+      try { localStorage.setItem(key, val); } catch (e) {}
+    }
+
+    function removeStoredVal(key) {
+      try { sessionStorage.removeItem(key); } catch (e) {}
+      try { localStorage.removeItem(key); } catch (e) {}
+    }
+
+    function saveStateToCache() {
+      const nowTime = new Date().toLocaleTimeString("it-IT");
+      try {
+        setStoredVal("sl_cache_lists", JSON.stringify(editableLists));
+        setStoredVal("sl_cache_workshops", JSON.stringify(workshopsDB));
+        setStoredVal("sl_cache_records", JSON.stringify(allRecords));
+        setStoredVal("sl_cache_time", nowTime);
+      } catch (e) {}
+
+      try {
+        const wn = getWindowNameData();
+        const stateObj = {
+          authMode: activeConnectionMode || getStoredVal("sl_auth_mode") || wn.authMode || "",
+          url: getStoredVal("sl_sb_url") || wn.url || DEFAULT_SUPABASE_URL,
+          key: getStoredVal("sl_sb_key") || wn.key || DEFAULT_SUPABASE_ANON_KEY,
+          pwd: getStoredVal("sl_sb_pwd") || wn.pwd || "",
+          lists: editableLists,
+          workshops: workshopsDB,
+          records: allRecords,
+          time: nowTime
+        };
+        window.name = "SL_STATE:" + JSON.stringify(stateObj);
       } catch (e) {
-        console.warn("Cache storage warning:", e);
+        console.warn("window.name cache warning:", e);
       }
     }
 
     function restoreStateFromCache() {
       try {
-        const cLists = sessionStorage.getItem("sl_cache_lists");
-        const cWs = sessionStorage.getItem("sl_cache_workshops");
-        const cRecs = sessionStorage.getItem("sl_cache_records");
+        const wn = getWindowNameData();
+        if (wn && Array.isArray(wn.workshops) && Array.isArray(wn.records)) {
+          editableLists = wn.lists || { companies: [], roles: [], sites: [] };
+          workshopsDB = wn.workshops;
+          allRecords = wn.records;
+          const syncTxt = document.getElementById("lastSyncText");
+          if (syncTxt && wn.time) syncTxt.textContent = `Sync: ${wn.time}`;
+          return true;
+        }
+        const cLists = getStoredVal("sl_cache_lists");
+        const cWs = getStoredVal("sl_cache_workshops");
+        const cRecs = getStoredVal("sl_cache_records");
         if (!cLists || !cWs || !cRecs) return false;
 
         editableLists = JSON.parse(cLists);
         workshopsDB = JSON.parse(cWs);
         allRecords = JSON.parse(cRecs);
-        const cTime = sessionStorage.getItem("sl_cache_time") || new Date().toLocaleTimeString("it-IT");
+        const cTime = getStoredVal("sl_cache_time") || new Date().toLocaleTimeString("it-IT");
         const syncTxt = document.getElementById("lastSyncText");
         if (syncTxt) syncTxt.textContent = `Sync: ${cTime}`;
         return true;
@@ -346,31 +435,32 @@
       const keyInput = document.getElementById("inputSbKey");
       const pwdInput = document.getElementById("inputAdminPassword");
 
-      const urlVal = ((urlInput && urlInput.value) || sessionStorage.getItem("sl_sb_url") || localStorage.getItem("sl_sb_url") || DEFAULT_SUPABASE_URL).trim();
-      const keyVal = ((keyInput && keyInput.value) || sessionStorage.getItem("sl_sb_key") || localStorage.getItem("sl_sb_key") || DEFAULT_SUPABASE_ANON_KEY).trim();
-      const pwdVal = silentAutoLogin ? (sessionStorage.getItem("sl_sb_pwd") || "") : (pwdInput ? pwdInput.value.trim() : "");
+      const cachedPwd = getStoredVal("sl_sb_pwd");
+      const urlVal = ((urlInput && urlInput.value) || getStoredVal("sl_sb_url") || DEFAULT_SUPABASE_URL).trim();
+      const keyVal = ((keyInput && keyInput.value) || getStoredVal("sl_sb_key") || DEFAULT_SUPABASE_ANON_KEY).trim();
+      const pwdVal = silentAutoLogin ? cachedPwd : (pwdInput ? pwdInput.value.trim() : "");
 
       if (!urlVal || !keyVal) {
         if (!silentAutoLogin) showError("Inserisci sia il Supabase Project URL sia la Anon Public Key.");
         return;
       }
-      if (!pwdVal) {
-        if (!silentAutoLogin) showError("Inserisci la Password Admin.");
+      if (!pwdVal && !silentAutoLogin) {
+        showError("Inserisci la Password Admin.");
         return;
       }
 
       supabaseClient = window.supabase.createClient(urlVal, keyVal);
 
-      // Se stiamo cambiando scheda ed esiste già la cache in sessionStorage, mostra subito la UI a 0ms senza flash!
+      // Se stiamo cambiando scheda ed esiste la cache, mostra istantaneamente la scheda senza attendere la rete
       if (silentAutoLogin && restoreStateFromCache()) {
         activeConnectionMode = "supabase";
+        document.documentElement.classList.add("is-authenticated");
         const liveCtrl = document.getElementById("liveControls");
         if (liveCtrl) {
           liveCtrl.classList.remove("hidden");
           liveCtrl.classList.add("flex");
         }
         initDashboardWithData(false);
-        // Sincronizza in background silenziosamente senza bloccare o far lampeggiare la pagina
         refreshFromSupabase(false);
         return;
       }
@@ -392,20 +482,15 @@
 
         if (cfgErr) throw new Error("Errore lettura tabella app_config: " + cfgErr.message);
 
-        if (cfg.admin_password && cfg.admin_password !== pwdVal) {
+        if (!silentAutoLogin && cfg.admin_password && cfg.admin_password !== pwdVal) {
           throw new Error("Password Admin errata.");
         }
 
-        const chk = document.getElementById("chkRememberSb");
-        if (!chk || chk.checked) {
-          localStorage.setItem("sl_sb_url", urlVal);
-          localStorage.setItem("sl_sb_key", keyVal);
-        }
-
-        sessionStorage.setItem("sl_sb_url", urlVal);
-        sessionStorage.setItem("sl_sb_key", keyVal);
-        sessionStorage.setItem("sl_sb_pwd", pwdVal);
-        sessionStorage.setItem("sl_auth_mode", "supabase");
+        setStoredVal("sl_sb_url", urlVal);
+        setStoredVal("sl_sb_key", keyVal);
+        if (pwdVal) setStoredVal("sl_sb_pwd", pwdVal);
+        setStoredVal("sl_auth_mode", "supabase");
+        activeConnectionMode = "supabase";
         document.documentElement.classList.add("is-authenticated");
 
         editableLists.companies = Array.isArray(cfg.companies) ? cfg.companies : [];
@@ -415,7 +500,6 @@
         await fetchWorkshopsAndSubmissionsFromSupabase();
         saveStateToCache();
 
-        activeConnectionMode = "supabase";
         const liveCtrl = document.getElementById("liveControls");
         if (liveCtrl) {
           liveCtrl.classList.remove("hidden");
@@ -515,7 +599,7 @@
 
     function getParticipantTestBaseUrl() {
       const loc = window.location;
-      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-workshop|admin-liste)\.html.*$/i, "");
+      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-workshop|admin-liste).*$/i, "");
       return `${loc.origin}${basePath.endsWith("/") ? basePath : basePath + "/"}index.html`;
     }
 
@@ -600,6 +684,7 @@
     function viewWorkshopReport(wsId) {
       const ws = workshopsDB.find(w => w.id === wsId);
       if (!ws) return;
+      saveStateToCache();
       window.location.href = `admin-risultati.html?ws_name=${encodeURIComponent(ws.name)}`;
     }
 
@@ -1033,7 +1118,7 @@
           complete: function(results) {
             allRecords = normalizeRows(results.data);
             activeConnectionMode = "csv";
-            sessionStorage.setItem("sl_auth_mode", "csv");
+            setStoredVal("sl_auth_mode", "csv");
             document.documentElement.classList.add("is-authenticated");
             saveStateToCache();
             initDashboardWithData(false);
@@ -1043,7 +1128,7 @@
     }
 
     function loadDemoDataset() {
-      if (sessionStorage.getItem("sl_auth_mode") === "demo" && restoreStateFromCache()) {
+      if (getStoredVal("sl_auth_mode") === "demo" && restoreStateFromCache()) {
         activeConnectionMode = "demo";
         document.documentElement.classList.add("is-authenticated");
         initDashboardWithData(false);
@@ -1100,7 +1185,7 @@
       }
 
       activeConnectionMode = "demo";
-      sessionStorage.setItem("sl_auth_mode", "demo");
+      setStoredVal("sl_auth_mode", "demo");
       document.documentElement.classList.add("is-authenticated");
       allRecords = normalizeRows(demoRows);
       saveStateToCache();
@@ -1108,6 +1193,7 @@
     }
 
     function initDashboardWithData(preserveFilters = false) {
+      document.documentElement.classList.add("is-authenticated");
       document.getElementById("screen-upload").classList.add("hidden");
       document.getElementById("adminNavTabs").classList.remove("hidden");
       document.getElementById("btnChangeSource").classList.remove("hidden");
@@ -1139,11 +1225,12 @@
 
     function logoutAndShowLogin() {
       selectedRecordIds.clear();
-      sessionStorage.removeItem("sl_auth_mode");
-      sessionStorage.removeItem("sl_sb_pwd");
-      sessionStorage.removeItem("sl_cache_lists");
-      sessionStorage.removeItem("sl_cache_workshops");
-      sessionStorage.removeItem("sl_cache_records");
+      removeStoredVal("sl_auth_mode");
+      removeStoredVal("sl_sb_pwd");
+      removeStoredVal("sl_cache_lists");
+      removeStoredVal("sl_cache_workshops");
+      removeStoredVal("sl_cache_records");
+      window.name = "";
       document.documentElement.classList.remove("is-authenticated");
 
       const liveCtrl = document.getElementById("liveControls");
@@ -1513,13 +1600,13 @@
       const dateInput = document.getElementById("inputWsDate");
       if (dateInput) dateInput.valueAsDate = new Date();
 
-      const savedUrl = localStorage.getItem("sl_sb_url") || DEFAULT_SUPABASE_URL;
-      const savedKey = localStorage.getItem("sl_sb_key") || DEFAULT_SUPABASE_ANON_KEY;
+      const savedUrl = getStoredVal("sl_sb_url") || DEFAULT_SUPABASE_URL;
+      const savedKey = getStoredVal("sl_sb_key") || DEFAULT_SUPABASE_ANON_KEY;
       if (savedUrl && document.getElementById("inputSbUrl")) document.getElementById("inputSbUrl").value = savedUrl;
       if (savedKey && document.getElementById("inputSbKey")) document.getElementById("inputSbKey").value = savedKey;
 
-      const authMode = sessionStorage.getItem("sl_auth_mode");
-      if (authMode === "supabase" && sessionStorage.getItem("sl_sb_pwd")) {
+      const authMode = getStoredVal("sl_auth_mode");
+      if (authMode === "supabase") {
         connectToSupabase(true);
       } else if (authMode === "demo") {
         loadDemoDataset();
