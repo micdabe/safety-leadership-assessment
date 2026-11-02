@@ -61,7 +61,8 @@
     html.is-authenticated #screen-dashboard,
     html.is-authenticated #screen-details,
     html.is-authenticated #screen-workshops,
-    html.is-authenticated #screen-lists { display: block !important; }
+    html.is-authenticated #screen-lists,
+    html.is-authenticated #screen-contents { display: block !important; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
@@ -94,20 +95,23 @@
       </div>
     </div>
 
-    <!-- Barra di Navigazione a 4 Pagine Separate -->
+        <!-- Barra di Navigazione a 5 Pagine Separate -->
     <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
-      <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 pt-2">
-        <a href="admin-risultati.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+      <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-1.5 pt-2">
+        <a href="admin-risultati.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>📊</span> <span>Analisi Risultati Globali</span>
         </a>
-        <a href="admin-dettaglio.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+        <a href="admin-dettaglio.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>📋</span> <span>Dettaglio Singoli Test</span>
         </a>
-        <a href="admin-workshop.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+        <a href="admin-workshop.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>🎯</span> <span>Gestione Workshop (Link & QR)</span>
         </a>
-        <a href="admin-liste.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
-          <span>🗂️</span> <span>Gestione Liste (Aziende, Ruoli, Cantieri)</span>
+        <a href="admin-liste.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
+          <span>🗂️</span> <span>Gestione Liste</span>
+        </a>
+        <a href="admin-contenuti.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+          <span>✏️</span> <span>Gestione Contenuti (Scenari & Coaching)</span>
         </a>
       </div>
     </div>
