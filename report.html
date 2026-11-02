@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safety Leadership — Report Finale Individuale</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+
+    /* =========================================================================
+       REGOLE DI STAMPA A 3 PAGINE (RIPAGINAZIONE RICHIESTA DALL'UTENTE)
+       - Pagina 1: Profilo Abilità (3 box su 1 riga) + Mappa Radar + Scomposizione Punti
+       - Pagina 2: Executive Coaching + Strategia Ponte + Allenamento Mirato
+       - Pagina 3: Dettaglio Analitico delle 7 Aree + Nota Metodologica riassunta in piccolo a fondo pagina
+       - Escluso dalla stampa: Riepilogo Comportamenti Scelti
+       ========================================================================= */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 8mm 10mm;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .print-page-1 {
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      .print-page-2 {
+        page-break-before: always !important;
+        break-before: page !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      .print-page-3 {
+        page-break-before: always !important;
+        break-before: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      /* Forza i 3 box del profilo su una sola riga orizzontale e compatta i margini */
+      .print-kpi-row {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        margin-top: 10px !important;
+      }
+
+      /* Forza i 2 grafici (Radar e Stacked Bar) affiancati sulla Pagina 1 */
+      .print-charts-row {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        margin-top: 10px !important;
+      }
+
+      .print-chart-height {
+        height: 215px !important;
+      }
+
+      .print-compact-card {
+        padding: 12px 14px !important;
+        box-shadow: none !important;
+      }
+
+      .print-only-block {
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header (Nascosto in stampa) -->
+  <header class="bg-slate-900 text-white shadow-md no-print">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-slate-950 text-lg shadow">
+          SL
+        </div>
+        <div>
+          <h1 id="hdrTitle" class="font-bold text-lg leading-tight">Safety Leadership Assessment — Report Finale</h1>
+          <p id="hdrSub" class="text-xs text-slate-400">Valutazione situazionale delle 7 aree di leadership</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button onclick="toggleLanguage()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
+          <span id="langSwitchPrefix">Lingua:</span> <span id="langLabel" class="text-amber-400 font-bold">Italiano 🇮🇹</span>
+        </button>
+        <button id="btnPrintHdr" onclick="window.print()" class="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold transition flex items-center gap-1.5">
+          <span>🖨️</span> <span id="btnPrintHdrLabel">Stampa / PDF</span>
+        </button>
+        <a id="btnBackAction" href="index.html" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
+          Nuovo Test
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8">
+
+    <!-- Stato di Caricamento o Errore -->
+    <section id="screen-loading" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 text-center max-w-xl mx-auto my-8 no-print">
+      <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-3 text-xl font-extrabold animate-pulse">
+        📊
+      </div>
+      <h2 id="loadingTitle" class="text-lg font-extrabold text-slate-900">Caricamento del Report Finale in corso...</h2>
+      <p id="loadingSub" class="text-xs text-slate-500 mt-1">Recupero dei dati associati all'ID del test da Supabase.</p>
+    </section>
+
+    <!-- CONTENUTO DEL REPORT FINALE (SUDDIVISO NELLE 3 PAGINE DI STAMPA) -->
+    <section id="screen-results" class="hidden space-y-6">
+
+      <!-- ===================================================================
+           PAGINA 1 DI STAMPA:
+           - Profilo delle tue Abilità di Safety Leadership (3 box su 1 riga)
+           - Mappa Radar della Distribuzione + Scomposizione Punti: Scelte Dirette vs Ripescate
+           =================================================================== -->
+      <div class="print-page-1 space-y-4">
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6 print-compact-card">
+          <div class="flex flex-wrap items-start justify-between gap-4 mb-3">
+            <div>
+              <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                <span id="resBadge" class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                  Analisi Completata • 12 Scenari
+                </span>
+                <span id="recordIdBadge" class="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-mono font-semibold">
+                  ID: -
+                </span>
+              </div>
+              <h2 id="resMainTitle" class="text-xl md:text-2xl font-extrabold text-slate-900">
+                Profilo delle tue Abilità di Safety Leadership
+              </h2>
+              <p id="resParticipantInfo" class="text-xs font-bold text-slate-600 mt-1 bg-slate-100 inline-block px-3 py-1 rounded-lg"></p>
+              <p id="resMainSub" class="text-xs text-slate-500 mt-1">
+                Distribuzione percentuale delle tue competenze nelle 7 aree in base alle priorità espresse negli scenari.
+              </p>
+            </div>
+            <div class="flex gap-2 no-print">
+              <button id="btnPrint" onclick="window.print()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-xs font-extrabold text-slate-950 shadow-sm transition">
+                🖨️ Stampa / PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- 3 Box delle aree del profilo compressi su una sola riga -->
+          <div class="grid grid-cols-3 gap-3 mt-4 print-kpi-row">
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+              <div id="kpiTop1Label" class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 mb-0.5">Area Dominante</div>
+              <div class="text-base md:text-lg font-extrabold text-slate-900 leading-tight" id="kpiTop1Name">-</div>
+              <div class="text-[11px] text-slate-600 mt-0.5 leading-tight" id="kpiTop1Stats">-</div>
+            </div>
+            <div class="p-3 rounded-xl bg-blue-50 border border-blue-200">
+              <div id="kpiTop2Label" class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 mb-0.5">Area Co-Dominante</div>
+              <div class="text-base md:text-lg font-extrabold text-slate-900 leading-tight" id="kpiTop2Name">-</div>
+              <div class="text-[11px] text-slate-600 mt-0.5 leading-tight" id="kpiTop2Stats">-</div>
+            </div>
+            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200">
+              <div id="kpiLowLabel" class="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 mb-0.5">Bisogno Formativo</div>
+              <div class="text-base md:text-lg font-extrabold text-slate-900 leading-tight" id="kpiLowName">-</div>
+              <div class="text-[11px] text-slate-600 mt-0.5 leading-tight" id="kpiLowStats">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grafici: Mappa Radar della Distribuzione + Scomposizione Punti: Scelte Dirette vs Ripescate -->
+        <div class="grid md:grid-cols-2 gap-4 print-charts-row">
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 print-compact-card">
+            <h3 id="chartRadarTitle" class="font-bold text-slate-900 text-sm md:text-base mb-0.5">Mappa Radar della Distribuzione</h3>
+            <p id="chartRadarSub" class="text-[11px] text-slate-500 mb-3">Confronto tra la tua distribuzione (%) e un profilo bilanciato (14.3% per area)</p>
+            <div class="relative h-64 print-chart-height flex items-center justify-center">
+              <canvas id="radarChart"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 print-compact-card">
+            <h3 id="chartBarTitle" class="font-bold text-slate-900 text-sm md:text-base mb-0.5">Scomposizione Punti: Scelte Dirette vs Ripescate</h3>
+            <p id="chartBarSub" class="text-[11px] text-slate-500 mb-3">Mostra quanto del punteggio di ogni area deriva da scelte immediate o da comportamenti riproposti</p>
+            <div class="relative h-64 print-chart-height flex items-center justify-center">
+              <canvas id="stackedBarChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Card Executive Coaching (Area Dominante e Area di Sviluppo) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print-compact-card">
+          <div class="bg-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b-4 border-amber-500">
+            <div>
+              <span id="coachBadge" class="inline-block px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider">
+                Executive Safety Coaching
+              </span>
+              <h3 id="coachMainTitle" class="text-base md:text-lg font-extrabold">
+                Analisi Comportamentale e Piano d'Azione Personalizzato
+              </h3>
+            </div>
+            <div class="text-xs text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+              <span id="coachFocusPrefix">Focus calibrato su:</span> <strong id="coachingHeaderBadge" class="text-amber-400">-</strong>
+            </div>
+          </div>
+
+          <div class="p-4 md:p-5 grid md:grid-cols-2 gap-4 print-charts-row">
+            <div class="rounded-xl border-2 border-emerald-200 bg-emerald-50/30 p-4 flex flex-col justify-between space-y-2.5">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <span id="coachDomTag" class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wide">
+                    Leva Principale • Area Dominante
+                  </span>
+                  <span id="coachDomPct" class="text-xs font-extrabold text-emerald-700">0%</span>
+                </div>
+                <h4 id="coachDomTitle" class="text-sm md:text-base font-extrabold text-slate-900 mb-0.5">-</h4>
+                <p id="coachDomArchetype" class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 mb-1.5">-</p>
+                <p id="coachDomStrength" class="text-xs text-slate-700 leading-relaxed mb-2">-</p>
+              </div>
+              <div class="bg-white rounded-lg p-3 border border-emerald-200/80">
+                <div id="coachDomShadowTitle" class="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 mb-0.5">
+                  ⚠️ Attenzione all'Effetto Ombra (Rischio da Eccesso)
+                </div>
+                <p id="coachDomShadow" class="text-[11px] text-slate-600 leading-snug">-</p>
+              </div>
+            </div>
+
+            <div class="rounded-xl border-2 border-amber-200 bg-amber-50/30 p-4 flex flex-col justify-between space-y-2.5">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <span id="coachWeakTag" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase tracking-wide">
+                    Area di Sviluppo • Meno Presidiata
+                  </span>
+                  <span id="coachWeakPct" class="text-xs font-extrabold text-amber-800">0%</span>
+                </div>
+                <h4 id="coachWeakTitle" class="text-sm md:text-base font-extrabold text-slate-900 mb-0.5">-</h4>
+                <p id="coachWeakRiskLabel" class="text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">
+                  Impatto se trascurata:
+                </p>
+                <p id="coachWeakRisk" class="text-xs text-slate-700 leading-relaxed mb-2">-</p>
+              </div>
+              <div class="bg-white rounded-lg p-3 border border-amber-200/80">
+                <div id="coachWeakActionsTitle" class="text-[10px] font-extrabold uppercase tracking-wider text-slate-800 mb-1.5">
+                  🎯 3 Azioni Pratiche di Coaching (Quick Wins)
+                </div>
+                <ul id="coachWeakActions" class="space-y-1.5 text-[11px] text-slate-700"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===================================================================
+           PAGINA 2 DI STAMPA:
+           - STRATEGIA PONTE PERSONALIZZATA (SINERGIA DI LEADERSHIP)
+           - Allenamento Mirato (insieme nella stessa pagina senza spezzarsi)
+           =================================================================== -->
+      <div class="print-page-2 space-y-5">
+
+        <div class="rounded-2xl bg-slate-900 text-white p-6 border border-slate-800 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <span id="bridgeHeader" class="text-xs font-extrabold uppercase tracking-wider text-amber-400">
+              🔗 Strategia Ponte Personalizzata (Sinergia di Leadership)
+            </span>
+            <span id="bridgeTag" class="text-xs text-slate-400 font-semibold">-</span>
+          </div>
+          <h4 id="bridgeTitle" class="text-lg font-bold text-white mb-2">-</h4>
+          <p id="bridgeText" class="text-sm text-slate-300 leading-relaxed">-</p>
+        </div>
+
+        <div class="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
+          <h4 id="skippedTitle" class="font-bold text-slate-900 text-base mb-1">
+            📌 Allenamento Mirato: Comportamenti di quest'area che hai lasciato in secondo piano
+          </h4>
+          <p id="skippedSub" class="text-xs text-slate-500 mb-4">
+            Questi comportamenti specifici dell'area meno presidiata sono comparsi negli scenari ma non sono stati scelti. Scegline uno da mettere in pratica nella prossima settimana:
+          </p>
+          <div id="skippedBehaviorsList" class="grid sm:grid-cols-2 gap-3.5 mt-3"></div>
+        </div>
+
+      </div>
+
+      <!-- ===================================================================
+           PAGINA 3 DI STAMPA:
+           - Dettaglio Analitico delle 7 Aree
+           - Nota Metodologica scritta in piccolo in forma riassunta a fondo pagina
+           =================================================================== -->
+      <div class="print-page-3 space-y-5">
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+          <h3 id="tblMainTitle" class="font-bold text-slate-900 text-lg mb-4">Dettaglio Analitico delle 7 Aree</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-200 text-xs uppercase text-slate-500">
+                  <th id="thArea" class="py-3 pr-4">Area di Competenza</th>
+                  <th id="thFirst" class="py-3 px-3">Scelte alla 1ª Comparsa (1.0x)</th>
+                  <th id="thCarry" class="py-3 px-3">Scelte Ripescate (0.65x / 0.35x)</th>
+                  <th id="thScore" class="py-3 px-3">Punteggio Ponderato</th>
+                  <th id="thDist" class="py-3 pl-4">Distribuzione Finale (100%)</th>
+                </tr>
+              </thead>
+              <tbody id="resultsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+            </table>
+          </div>
+
+          <!-- Nota Metodologica riassunta in piccolo nel fondo pagina del Dettaglio Analitico -->
+          <div class="mt-6 pt-4 border-t border-slate-200 text-[10px] leading-relaxed text-slate-500">
+            <div class="font-extrabold uppercase tracking-wider text-slate-700 mb-1" id="methCompactTitle">
+              Nota Metodologica — Calcolo del Punteggio (Ponderazione Adattiva e Ripescaggio)
+            </div>
+            <p id="methCompactText">
+              Per garantire una valutazione autentica e priva di condizionamenti, il motore di calcolo applica una doppia ponderazione su 12 scenari: ogni comportamento non selezionato viene reinserito in coda e riproposto negli scenari successivi con un peso decrescente.
+              <strong>1) Peso Ordine di Priorità:</strong> 1ª Scelta = 100% (1.00) • 2ª Scelta = 85% (0.85) • 3ª Scelta = 70% (0.70).
+              <strong>2) Peso di Comparsa:</strong> Scelto alla 1ª comparsa = coeff. 1.00x (100%) • Scelto al 1° ripescaggio = coeff. 0.65x (65%) • Scelto dal 2° ripescaggio in poi = coeff. 0.35x (35%).
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===================================================================
+           SOLO A SCHERMO (ESCLUSO DALLA STAMPA COME RICHIESTO):
+           - Riepilogo Comportamenti Scelti nei 12 Scenari
+           =================================================================== -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 no-print">
+        <h3 id="logMainTitle" class="font-bold text-slate-900 text-lg mb-1">Riepilogo Comportamenti Scelti nei 12 Scenari</h3>
+        <p id="logMainSub" class="text-xs text-slate-500 mb-4">Elenco cronologico delle soluzioni adottate, con l'indicazione della priorità e dell'eventuale ripescaggio (visibile a schermo, escluso dalla stampa).</p>
+        <div id="decisionLogContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    const DEFAULT_SUPABASE_URL = "https://axiilxpcvevqlctjfpjj.supabase.co";      // es. "https://xyzabcdef.supabase.co"
+    const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4aWlseHBjdmV2cWxjdGpmcGpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzOTM1NzksImV4cCI6MjEwODk2OTU3OX0.m5oHRZA7lo4bl3ys9LnJpGKnpjYZneh-Unxf5CDbA7A"; // es. "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+
+    let supabaseClient = null;
+    let currentLang = "it";
+    let activeWorkshop = null; // { id, name, date, site, level, targetType: 'site'|'office', active }
+    let currentLockReason = "missing";
+    let closedWorkshopTitle = "";
+
+    function isOfficeMode() {
+      return activeWorkshop && activeWorkshop.targetType === "office";
+    }
+
+    function getBehaviorText(behObj) {
+      if (isOfficeMode() && behObj.office_it && behObj.office_en) {
+        return currentLang === "it" ? behObj.office_it : behObj.office_en;
+      }
+      return currentLang === "it" ? behObj.it : behObj.en;
+    }
+
+    const UI_TEXT = {
+      it: {
+        hdrTitle: "Safety Leadership Assessment",
+        hdrSub: "Valutazione situazionale delle 7 aree di leadership",
+        langSwitchPrefix: "Lingua:",
+        langLabel: "Italiano 🇮🇹",
+        btnResetHdr: "Ricomincia",
+        lockBadge: "Link Workshop Richiesto",
+        lockTitle: "Accesso consentito solo tramite Link o QR Code di un Workshop attivo",
+        lockDesc: "Questo questionario può essere compilato esclusivamente dai partecipanti a una sessione <strong>Workshop</strong> programmata. Utilizza il <strong>link specifico</strong> o inquadra il <strong>QR Code</strong> fornito dal coordinatore del tuo Workshop.",
+        lockHint: "Se sei il coordinatore, accedi alla Dashboard Admin → scheda 'Gestione Workshop' per generare o riattivare il link dell'evento.",
+        closedBadge: "Sessione Workshop Conclusa",
+        closedTitle: (wsName) => `Il Workshop "${wsName}" è chiuso`,
+        closedDesc: "La raccolta dei questionari per questa sessione d'aula è terminata e il link è stato disattivato dal coordinatore.",
+        wsActiveBadge: "WORKSHOP UFFICIALE",
+        wsTargetSite: "🏗️ Profilo: Cantiere / Site",
+        wsTargetOffice: "🏢 Profilo: Ufficio / Sede (HQ)",
+        wsLevelPrefix: "Livello:",
+        wBadge1: "12 Scenari Decisionali",
+        wBadge2: "7 Aree di Competenza",
+        wBadge3: "Report & Executive Coaching",
+        wTitle: "Scopri il tuo profilo di Safety Leadership attraverso situazioni reali",
+        wDescSite: "Questo percorso presenta <strong>12 situazioni realistiche di cantiere e di progetto</strong>. Per ciascun problema ti verranno proposte 7 possibili azioni risolutive. Scegli i comportamenti che adotteresti realmente sul campo, indicandoli in ordine di priorità.",
+        wDescOffice: "Questo percorso presenta <strong>12 situazioni realistiche di direzione, ingegneria, procurement e gestione progetti da sede/ufficio</strong>. Per ciascun problema ti verranno proposte 7 possibili azioni risolutive. Scegli i comportamenti che adotteresti realmente nel tuo ruolo, in ordine di priorità.",
+        userFormTitle: "Dati del Partecipante",
+        listsLoadingBadge: "Connessione a Supabase...",
+        listsLoadedBadge: "Liste sincronizzate da Supabase ✓",
+        listsErrorBadge: "Errore connessione database Supabase",
+        lblRequiredNote: "* Campi obbligatori",
+        lblUserCompany: "Azienda *",
+        phSelectCompany: "-- Seleziona l'azienda --",
+        lblUserRole: "Ruolo / Funzione *",
+        phSelectRole: "-- Seleziona il tuo ruolo --",
+        lblUserSite: "Cantiere / Sede (Associato al Workshop) *",
+        phSelectSite: "-- Seleziona il cantiere / sede --",
+        lblUserName: "Nome e Cognome (Opzionale)",
+        phUserName: "Lascia vuoto per test anonimo",
+        anonymousLabel: "Anonimo",
+        lblPrivacyText: "Acconsento al trattamento del mio nominativo ai sensi del GDPR (Reg. UE 2016/679) per la generazione e archiviazione del report di valutazione.",
+        privacyRequiredBadge: "Obbligatorio se inserisci il nome *",
+        privacyOptionalBadge: "Non richiesto per test anonimo",
+        btnPrivacyInfoOpen: "[Leggi informativa]",
+        btnPrivacyInfoClose: "[Chiudi informativa]",
+        privacyDetailsText: "Il conferimento del nominativo è facoltativo. In assenza del nome, i dati statistici aggregati (Workshop, Azienda, Ruolo, Cantiere/Sede e punteggi nelle 7 aree) vengono raccolti in forma totalmente anonima nel database Supabase per finalità di analisi organizzativa e formazione sulla sicurezza. Inserendo il nome, i dati saranno associati all'interessato esclusivamente per attività di feedback e coaching individuale, nel pieno rispetto del Regolamento UE 2016/679 (GDPR).",
+        errMissingDropdowns: "Seleziona tutti i campi obbligatori: Azienda, Ruolo e Cantiere / Sede.",
+        errMissingPrivacy: "Hai inserito il tuo Nome: per proseguire è obbligatorio spuntare la casella di accettazione dei termini di Privacy (oppure cancella il nome per procedere in forma anonima).",
+        privacyAcceptedLog: "Accettato (GDPR)",
+        privacyAnonymousLog: "Anonimo (Non richiesto)",
+        wHowTitle: "Come funziona il test",
+        wStep1Title: "Analizza lo Scenario",
+        wStep1Desc: "Leggi il contesto decisionale e la criticità di sicurezza descritta in ciascuno dei 12 round.",
+        wStep2Title: "Scegli da 1 a 3 Azioni",
+        wStep2Desc: "Seleziona fino a 3 comportamenti in ordine di importanza: 1ª scelta (azione prioritaria), 2ª scelta e 3ª scelta.",
+        wStep3Title: "Ottieni il tuo Report",
+        wStep3Desc: "Al termine visualizzerai la distribuzione delle tue abilità nelle 7 aree e i consigli di coaching personalizzati.",
+        btnStart: "Inizia il Test →",
+        scenarioWord: "Scenario",
+        ofWord: "di",
+        contextPrefix: "Contesto:",
+        selectionPromptTitle: "Quali comportamenti metti in campo per gestire questa situazione?",
+        selectionPromptSub: "Seleziona da 1 a 3 comportamenti in ordine di priorità (clicca per selezionare o deselezionare).",
+        chosenCounter: (n) => `Scelti: ${n} / 3`,
+        choiceBadge: (rank) => `${rank}ª Scelta`,
+        validationWarning: "Seleziona almeno un comportamento (massimo 3) prima di proseguire.",
+        btnNextRound: "Conferma e Prosegui →",
+        btnFinishRound: "Conferma e Genera il Report Finale ✓",
+        resBadge: "Analisi Completata • 12 Scenari",
+        syncSending: "Salvataggio nel database Supabase in corso...",
+        syncSuccess: "Risultati salvati nel database Supabase ✓",
+        syncLocalPreview: "Database non configurato",
+        syncError: "Errore durante il salvataggio su Supabase",
+        btnRetrySync: "Riprova salvataggio",
+        resMainTitle: "Profilo delle tue Abilità di Safety Leadership",
+        resMainSub: "Distribuzione percentuale delle tue competenze nelle 7 aree in base alle priorità espresse negli scenari.",
+        participantSummary: (wsName, wsLevel, name, company, role, site) =>
+          `Workshop: ${wsName} (${wsLevel}) • Azienda: ${company} • Ruolo: ${role} • Sede/Cantiere: ${site} • Partecipante: ${name}`,
+        btnPrint: "Stampa / PDF",
+        btnNewTest: "Ricomincia",
+        kpiTop1Label: "Area Dominante",
+        kpiTop2Label: "Area Co-Dominante",
+        kpiLowLabel: "Bisogno Formativo",
+        kpiStatsFormat: (pts, c1, c2) => `${pts} pt ponderati (${c1} dirette, ${c2} ripescate)`,
+        chartRadarTitle: "Mappa Radar della Distribuzione",
+        chartRadarSub: "Confronto tra la tua distribuzione (%) e un profilo bilanciato (14.3% per area)",
+        chartRadarDataset1: "La tua Distribuzione (%)",
+        chartRadarDataset2: "Equilibrio Ideale (14.3%)",
+        chartBarTitle: "Scomposizione Punti: Scelte Dirette vs Ripescate",
+        chartBarSub: "Mostra quanto del punteggio di ogni area deriva da scelte immediate o da comportamenti riproposti",
+        chartBarDataset1: "Scelte alla 1ª Comparsa",
+        chartBarDataset2: "Scelte su Ripescaggio",
+        coachBadge: "Executive Safety Coaching",
+        coachMainTitle: "Analisi Comportamentale e Piano d'Azione Personalizzato",
+        coachFocusPrefix: "Focus calibrato su:",
+        coachDomTag: "Leva Principale • Area Dominante",
+        coachWeakTag: "Area di Sviluppo • Meno Presidiata",
+        profileShareWord: "del profilo",
+        coachDomTitlePrefix: "1. Valorizza la tua forza in",
+        coachArchetypePrefix: "Archetipo:",
+        coachDomShadowTitle: "⚠️ Attenzione all'Effetto Ombra (Rischio da Eccesso)",
+        coachWeakTitlePrefix: "2. Potenzia il presidio su",
+        coachWeakRiskLabel: "Impatto se trascurata:",
+        coachWeakActionsTitle: "🎯 3 Azioni Pratiche di Coaching (Quick Wins)",
+        bridgeHeader: "🔗 Strategia Ponte Personalizzata (Sinergia di Leadership)",
+        bridgeSynergyPrefix: "Sinergia",
+        bridgeTitleFormat: (top, low) => `Come usare la tua leadership in ${top} per far crescere ${low}`,
+        bridgeTextFormat: (bFrom, second, low, bTo, top) =>
+          `${bFrom} (supportata anche dalla tua seconda area forte, <strong>${second}</strong>) per colmare il divario in <strong>${low}</strong>, ${bTo} Non devi snaturare il tuo stile: usa la credibilità e la sicurezza che hai già in <em>${top}</em> per introdurre gradualmente una sola abitudine settimanale legata a <em>${low}</em>.`,
+        skippedTitle: "📌 Allenamento Mirato: Comportamenti di quest'area che hai lasciato in secondo piano",
+        skippedSub: "Questi comportamenti specifici dell'area meno presidiata sono comparsi negli scenari ma non sono stati scelti. Scegline uno da mettere in pratica nella prossima settimana:",
+        skippedCardBadge: "Obiettivo Comportamentale",
+        skippedCountLabel: (n) => `Tralasciato ${n}x negli scenari`,
+        methBadge: "Nota Metodologica",
+        methTitle: "Come è stato calcolato il tuo punteggio (Ponderazione Adattiva e Ripescaggio)",
+        methDesc: "Per garantire una valutazione autentica e priva di condizionamenti durante il test, il motore di calcolo ha applicato dietro le quinte una <strong>doppia ponderazione</strong>: ogni comportamento non selezionato in uno scenario non è andato perso, ma è stato reinserito in coda e riproposto negli scenari successivi con un peso progressivamente minore.",
+        methBox1Title: "1. Peso dell'Ordine di Priorità (Scelta 1ª, 2ª, 3ª)",
+        methBox1List: `
+          <li>• <strong>1ª Scelta (Priorità Alta):</strong> 100% del valore del comportamento</li>
+          <li>• <strong>2ª Scelta (Priorità Media):</strong> 85% del valore del comportamento</li>
+          <li>• <strong>3ª Scelta (Priorità Complementare):</strong> 70% del valore del comportamento</li>
+        `,
+        methBox2Title: "2. Peso di Comparsa (Immediato vs Ripescato)",
+        methBox2List: `
+          <li>• <strong>Scelto alla 1ª Comparsa:</strong> coefficiente pieno <strong>1.00x (100%)</strong></li>
+          <li>• <strong>Scelto al 1° Ripescaggio (2ª comparsa):</strong> coefficiente ridotto <strong>0.65x (65%)</strong></li>
+          <li>• <strong>Scelto dal 2° Ripescaggio in poi (3ª+ comparsa):</strong> coefficiente <strong>0.35x (35%)</strong></li>
+        `,
+        tblMainTitle: "Dettaglio Analitico delle 7 Aree",
+        thArea: "Area di Competenza",
+        thFirst: "Scelte 1ª Comparsa (1.0x)",
+        thCarry: "Scelte Ripescate (0.65x / 0.35x)",
+        thScore: "Punteggio Ponderato",
+        thDist: "Distribuzione Finale (100%)",
+        tblChoicesWord: "scelte",
+        tblCarryWord: "ripescate",
+        logMainTitle: "Riepilogo Comportamenti Scelti nei 12 Scenari",
+        logMainSub: "Elenco cronologico delle soluzioni che hai adottato, con l'indicazione della priorità e dell'eventuale ripescaggio.",
+        logFirstApp: "1ª Comparsa (Peso 1.0x)",
+        logCarryApp: (n, w) => `Ripescato ${n}x (Peso ${w}x)`
+      },
+      en: {
+        hdrTitle: "Safety Leadership Assessment",
+        hdrSub: "Situational assessment across the 7 leadership areas",
+        langSwitchPrefix: "Language:",
+        langLabel: "English 🇬🇧",
+        btnResetHdr: "Restart",
+        lockBadge: "Workshop Link Required",
+        lockTitle: "Access allowed only via an active Workshop Link or QR Code",
+        lockDesc: "This assessment can only be completed by participants of a scheduled <strong>Workshop</strong> session. Please use the <strong>dedicated link</strong> or scan the <strong>QR Code</strong> provided by your Workshop coordinator.",
+        lockHint: "If you are the coordinator, open the Admin Dashboard → 'Manage Workshops' tab to generate or reactivate the event link.",
+        closedBadge: "Workshop Session Closed",
+        closedTitle: (wsName) => `The Workshop "${wsName}" is closed`,
+        closedDesc: "Assessment collection for this classroom session has ended and the link has been deactivated by the coordinator.",
+        wsActiveBadge: "OFFICIAL WORKSHOP",
+        wsTargetSite: "🏗️ Profile: Site / Field",
+        wsTargetOffice: "🏢 Profile: Office / HQ",
+        wsLevelPrefix: "Level:",
+        wBadge1: "12 Decision Scenarios",
+        wBadge2: "7 Leadership Areas",
+        wBadge3: "Report & Executive Coaching",
+        wTitle: "Discover your Safety Leadership profile through realistic situations",
+        wDescSite: "This assessment presents <strong>12 realistic site and project scenarios</strong>. For each situation, you will be presented with 7 possible leadership actions. Select the behaviors you would genuinely apply in the field, ranking them in order of priority.",
+        wDescOffice: "This assessment presents <strong>12 realistic corporate, engineering, procurement, and project management scenarios from an Office/HQ perspective</strong>. Select the behaviors you would genuinely apply in your role, ranking them in order of priority.",
+        userFormTitle: "Participant Details",
+        listsLoadingBadge: "Connecting to Supabase...",
+        listsLoadedBadge: "Lists synced from Supabase ✓",
+        listsErrorBadge: "Supabase DB connection error",
+        lblRequiredNote: "* Required fields",
+        lblUserCompany: "Company *",
+        phSelectCompany: "-- Select company --",
+        lblUserRole: "Role / Job Title *",
+        phSelectRole: "-- Select your role --",
+        lblUserSite: "Site / Location (Linked to Workshop) *",
+        phSelectSite: "-- Select site / location --",
+        lblUserName: "Full Name (Optional)",
+        phUserName: "Leave blank for anonymous assessment",
+        anonymousLabel: "Anonymous",
+        lblPrivacyText: "I consent to the processing of my personal name under the GDPR (EU Reg. 2016/679) for generating and archiving my assessment report.",
+        privacyRequiredBadge: "Required when name is entered *",
+        privacyOptionalBadge: "Not required for anonymous test",
+        btnPrivacyInfoOpen: "[Read privacy notice]",
+        btnPrivacyInfoClose: "[Hide privacy notice]",
+        privacyDetailsText: "Providing your name is optional. If left blank, aggregated statistical data (Workshop, Company, Role, Site/Location, and scores across the 7 areas) are collected anonymously in the Supabase database for organizational safety analysis and training. If you enter your name, your data will be linked to your profile solely for individual feedback and coaching, in full compliance with EU Regulation 2016/679 (GDPR).",
+        errMissingDropdowns: "Please select all required dropdown fields: Company, Role, and Site / Location.",
+        errMissingPrivacy: "You entered your Name: you must check the Privacy Terms acceptance box to proceed (or clear the Name field to take the test anonymously).",
+        privacyAcceptedLog: "Accepted (GDPR)",
+        privacyAnonymousLog: "Anonymous (Not required)",
+        wHowTitle: "How the assessment works",
+        wStep1Title: "Analyze the Scenario",
+        wStep1Desc: "Read the decision context and the safety challenge described in each of the 12 rounds.",
+        wStep2Title: "Select 1 to 3 Actions",
+        wStep2Desc: "Choose up to 3 behaviors in order of importance: 1st choice (primary action), 2nd choice, and 3rd choice.",
+        wStep3Title: "Get Your Report",
+        wStep3Desc: "At the end, you will see your skill distribution across the 7 areas and tailored executive coaching advice.",
+        btnStart: "Start Assessment →",
+        scenarioWord: "Scenario",
+        ofWord: "of",
+        contextPrefix: "Context:",
+        selectionPromptTitle: "Which behaviors do you deploy to handle this situation?",
+        selectionPromptSub: "Select from 1 to 3 behaviors in order of priority (click to select or deselect).",
+        chosenCounter: (n) => `Selected: ${n} / 3`,
+        choiceBadge: (rank) => rank === 1 ? "1st Choice" : rank === 2 ? "2nd Choice" : "3rd Choice",
+        validationWarning: "Please select at least one behavior (up to 3) before proceeding.",
+        btnNextRound: "Confirm & Continue →",
+        btnFinishRound: "Confirm & Generate Final Report ✓",
+        resBadge: "Analysis Complete • 12 Scenarios",
+        syncSending: "Saving to Supabase database...",
+        syncSuccess: "Results saved in Supabase database ✓",
+        syncLocalPreview: "Database not configured",
+        syncError: "Error saving to Supabase database",
+        btnRetrySync: "Retry saving",
+        resMainTitle: "Your Safety Leadership Skills Profile",
+        resMainSub: "Percentage distribution of your competencies across the 7 areas based on the priorities expressed in the scenarios.",
+        participantSummary: (wsName, wsLevel, name, company, role, site) =>
+          `Workshop: ${wsName} (${wsLevel}) • Company: ${company} • Role: ${role} • Location: ${site} • Participant: ${name}`,
+        btnPrint: "Print / PDF",
+        btnNewTest: "Restart",
+        kpiTop1Label: "Dominant Area",
+        kpiTop2Label: "Co-Dominant Area",
+        kpiLowLabel: "Training Need",
+        kpiStatsFormat: (pts, c1, c2) => `${pts} weighted pts (${c1} direct, ${c2} re-proposed)`,
+        chartRadarTitle: "Competency Distribution Radar",
+        chartRadarSub: "Comparison between your distribution (%) and a balanced profile (14.3% per area)",
+        chartRadarDataset1: "Your Distribution (%)",
+        chartRadarDataset2: "Balanced Target (14.3%)",
+        chartBarTitle: "Point Breakdown: Direct vs Re-proposed Choices",
+        chartBarSub: "Shows how much of each area's score comes from immediate selections vs re-proposed behaviors",
+        chartBarDataset1: "1st Appearance Choices",
+        chartBarDataset2: "Re-proposed Choices",
+        coachBadge: "Executive Safety Coaching",
+        coachMainTitle: "Behavioral Analysis & Tailored Action Plan",
+        coachFocusPrefix: "Calibrated on:",
+        coachDomTag: "Primary Lever • Dominant Area",
+        coachWeakTag: "Growth Area • Least Covered",
+        profileShareWord: "of profile",
+        coachDomTitlePrefix: "1. Leverage your strength in",
+        coachArchetypePrefix: "Archetype:",
+        coachDomShadowTitle: "⚠️ Watch Out for the Shadow Effect (Overuse Risk)",
+        coachWeakTitlePrefix: "2. Strengthen your coverage in",
+        coachWeakRiskLabel: "Impact if neglected:",
+        coachWeakActionsTitle: "🎯 3 Practical Coaching Actions (Quick Wins)",
+        bridgeHeader: "🔗 Tailored Bridge Strategy (Leadership Synergy)",
+        bridgeSynergyPrefix: "Synergy",
+        bridgeTitleFormat: (top, low) => `How to use your leadership in ${top} to grow ${low}`,
+        bridgeTextFormat: (bFrom, second, low, bTo, top) =>
+          `${bFrom} (also supported by your second strongest area, <strong>${second}</strong>) to close the gap in <strong>${low}</strong>, ${bTo} You don't need to change who you are: use the confidence and credibility you already command in <em>${top}</em> to gradually introduce one weekly habit tied to <em>${low}</em>.`,
+        skippedTitle: "📌 Targeted Training: Behaviors in this area you left in the background",
+        skippedSub: "These specific behaviors from your least covered area appeared in the scenarios but were not selected. Pick one to actively practice next week:",
+        skippedCardBadge: "Behavioral Target",
+        skippedCountLabel: (n) => `Passed over ${n}x in scenarios`,
+        methBadge: "Methodological Note",
+        methTitle: "How your score was calculated (Adaptive Weighting & Carry-Over)",
+        methDesc: "To ensure an authentic, unbiased experience during the test, the scoring engine applied a <strong>dual weighting model</strong> behind the scenes: any behavior not selected in a round was not discarded, but placed in a carry-over queue and re-proposed in later scenarios with a progressively lower weight.",
+        methBox1Title: "1. Priority Order Weight (1st, 2nd, 3rd Choice)",
+        methBox1List: `
+          <li>• <strong>1st Choice (High Priority):</strong> 100% of the behavior's value</li>
+          <li>• <strong>2nd Choice (Medium Priority):</strong> 85% of the behavior's value</li>
+          <li>• <strong>3rd Choice (Complementary Priority):</strong> 70% of the behavior's value</li>
+        `,
+        methBox2Title: "2. Appearance Weight (Immediate vs Re-proposed)",
+        methBox2List: `
+          <li>• <strong>Selected on 1st Appearance:</strong> full multiplier <strong>1.00x (100%)</strong></li>
+          <li>• <strong>Selected on 1st Carry-Over (2nd appearance):</strong> reduced multiplier <strong>0.65x (65%)</strong></li>
+          <li>• <strong>Selected on 2nd+ Carry-Over (3rd+ appearance):</strong> multiplier <strong>0.35x (35%)</strong></li>
+        `,
+        tblMainTitle: "Analytical Breakdown of the 7 Areas",
+        thArea: "Competency Area",
+        thFirst: "1st Appearance Choices (1.0x)",
+        thCarry: "Re-proposed Choices (0.65x / 0.35x)",
+        thScore: "Weighted Score",
+        thDist: "Final Distribution (100%)",
+        tblChoicesWord: "choices",
+        tblCarryWord: "re-proposed",
+        logMainTitle: "Summary of Behaviors Selected Across the 12 Scenarios",
+        logMainSub: "Chronological log of the solutions you adopted, showing priority rank and whether the behavior was immediate or re-proposed.",
+        logFirstApp: "1st Appearance (Weight 1.0x)",
+        logCarryApp: (n, w) => `Re-proposed ${n}x (Weight ${w}x)`
+      }
+    };
+
+    // =========================================================================
+    // 2. DEFINIZIONE DELLE 7 AREE E DEI 69 COMPORTAMENTI (SITE & OFFICE)
+    // =========================================================================
+    const AREAS = [
+      {
+        id: "VISION",
+        name: "Vision",
+        color: "#2563eb",
+        desc: {
+          it: "Visione strategica, integrazione nei processi e responsabilità non delegabile.",
+          en: "Strategic vision, integration into processes, and non-delegable leadership accountability."
+        },
+        behaviors: [
+          {
+            it: "Dimostro un forte impegno verso la Safety Vision e la integro concretamente nelle pratiche di ingegneria e costruzione.",
+            en: "Demonstrates a strong commitment to the Safety Vision and integrates it into engineering and construction practices.",
+            office_it: "Dimostro un forte impegno verso la Safety Vision e la integro fin dalle scelte di ingegneria, progettazione, budget e contrattualistica.",
+            office_en: "Demonstrates a strong commitment to the Safety Vision and integrates it into engineering design, budgeting, and contracting practices."
+          },
+          {
+            it: "Traduco la Safety Vision in applicazioni pratiche e specifiche per il cantiere, garantendone la credibilità operativa.",
+            en: "Translates the Safety Vision into practical, site-specific applications to ensure its credibility in all operating environments.",
+            office_it: "Traduco la Safety Vision in criteri decisionali concreti per il mio dipartimento (Design, Procurement, PM), rendendola credibile e applicabile.",
+            office_en: "Translates the Safety Vision into practical decision-making criteria for office functions (Design, Procurement, PM) to ensure its credibility."
+          },
+          {
+            it: "Definisco chiaramente lo stato futuro desiderato delle prestazioni di sicurezza e allineo l'esecuzione del progetto a questa visione.",
+            en: "Clearly defines the desired future state of safety performance and aligns project execution with this Safety Vision.",
+            office_it: "Definisco chiaramente gli obiettivi strategici di sicurezza e allineo la pianificazione e le milestone di progetto a questa Safety Vision.",
+            office_en: "Clearly defines the desired future state of safety performance and aligns project planning and milestones with this Safety Vision."
+          },
+          {
+            it: "Analizzo in modo approfondito e basato sui dati l'attuale cultura della sicurezza per identificare i gap critici e le aree di miglioramento.",
+            en: "Has a thorough and data-driven understanding of the current safety culture, identifying key gaps and areas for improvement.",
+            office_it: "Analizzo in modo approfondito e basato sui dati i KPI e i trend di sicurezza dei progetti per identificare i gap organizzativi e di processo.",
+            office_en: "Has a thorough and data-driven understanding of project safety KPIs and trends, identifying organizational and process gaps."
+          },
+          {
+            it: "Mi assumo la responsabilità della leadership nella sicurezza a tutti i livelli e guido il miglioramento continuo della cultura.",
+            en: "Takes responsibility for safety leadership at all levels and drives continuous improvement of the safety culture.",
+            office_it: "Mi assumo la responsabilità della leadership nella sicurezza anche dai ruoli di sede, guidando il miglioramento continuo della cultura aziendale.",
+            office_en: "Takes responsibility for safety leadership across corporate and office levels and drives continuous improvement of the safety culture."
+          },
+          {
+            it: "Stabilisco e faccio rispettare aspettative, ruoli e responsabilità chiari in materia di sicurezza, in linea con la Safety Vision.",
+            en: "Establishes and enforces clear safety expectations, roles and accountabilities in line with the Safety Vision.",
+            office_it: "Stabilisco e faccio rispettare aspettative, ruoli e responsabilità HSE chiari nei capitolati, nei team di progetto e verso i fornitori.",
+            office_en: "Establishes and enforces clear safety expectations, roles, and accountabilities across project teams, specs, and vendors."
+          },
+          {
+            it: "Dimostro coi fatti che raggiungere l'eccellenza nella sicurezza contribuisce direttamente all'efficienza, alla qualità e al successo del progetto.",
+            en: "Recognises that achieving safety excellence directly contributes to overall project efficiency, quality and success.",
+            office_it: "Dimostro nelle decisioni direzionali che l'eccellenza nella sicurezza fin dal design contribuisce a qualità, rispetto dei tempi e successo del progetto.",
+            office_en: "Recognises in management decisions that achieving safety excellence by design directly contributes to overall project efficiency, quality, and success."
+          },
+          {
+            it: "Mantengo in prima persona la guida della Safety Vision, trattandola come una responsabilità primaria di leadership non delegabile.",
+            en: "Takes full responsibility for maintaining and driving the Safety Vision, ensuring it remains a core leadership responsibility that cannot be delegated.",
+            office_it: "Mantengo in prima persona la guida della Safety Vision nel mio team di sede, senza mai delegarla come questione esclusiva della funzione HSE.",
+            office_en: "Takes full responsibility for driving the Safety Vision within office teams, ensuring it is never delegated solely to the HSE department."
+          }
+        ]
+      },
+      {
+        id: "FOCUS",
+        name: "Focus",
+        color: "#d97706",
+        desc: {
+          it: "Presidio operativo, rimozione barriere, rigore metodologico e gestione proattiva dei rischi.",
+          en: "Operational rigor, barrier removal, zero tolerance, and proactive risk management."
+        },
+        behaviors: [
+          {
+            it: "Identifico e valorizzo i risultati positivi di sicurezza raggiunti sul campo per consolidare una cultura di eccellenza.",
+            en: "Identifies and recognises successful safety outcomes, reinforcing a culture of safety excellence.",
+            office_it: "Identifico e valorizzo le soluzioni progettuali, contrattuali o organizzative che migliorano la sicurezza, consolidando una cultura di eccellenza.",
+            office_en: "Identifies and recognises engineering, contractual, or organizational solutions that improve safety, reinforcing a culture of excellence."
+          },
+          {
+            it: "Partecipo in prima persona alle iniziative di cantiere, ai toolbox talk e alle valutazioni dei rischi per guidare il miglioramento.",
+            en: "Actively participates in site safety initiatives, toolbox talks and risk assessments to drive continuous improvement.",
+            office_it: "Partecipo attivamente alle Design Review, agli HAZOP, ai Risk Assessment di progetto e alle iniziative HSE di sede per guidare il miglioramento.",
+            office_en: "Actively participates in Design Reviews, HAZOPs, project risk assessments, and corporate safety initiatives to drive continuous improvement."
+          },
+          {
+            it: "Individuo e rimuovo sistematicamente gli ostacoli operativi o organizzativi che frenano le prestazioni di sicurezza.",
+            en: "Identifies and systematically removes barriers to safety performance.",
+            office_it: "Individuo e rimuovo rapidamente i colli di bottiglia burocratici, di budget o di approvvigionamento che ostacolano la sicurezza nei progetti.",
+            office_en: "Identifies and systematically removes bureaucratic, budgetary, or procurement bottlenecks that hinder safety performance."
+          },
+          {
+            it: "Implemento un monitoraggio strutturato delle attività critiche, dei comportamenti chiave e delle metriche per prevenire le deviazioni.",
+            en: "Implements a structured approach to tracking critical safety activities, key behaviours and performance metrics to drive a proactive safety culture.",
+            office_it: "Implemento nei report di progetto un monitoraggio strutturato dei leading indicator HSE, delle azioni di mitigazione e delle qualifiche vendor.",
+            office_en: "Implements a structured approach in project reporting to track leading HSE indicators, risk mitigations, and vendor qualifications."
+          },
+          {
+            it: "Mantengo un impegno visibile e costante verso gli obiettivi a lungo termine, integrandoli nelle operazioni giornaliere di cantiere.",
+            en: "Maintains a visible and unwavering commitment to long-term safety goals and integrates them into daily site operations.",
+            office_it: "Mantengo un impegno visibile e costante verso gli obiettivi di sicurezza a lungo termine, integrandoli nei processi decisionali quotidiani d'ufficio.",
+            office_en: "Maintains a visible and unwavering commitment to long-term safety goals and integrates them into daily office and project workflows."
+          },
+          {
+            it: "Resto fermamente concentrato sulle priorità di sicurezza nonostante le pressioni su scadenze, produttività o imprevisti.",
+            en: "Remains focused on safety priorities despite operational pressures such as deadlines, productivity demands or temporary frustrations.",
+            office_it: "Resto fermamente concentrato sui requisiti di sicurezza anche sotto forte pressione per il rilascio di documenti, offerte, ordini d'acquisto o milestone.",
+            office_en: "Remains focused on safety requirements despite commercial pressures, tight engineering deliverables, procurement deadlines, or budget constraints."
+          },
+          {
+            it: "Applico tolleranza zero verso le violazioni tramite una presenza costante sul campo e azioni correttive immediate.",
+            en: "Demonstrates zero tolerance for safety violations through consistent, hands-on leadership and prompt corrective action.",
+            office_it: "Applico tolleranza zero verso scorciatoie progettuali o deroghe agli standard HSE nei contratti, intervenendo subito con azioni correttive.",
+            office_en: "Demonstrates zero tolerance for design shortcuts or deviations from HSE standards in contracts through prompt corrective action."
+          },
+          {
+            it: "Fornisco risposte tempestive e motivate alle segnalazioni di sicurezza, facendo sentire i lavoratori ascoltati e tutelati.",
+            en: "Provides timely and reasoned responses to safety concerns, ensuring that employees feel heard and supported.",
+            office_it: "Fornisco risposte rapide, tecniche e motivate alle richieste di supporto o modifica per la sicurezza provenienti dai cantieri o dal team.",
+            office_en: "Provides timely and reasoned responses to safety concerns or technical queries raised by project teams or site operations."
+          },
+          {
+            it: "Investo personalmente tempo ed energie per risolvere le criticità di sicurezza, dando un esempio concreto al team.",
+            en: "Personally invests time and effort to drive safety improvements, setting a strong example for the team.",
+            office_it: "Investo personalmente tempo ed energie nelle revisioni progettuali e organizzative per migliorare la sicurezza, dando un esempio concreto ai colleghi.",
+            office_en: "Personally invests time and effort in project and process reviews to drive safety improvements, setting a strong example for the team."
+          },
+          {
+            it: "Agisco sulle dinamiche del comportamento umano per influenzare positivamente le abitudini e gli atteggiamenti in campo.",
+            en: "Possesses a deep understanding of human behaviour and uses this to influence positive safety attitudes and practices in the field.",
+            office_it: "Comprendo l'impatto dei carichi di lavoro, dello stress e dei fattori umani in ufficio e in progetto, promuovendo pratiche di lavoro sostenibili e sicure.",
+            office_en: "Possesses a deep understanding of human factors and organizational behavior, using this to influence positive safety attitudes across teams."
+          },
+          {
+            it: "Richiamo con costanza il valore della cultura della sicurezza e le conseguenze reali delle azioni non sicure.",
+            en: "Consistently communicates the value of a strong safety culture and reinforces the real consequences of unsafe actions.",
+            office_it: "Richiamo con costanza nei team di sede come una scelta progettuale o d'acquisto errata abbia conseguenze reali sulla sicurezza di chi opera in campo.",
+            office_en: "Consistently communicates the value of a strong safety culture and the real-world field consequences of office, design, or procurement decisions."
+          },
+          {
+            it: "Incoraggio i membri del team a documentare, tracciare e farsi carico in prima persona dei propri impegni di sicurezza.",
+            en: "Encourages team members to document, track and take ownership of their personal safety commitments.",
+            office_it: "Incoraggio i colleghi del team a documentare, tracciare e portare a chiusura in prima persona le azioni HSE nei registri di progetto.",
+            office_en: "Encourages team members to document, track, and take personal ownership of safety actions in project registers."
+          },
+          {
+            it: "Integro discussioni mirate e incisive sulla sicurezza in ogni riunione, evitando passaggi burocratici o superficiali.",
+            en: "Integrates safety discussions into every meeting with purpose and impact, avoiding routine or superficial mentions.",
+            office_it: "Integro momenti di riflessione mirati sulla sicurezza in ogni Project Review o riunione di dipartimento, evitando passaggi burocratici o formali.",
+            office_en: "Integrates purposeful safety discussions into every project review or department meeting, avoiding routine or superficial mentions."
+          },
+          {
+            it: "Assumo un ruolo attivo nella pianificazione e nel risk assessment, coinvolgendo tutti gli stakeholder e i decisori chiave.",
+            en: "Takes an active role in planning and risk assessment, ensuring the full participation of key stakeholders and decision-makers.",
+            office_it: "Assumo un ruolo attivo nella pianificazione preliminare e nel Risk Assessment di progetto, coinvolgendo Ingegneria, Procurement, Construction e HSE.",
+            office_en: "Takes an active role in early project planning and risk assessment, ensuring full participation of Engineering, Procurement, Construction, and HSE."
+          },
+          {
+            it: "Promuovo un'elevata percezione del rischio, stimolando l'identificazione e la mitigazione preventiva dei pericoli.",
+            en: "Promotes a culture of heightened risk awareness, encouraging proactive hazard identification and mitigation.",
+            office_it: "Promuovo la cultura del 'Safety by Design', incoraggiando l'identificazione e l'eliminazione preventiva dei pericoli già a tavolino.",
+            office_en: "Promotes a culture of 'Safety by Design' and heightened risk awareness, encouraging proactive hazard elimination during planning."
+          }
+        ]
+      },
+      {
+        id: "INFLUENCE",
+        name: "Influence",
+        color: "#7c3aed",
+        desc: {
+          it: "Ispirare, unire i team interfunzionali e allineare la sicurezza ai valori personali e aziendali.",
+          en: "Inspiring, uniting cross-functional teams, and aligning safety with personal and business values."
+        },
+        behaviors: [
+          {
+            it: "Trasmetto messaggi incisivi sulla sicurezza nei momenti più strategici e delicati per ottenere il massimo coinvolgimento.",
+            en: "Delivers powerful safety messages at the most strategic and influential moments to ensure maximum engagement.",
+            office_it: "Lancio messaggi incisivi sulla sicurezza nei momenti decisionali chiave (kick-off meeting, gare, revisioni budget) per massimizzare l'attenzione.",
+            office_en: "Delivers powerful safety messages at strategic decision points (kick-off meetings, bid evaluations, budget reviews) for maximum engagement."
+          },
+          {
+            it: "Curo il modo in cui il mio approccio alla sicurezza viene percepito dagli altri, dando il buon esempio nelle decisioni e in cantiere.",
+            en: "Maintains awareness of how their approach to safety is perceived by others, setting the right example on site and in decision making.",
+            office_it: "Sono consapevole di come le mie scelte manageriali orientano il team: do il buon esempio non sacrificando mai la sicurezza nelle decisioni d'ufficio.",
+            office_en: "Maintains awareness of how their managerial approach to safety is perceived, setting the right example in corporate decision-making."
+          },
+          {
+            it: "Unisco e influenzo efficacemente i team di ogni livello e background culturale affinché agiscano secondo la Safety Vision.",
+            en: "Effectively influences and unites teams at all levels - regardless of hierarchy or cultural background - to embrace and act on the Safety Vision.",
+            office_it: "Allineo e unisco efficacemente funzioni diverse (Ingegneria, Acquisti, Cantieri, Fornitori internazionali) affinché agiscano secondo la Safety Vision.",
+            office_en: "Effectively influences and unites cross-functional teams (Engineering, Procurement, Site, global Vendors) to act on the Safety Vision."
+          },
+          {
+            it: "Stabilisco, mantengo ed esigo in modo fermo i più alti standard di sicurezza in qualsiasi operazione.",
+            en: "Is widely recognised as a leader who sets, maintains and demands the highest safety standards in all operations.",
+            office_it: "Sono riconosciuto come un manager che esige i più alti standard di sicurezza nei progetti, nei capitolati tecnici e nella selezione dei partner.",
+            office_en: "Is widely recognised as a leader who sets, maintains, and demands the highest safety standards across project deliverables and vendor selection."
+          },
+          {
+            it: "Coinvolgo attivamente le squadre nell'immaginare e costruire insieme un ambiente di lavoro a zero infortuni.",
+            en: "Actively engages teams in envisioning and working towards an injury-free work environment.",
+            office_it: "Coinvolgo attivamente i colleghi di sede nel progettare processi, impianti e pianificazioni che rendano possibile un'esecuzione a zero infortuni.",
+            office_en: "Actively engages office and project teams in designing processes, plants, and schedules that enable an injury-free work environment."
+          },
+          {
+            it: "Comunico gli obiettivi di sicurezza con convinzione e ne dimostro la concreta realizzabilità attraverso azioni chiare.",
+            en: "Communicates safety objectives with confidence and conviction and reinforces their achievability through clear action and leadership.",
+            office_it: "Comunico gli obiettivi HSE di progetto con convinzione e ne sostengo la fattibilità allocando tempi e risorse adeguate nella pianificazione.",
+            office_en: "Communicates safety objectives with confidence and reinforces their achievability through clear resource and schedule allocation."
+          },
+          {
+            it: "Collego le discussioni sulla sicurezza ai valori personali e familiari dei lavoratori, rendendola rilevante per ciascuno.",
+            en: "Aligns safety discussions with employees' core values and priorities, making safety personally relevant to each individual.",
+            office_it: "Collego la qualità del nostro lavoro in ufficio alla tutela reale della salute e della vita delle persone, rendendo la sicurezza un valore sentito da ciascuno.",
+            office_en: "Aligns safety discussions with core human values, helping office staff see how their work directly protects people's lives and families."
+          },
+          {
+            it: "Parlo con passione della sicurezza anche nelle conversazioni informali, mostrando un impegno autentico oltre il dovere di ruolo.",
+            en: "Speaks passionately about safety in all settings, particularly in informal conversations, demonstrating a genuine commitment that goes beyond professional obligation.",
+            office_it: "Parlo con convinzione della sicurezza anche negli scambi informali in ufficio, dimostrando che è un valore autentico e non un adempimento formale.",
+            office_en: "Speaks passionately about safety in informal office conversations, demonstrating a genuine commitment beyond formal role obligations."
+          },
+          {
+            it: "Spiego con chiarezza il legame diretto tra eccellenza nella sicurezza e successo operativo ed economico del progetto.",
+            en: "Clearly articulates the direct link between safety excellence and business success, ensuring that teams understand the operational and financial implications.",
+            office_it: "Articolo con chiarezza ai colleghi e agli stakeholder il legame diretto tra eccellenza HSE, sostenibilità finanziaria, reputazione e successo del business.",
+            office_en: "Clearly articulates to colleagues and stakeholders the direct link between safety excellence, financial sustainability, and business success."
+          }
+        ]
+      },
+      {
+        id: "CREDIBILITY",
+        name: "Credibility",
+        color: "#059669",
+        desc: {
+          it: "Coraggio decisionale, coerenza, integrità e tutela delle persone sopra gli obiettivi di breve termine.",
+          en: "Decision-making courage, consistency, integrity, and prioritizing people over short-term targets."
+        },
+        behaviors: [
+          {
+            it: "Dimostro il coraggio di bloccare e contestare pratiche non sicure decidendo in base ai principi di sicurezza, a prescindere dal grado o dalle pressioni.",
+            en: "Demonstrates the courage to challenge unsafe practices and drive change in environments with a poor safety culture, making decisions based on safety principles regardless of rank or pressure.",
+            office_it: "Dimostro il coraggio di fermare scelte progettuali, contrattuali o di cronoprogramma che creerebbero rischi inaccettabili, indipendentemente dalle pressioni commerciali.",
+            office_en: "Demonstrates the courage to challenge unsafe design, contractual, or schedule decisions regardless of commercial pressure or rank."
+          },
+          {
+            it: "Antepongo la sicurezza e il benessere reale delle persone agli obiettivi operativi, sia sul campo che nei rapporti individuali.",
+            en: "Prioritises the safety of employees over operational objectives and demonstrates genuine concern for the welfare of employees, both in the field and in personal interactions.",
+            office_it: "Antepongo la sicurezza e il benessere delle persone agli obiettivi di costo o tempistica immediata, sia nelle decisioni di progetto che nella gestione del mio team.",
+            office_en: "Prioritises the safety and wellbeing of people over short-term cost or schedule targets, both in project decisions and team management."
+          },
+          {
+            it: "Porto rigorosamente a termine gli impegni di sicurezza presi e mantengo le promesse fatte al team, consolidando la fiducia.",
+            en: "Follows through on safety commitments and keeps promises, building trust and accountability.",
+            office_it: "Porto rigorosamente a termine gli impegni HSE presi nelle riunioni di progetto e mantengo le promesse fatte al team e ai cantieri, costruendo fiducia.",
+            office_en: "Follows through on safety commitments made in project meetings and keeps promises to office and site teams, building trust."
+          },
+          {
+            it: "Mantengo la prospettiva della sicurezza in ogni decisione, applicando soluzioni pratiche e realistiche che rispondono alle esigenze operative.",
+            en: "Maintains a safety perspective in all decisions, applying practical, real-world solutions that meet operational needs.",
+            office_it: "Valuto l'impatto HSE in ogni decisione tecnica o d'acquisto, adottando soluzioni realistiche che agevolino concretamente chi dovrà operare in campo.",
+            office_en: "Maintains a safety perspective in all technical and procurement decisions, applying practical solutions that support real-world execution."
+          },
+          {
+            it: "Fornisco supporto incrollabile alla squadra anche nei momenti di forte pressione, affinché nessuno debba scendere a compromessi sulla sicurezza.",
+            en: "Provides unwavering support to the team, even under pressure, so as not to compromise safety.",
+            office_it: "Sostengo con fermezza i miei collaboratori quando segnalano una criticità tecnica o rifiutano di validare una soluzione non sicura sotto pressione.",
+            office_en: "Provides unwavering support to team members when they flag technical hazards or refuse to sign off on unsafe solutions under pressure."
+          },
+          {
+            it: "Applico gli standard di sicurezza con assoluta equità e coerenza verso tutti, rafforzando integrità e affidabilità.",
+            en: "Is known for fairness and consistency in enforcing safety standards, building a reputation for integrity and reliability.",
+            office_it: "Applico i criteri di qualifica e gli standard HSE con equità e coerenza verso tutti i fornitori, clienti e team interni, senza favoritismi o doppi standard.",
+            office_en: "Applies safety qualification criteria and standards with fairness and consistency across all vendors, clients, and internal teams."
+          },
+          {
+            it: "Sostengo e difendo le esigenze di sicurezza del mio team presso il top management per ottenere le risorse e gli interventi necessari.",
+            en: "Advocates the safety needs of their team to higher levels of management, ensuring that concerns are addressed and resources are allocated appropriately.",
+            office_it: "Difendo presso il Top Management e il Comitato di Progetto la necessità di allocare budget, tempi e risorse ingegneristiche adeguate per la sicurezza.",
+            office_en: "Advocates safety budget, schedule, and engineering resource needs to senior management, ensuring concerns are properly funded."
+          },
+          {
+            it: "Riconosco apertamente eventuali errori di valutazione e li trasformo in un'opportunità di apprendimento e miglioramento.",
+            en: "Openly acknowledges mistakes and uses them as an opportunity to learn and improve safety leadership.",
+            office_it: "Riconosco apertamente eventuali errori di pianificazione, progettazione o valutazione, usandoli come 'Lessons Learned' per migliorare i processi.",
+            office_en: "Openly acknowledges planning, design, or assessment mistakes and uses them as Lessons Learned to improve safety leadership."
+          },
+          {
+            it: "Costruisco e mantengo la fiducia tra gruppi di diverso background culturale adattando di conseguenza il mio stile di guida.",
+            en: "Understands how to build and maintain trust across different cultural backgrounds and adapts leadership style accordingly.",
+            office_it: "Costruisco e mantengo la fiducia collaborando con sedi estere, clienti internazionali e team multiculturali, adattando il mio stile di leadership.",
+            office_en: "Builds and maintains trust across international offices, global clients, and multicultural teams by adapting leadership style accordingly."
+          },
+          {
+            it: "Metto in campo una conoscenza tecnica autorevole e competente sugli standard di sicurezza, sui rischi specifici e sulle best practice.",
+            en: "Is widely recognised as a knowledgeable and competent authority on safety standards, risks and best practice.",
+            office_it: "Sono riconosciuto nel mio ambito professionale come un riferimento competente sulle normative, sugli standard HSE di progetto e sulle best practice.",
+            office_en: "Is widely recognised within their corporate domain as a knowledgeable authority on project safety standards, risks, and best practices."
+          }
+        ]
+      },
+      {
+        id: "TEAM",
+        name: "Team",
+        color: "#0891b2",
+        desc: {
+          it: "Sicurezza psicologica, collaborazione interfunzionale e responsabilità condivisa.",
+          en: "Psychological safety, cross-functional collaboration, and shared ownership."
+        },
+        behaviors: [
+          {
+            it: "Creo un clima in cui ogni membro del team si sente ascoltato, valorizzato e rispettato quando esprime il proprio punto di vista sulla sicurezza.",
+            en: "Creates an environment where team members feel heard, valued and respected when sharing their safety perspectives.",
+            office_it: "Creo nelle riunioni di progetto un clima in cui anche le figure più junior si sentono ascoltate e valorizzate quando sollevano un dubbio di sicurezza.",
+            office_en: "Creates an office environment where all team members—including junior staff—feel heard and valued when sharing safety perspectives."
+          },
+          {
+            it: "Autorizzo e responsabilizzo i lavoratori a sollevare dubbi e ad agire subito in modo proattivo per eliminare i pericoli.",
+            en: "Empowers employees to raise safety concerns and take proactive steps to address potential hazards.",
+            office_it: "Responsabilizzo ingegneri, buyer e project coordinator a fermare e segnalare subito specifiche, offerte o tempistiche che possano generare rischi a valle.",
+            office_en: "Empowers engineers, buyers, and coordinators to flag and revise specs, bids, or schedules that could introduce downstream hazards."
+          },
+          {
+            it: "Costruisco l'impegno comune aprendo il confronto sulle criticità e coinvolgendo direttamente la squadra nelle decisioni operative.",
+            en: "Builds commitment to safety by encouraging open discussion of critical safety issues and involving the team in decision making.",
+            office_it: "Costruisco l'impegno comune aprendo il dibattito sulle criticità HSE del progetto e coinvolgendo tutte le discipline nelle decisioni risolutive.",
+            office_en: "Builds commitment to safety by encouraging open cross-disciplinary discussion of critical issues and involving the team in decisions."
+          },
+          {
+            it: "Rafforzo lo spirito di squadra facendo comprendere che la sicurezza è una responsabilità collettiva e reciproca.",
+            en: "Reinforces a culture of teamwork by ensuring that all members understand the importance of collective responsibility for safety.",
+            office_it: "Supero i silos tra dipartimenti (Ingegneria, Procurement, Construction, HSE) facendo comprendere che la sicurezza è una responsabilità collettiva.",
+            office_en: "Breaks down departmental silos (Engineering, Procurement, Construction, HSE) by reinforcing collective responsibility for safety."
+          },
+          {
+            it: "Garantisco un ambiente di piena fiducia in cui chiunque può segnalare un rischio o fermare un lavoro senza alcun timore di ripercussioni.",
+            en: "Fosters an environment of trust where employees feel confident to speak up about safety concerns without fear of repercussions.",
+            office_it: "Garantisco un ambiente di piena fiducia psicologica in cui chiunque può evidenziare un errore progettuale o un rischio senza timore di ritorsioni.",
+            office_en: "Fosters a psychologically safe environment where employees feel confident to highlight design flaws or risks without fear of repercussions."
+          },
+          {
+            it: "Incoraggio ciascun componente del team a farsi promotore dei miglioramenti di sicurezza e a dare il buon esempio ai colleghi.",
+            en: "Encourages each team member to take personal responsibility for safety improvements and to lead by example.",
+            office_it: "Incoraggio ogni membro del mio team d'ufficio a farsi promotore attivo della sicurezza nei propri elaborati, contratti e processi decisionali.",
+            office_en: "Encourages each office team member to take personal ownership of safety improvements within their deliverables and workflows."
+          },
+          {
+            it: "Promuovo un dialogo costruttivo e continuo tra operativi e management per risolvere i problemi di sicurezza alla radice.",
+            en: "Promotes a culture of open, constructive feedback between employees and management to ensure that safety issues are addressed effectively.",
+            office_it: "Promuovo uno scambio aperto e continuo tra la sede centrale e i team di cantiere per recepire i feedback operativi e risolvere i problemi alla radice.",
+            office_en: "Promotes open, constructive feedback between HQ/office teams and site operations to resolve safety issues at their root."
+          },
+          {
+            it: "Rendo l'intervento reciproco sui comportamenti non sicuri una prassi naturale, quotidiana e condivisa da tutto il gruppo.",
+            en: "Embeds safety into the workplace culture so that addressing unsafe behaviours is a natural and expected part of daily operations.",
+            office_it: "Integro la sicurezza nella cultura d'ufficio affinché il controllo incrociato e l'attenzione ai rischi progettuali/organizzativi siano una prassi naturale.",
+            office_en: "Embeds safety into office culture so that peer review and challenging unsafe project assumptions are a natural part of daily work."
+          }
+        ]
+      },
+      {
+        id: "COMMUNICATION",
+        name: "Communication",
+        color: "#db2777",
+        desc: {
+          it: "Chiarezza nei requisiti, ascolto attivo tra sede e campo, domande stimolanti e allineamento.",
+          en: "Clarity of requirements, active listening between HQ and site, thought-provoking questions, and alignment."
+        },
+        behaviors: [
+          {
+            it: "Comunico con estrema chiarezza i requisiti di sicurezza, garantendo totale trasparenza sulle aspettative e sulla conformità.",
+            en: "Clearly communicates safety requirements, ensuring transparency of expectations and compliance.",
+            office_it: "Comunico con estrema chiarezza i requisiti HSE nei capitolati, nelle procedure e nei briefing di progetto, garantendo trasparenza sulle aspettative.",
+            office_en: "Clearly communicates safety requirements in project specs, procedures, and briefings, ensuring full transparency of expectations."
+          },
+          {
+            it: "Fornisco aggiornamenti che collegano le attività quotidiane di cantiere agli obiettivi generali di sicurezza e alle best practice di settore.",
+            en: "Provides high-level safety updates that link day-to-day operations to broader safety goals and industry best practices.",
+            office_it: "Fornisco al team aggiornamenti strategici che collegano il lavoro quotidiano d'ufficio agli obiettivi HSE aziendali e alle best practice di settore.",
+            office_en: "Provides strategic safety updates that link daily office and engineering work to broader corporate safety goals and industry best practices."
+          },
+          {
+            it: "Adatto lo stile e il linguaggio comunicativo alle diverse squadre per garantire comprensione immediata e coinvolgimento.",
+            en: "Recognises that communication styles vary across different teams and adapts messages to ensure clarity and engagement.",
+            office_it: "Adatto il registro comunicativo quando dialogo con interlocutori diversi (Board, Ingegneria, Fornitori, Cantiere) per garantire chiarezza ed efficacia.",
+            office_en: "Adapts communication style across different stakeholders (Executives, Engineering, Vendors, Site crews) to ensure clarity and engagement."
+          },
+          {
+            it: "Utilizzo tecniche di ascolto attivo per verificare che i messaggi di sicurezza siano stati realmente compresi a tutti i livelli.",
+            en: "Uses active listening techniques to confirm that safety messages are consistently understood at all levels of the organisation.",
+            office_it: "Pratico l'ascolto attivo nelle riunioni interfunzionali per verificare che i vincoli e i requisiti di sicurezza siano stati compresi da tutte le parti.",
+            office_en: "Uses active listening techniques in cross-functional meetings to confirm that safety requirements are consistently understood at all levels."
+          },
+          {
+            it: "Mi assicuro che le informazioni critiche di sicurezza vengano trasmesse con urgenza e raggiungano tempestivamente tutti gli interessati.",
+            en: "Ensures that critical safety information is communicated with urgency and reaches all relevant personnel in a timely manner.",
+            office_it: "Mi assicuro che modifiche progettuali, Safety Alert o non-conformità critiche di fornitori vengano trasmesse con urgenza a tutti gli stakeholder coinvolti.",
+            office_en: "Ensures that critical design changes, Safety Alerts, or vendor non-conformities are communicated urgently to all relevant personnel."
+          },
+          {
+            it: "Promuovo una comunicazione bidirezionale aperta in cui i lavoratori sono incoraggiati a condividere dubbi, osservazioni e spunti.",
+            en: "Leads by example, fostering open, two-way communication where employees feel encouraged to share safety concerns and insights.",
+            office_it: "Promuovo una comunicazione bidirezionale aperta tra sede e cantieri, incoraggiando chiunque a condividere dubbi tecnici e osservazioni di sicurezza.",
+            office_en: "Fosters open, two-way communication between office teams and site operations, encouraging everyone to share safety concerns and insights."
+          },
+          {
+            it: "Pongo domande mirate e stimolanti che mettono in discussione le abitudini scontate e attivano l'attenzione sui rischi nascosti.",
+            en: "Asks thought-provoking safety questions that challenge assumptions and encourage proactive safety awareness.",
+            office_it: "Pongo domande sfidanti durante le revisioni di progetto ('Come verrà montato e manutenuto in sicurezza?') per far emergere i rischi nascosti.",
+            office_en: "Asks thought-provoking safety questions during project reviews ('How will this be safely built and maintained?') to challenge assumptions."
+          },
+          {
+            it: "Adotto un approccio costruttivo ed esplorativo per approfondire e sviluppare le idee proposte dagli altri.",
+            en: "Uses a constructive approach to explore other people's ideas.",
+            office_it: "Utilizzo un approccio costruttivo ed esplorativo per valutare le proposte tecniche e organizzative avanzate dai colleghi o dai cantieri.",
+            office_en: "Uses a constructive, exploratory approach to evaluate technical and organizational ideas proposed by colleagues or site teams."
+          },
+          {
+            it: "Scelgo il canale comunicativo più efficace (es. confronto diretto faccia a faccia o toolbox talk mirato) nel momento giusto per massimizzare l'impatto.",
+            en: "Chooses the most effective communication methods - such as face-to-face or toolbox talks - at the right time to maximise impact.",
+            office_it: "Scelgo il mezzo comunicativo più efficace (confronto diretto, workshop interfunzionale, allineamento visivo) invece di limitarmi a inviare email formali.",
+            office_en: "Chooses the most effective communication channel (direct huddle, workshop, visual alignment) rather than relying on passive emails."
+          }
+        ]
+      },
+      {
+        id: "FEEDBACK",
+        name: "Feedback",
+        color: "#4f46e5",
+        desc: {
+          it: "Rinforzo positivo, riconoscimento, ascolto bottom-up e valorizzazione dei contributi.",
+          en: "Positive reinforcement, recognition, bottom-up feedback, and valuing employee input."
+        },
+        behaviors: [
+          {
+            it: "Fornisco un feedback immediato nei momenti critici e ad alto impatto per massimizzarne l'efficacia nel rinforzare le pratiche sicure.",
+            en: "Provides feedback at critical, high-impact moments to maximise its effectiveness in reinforcing safe practices.",
+            office_it: "Fornisco un feedback tempestivo e puntuale durante le fasi decisionali critiche del progetto per consolidare le scelte orientate alla sicurezza.",
+            office_en: "Provides timely feedback at critical project decision milestones to maximize its effectiveness in reinforcing safe choices."
+          },
+          {
+            it: "Sollecito il feedback dal basso permettendo ai lavoratori di valutare e dare input su come viene gestita la sicurezza.",
+            en: "Leads by example in encouraging bottom-up feedback by implementing systems that allow employees to rate and provide input on safety leadership.",
+            office_it: "Sollecito attivamente il feedback dal basso (dai team operativi e dai collaboratori) per valutare come le decisioni di sede impattano sulla sicurezza.",
+            office_en: "Actively encourages bottom-up feedback from project teams and site staff to evaluate how office leadership impacts field safety."
+          },
+          {
+            it: "Do priorità al rinforzo positivo, riconoscendo e consolidando i comportamenti corretti per rafforzare la cultura della sicurezza.",
+            en: "Prioritises positive reinforcement, recognising and reinforcing safe behaviour to build a culture of safety.",
+            office_it: "Do priorità al rinforzo positivo, valorizzando pubblicamente i colleghi e i fornitori che propongono soluzioni progettuali o gestionali più sicure.",
+            office_en: "Prioritises positive reinforcement, recognizing colleagues and vendors who proactively deliver safer design or management solutions."
+          },
+          {
+            it: "Celebro attivamente i traguardi di sicurezza e riconosco pubblicamente chi dimostra un impegno esemplare.",
+            en: "Actively celebrates safety achievements and recognises individuals who demonstrate exceptional commitment to safety.",
+            office_it: "Celebro i risultati di sicurezza dei progetti anche in sede, riconoscendo il contributo determinante di chi ha lavorato a monte in ufficio.",
+            office_en: "Actively celebrates project safety achievements across HQ, recognizing individuals who demonstrated exceptional upstream commitment."
+          },
+          {
+            it: "Aiuto le persone a riflettere sulle conseguenze reali dei comportamenti a rischio e sull'impatto per se stessi e le proprie famiglie.",
+            en: "Helps employees understand the real-world consequences of unsafe behaviours, emphasising the impact on themselves and their families.",
+            office_it: "Aiuto i team d'ufficio a visualizzare le conseguenze umane e familiari reali che una svista progettuale o una pressione eccessiva può causare in cantiere.",
+            office_en: "Helps office teams understand the real-world human and family consequences that design oversights or schedule pressures can cause on site."
+          },
+          {
+            it: "Valorizzo e prendo seriamente in carico le idee e i suggerimenti di miglioramento provenienti dai lavoratori di qualsiasi livello.",
+            en: "Genuinely values and considers safety improvement ideas and suggestions from employees at all levels.",
+            office_it: "Valorizzo e integro nei progetti i suggerimenti di miglioramento della costruttibilità e sicurezza provenienti dal campo o dai livelli operativi.",
+            office_en: "Genuinely values and integrates constructability and safety improvement suggestions coming from site operations and staff at all levels."
+          },
+          {
+            it: "Adatto le modalità di feedback e di riconoscimento alle diverse sensibilità culturali presenti in cantiere per risultare inclusivo ed efficace.",
+            en: "Adapts feedback and recognition methods to suit different cultural backgrounds to ensure inclusiveness and effectiveness.",
+            office_it: "Adatto le modalità di feedback e riconoscimento ai diversi contesti culturali dei team internazionali di ingegneria, procurement e progetto.",
+            office_en: "Adapts feedback and recognition methods to suit different cultural backgrounds across international engineering and project teams."
+          },
+          {
+            it: "Supporto e do spazio alle persone che si attivano per guidare un cambiamento positivo nella cultura della sicurezza.",
+            en: "Supports and empowers individuals to drive positive safety culture change within the organisation.",
+            office_it: "Supporto e do visibilità ai colleghi di sede che si fanno promotori di innovazioni metodologiche o culturali a favore della sicurezza.",
+            office_en: "Supports and empowers office colleagues who champion methodological or cultural innovations that advance safety."
+          },
+          {
+            it: "Mi assicuro che ogni feedback fornito sia coerente con la Safety Vision aziendale e la rafforzi.",
+            en: "Ensures that all feedback is consistent with and reinforces the organisation's Safety Vision.",
+            office_it: "Mi assicuro che nelle valutazioni delle performance e nelle revisioni di progetto il feedback sia sempre allineato alla Safety Vision aziendale.",
+            office_en: "Ensures that performance reviews and project feedback are always consistent with and reinforce the organization's Safety Vision."
+          },
+          {
+            it: "Incoraggio e sostengo attivamente gli interventi proattivi dei singoli, promuovendo senso di responsabilità e leadership diffusa.",
+            en: "Actively encourages and supports proactive safety interventions by individuals, fostering a sense of ownership and leadership at all levels.",
+            office_it: "Incoraggio e premio chi in ufficio interviene proattivamente per segnalare una criticità prima che un documento o un ordine venga emesso.",
+            office_en: "Actively encourages and supports proactive safety interventions by office staff before documents, specs, or purchase orders are issued."
+          }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // 3. I 12 SCENARI DUAL-MODE (SITE = Cantiere | OFFICE = Sede/HQ)
+    // =========================================================================
+    const SCENARIOS = [
+      {
+        id: 1,
+        primaryMap: { VISION: 6, FOCUS: 5, INFLUENCE: 8, CREDIBILITY: 1, TEAM: 4, COMMUNICATION: 0, FEEDBACK: 8 },
+        site: {
+          context: { it: "Pressione Operativa & Cronoprogramma", en: "Operational Pressure & Project Schedule" },
+          title: { it: "Ritardo critico sulla milestone e tentazione di scorciatoie", en: "Critical milestone delay and temptation to cut corners" },
+          desc: {
+            it: "Il progetto ha accumulato 10 giorni di ritardo a causa del maltempo. Durante la riunione operativa, alcuni supervisori lasciano intendere che per recuperare terreno si potrebbero velocizzare le verifiche preliminari sui mezzi di sollevamento e rimandare i controlli non bloccanti.",
+            en: "The project is 10 days behind schedule due to severe weather. During the progress meeting, some supervisors subtly suggest speeding up pre-use checks on lifting equipment and postponing non-critical safety inspections to recover lost time."
+          }
+        },
+        office: {
+          context: { it: "Scadenze di Progetto & Design Review", en: "Project Deadlines & Design Review" },
+          title: { it: "Pressione per emettere i disegni costruttivi saltando la verifica HSE", en: "Pressure to issue construction drawings skipping the HSE review" },
+          desc: {
+            it: "La milestone di emissione dei pacchetti di ingegneria (IFC) scade tra 48 ore e c'è una penale contrattuale. Alcuni responsabili di disciplina propongono di emettere subito gli elaborati al cantiere e di fare la verifica di sicurezza e costruttibilità (HAZOP / Design Review) solo in un secondo momento.",
+            en: "The Issue-for-Construction (IFC) engineering milestone is due in 48 hours with contractual penalties at stake. Some discipline leads suggest releasing the drawings to site immediately and postponing the formal HSE & constructability review."
+          }
+        }
+      },
+      {
+        id: 2,
+        primaryMap: { VISION: 3, FOCUS: 7, INFLUENCE: 4, CREDIBILITY: 0, TEAM: 1, COMMUNICATION: 5, FEEDBACK: 9 },
+        site: {
+          context: { it: "Segnalazione Rischi & Cultura No-Blame", en: "Hazard Reporting & No-Blame Culture" },
+          title: { it: "Quasi-infortuni (Near-Miss) non segnalati dalle squadre", en: "Unreported Near-Misses across active work zones" },
+          desc: {
+            it: "Noti che negli ultimi due mesi il numero di segnalazioni di Near-Miss in un'area ad alta intensità lavorativa è sceso a zero, nonostante alcune evidenze sul campo mostrino piccoli urti e materiali lasciati in bilico. Gli operai temono ripercussioni o blocchi delle attività.",
+            en: "Over the past two months, Near-Miss reporting in a high-intensity work zone has dropped to zero, despite field evidence of minor bumps and unsecured materials. Workers fear blame or work stoppages if they speak up."
+          }
+        },
+        office: {
+          context: { it: "Trasparenza nei Processi & Risk Register", en: "Process Transparency & Risk Register" },
+          title: { it: "Criticità tecniche e rischi progettuali taciuti nelle riunioni di avanzamento", en: "Technical hazards and design risks kept quiet in progress meetings" },
+          desc: {
+            it: "Noti che nel Risk Register di progetto non vengono più segnalate criticità di interfaccia o rischi HSE da diverse settimane, nonostante il cantiere stia inviando numerose richieste di chiarimento tecnico (RFI) urgenti. Il team d'ufficio teme di essere incolpato per eventuali ritardi o rilavorazioni.",
+            en: "No new interface hazards or HSE risks have been logged in the Project Risk Register for weeks, even though the site is sending urgent technical queries (RFIs). Office team members fear being blamed for schedule delays or rework if they raise issues."
+          }
+        }
+      },
+      {
+        id: 3,
+        primaryMap: { VISION: 1, FOCUS: 9, INFLUENCE: 2, CREDIBILITY: 8, TEAM: 3, COMMUNICATION: 2, FEEDBACK: 6 },
+        site: {
+          context: { it: "Gestione Subappalti & Multiculturalità", en: "Subcontractor Management & Multicultural Crews" },
+          title: { it: "Ingresso di nuove squadre multietniche con standard disomogenei", en: "Onboarding multicultural subcontractor crews with uneven standards" },
+          desc: {
+            it: "Entrano in cantiere tre nuove imprese subappaltatrici con personale di diverse nazionalità e abitudini operative molto distanti dagli standard del sito. Si registrano già le prime incomprensioni linguistiche e una scarsa percezione delle regole comuni.",
+            en: "Three new subcontractor companies mobilize on site with crews from diverse nationalities and work habits far below site safety standards. Language barriers and differing risk perceptions are already causing friction."
+          }
+        },
+        office: {
+          context: { it: "Coordinamento Sedi Estere & Vendor Internazionali", en: "Global Engineering Centers & International Vendors" },
+          title: { it: "Disallineamento sugli standard HSE con un centro di ingegneria/fornitore estero", en: "Misalignment on HSE standards with an international engineering center/vendor" },
+          desc: {
+            it: "Una parte importante della progettazione e fornitura di skid prefabbricati è stata affidata a partner internazionali con un background culturale e normativo molto diverso. Nei primi pacchetti tecnici ricevuti in sede mancano requisiti essenziali di ergonomia, accesso sicuro e protezione macchine.",
+            en: "A major portion of skid design and fabrication has been awarded to international partners with very different cultural and regulatory backgrounds. Early technical packages received at HQ lack essential ergonomics, safe access, and machine guarding standards."
+          }
+        }
+      },
+      {
+        id: 4,
+        primaryMap: { VISION: 5, FOCUS: 6, INFLUENCE: 3, CREDIBILITY: 5, TEAM: 7, COMMUNICATION: 4, FEEDBACK: 0 },
+        site: {
+          context: { it: "Coerenza & Tolleranza Zero", en: "Consistency & Zero Tolerance" },
+          title: { it: "Violazione delle regole da parte di un caposquadra molto produttivo", en: "Safety violation by a highly productive senior foreman" },
+          desc: {
+            it: "Mentre attraversi l'area di montaggio, vedi uno dei capisquadra più esperti e stimati per la sua rapidità esecutiva operare su un trabattello senza aver fissato i parapetti regolamentari, sotto gli occhi di due giovani neoassunti.",
+            en: "While walking the assembly area, you spot one of your most experienced and productive foremen working on a mobile scaffold without guardrails installed, right in front of two newly hired junior workers."
+          }
+        },
+        office: {
+          context: { it: "Vendor Qualification & Coerenza Contrattuale", en: "Vendor Qualification & Contractual Consistency" },
+          title: { it: "Spinta per assegnare un appalto al fornitore più economico ma carente in HSE", en: "Push to award a contract to the lowest bidder despite poor HSE qualification" },
+          desc: {
+            it: "Durante la commissione di aggiudicazione (Bid Evaluation) in sede, un Project Manager senior spinge per assegnare un contratto critico a un subappaltatore che offre un ribasso del 18%, ma che presenta indicatori d'infortunio alti e un piano HSE gravemente insufficiente, davanti ai buyer più giovani.",
+            en: "During a Bid Evaluation meeting at HQ, a senior Project Manager pushes to award a critical contract to a subcontractor offering an 18% cost saving, despite their poor injury record and substandard HSE plan, right in front of junior buyers."
+          }
+        }
+      },
+      {
+        id: 5,
+        primaryMap: { VISION: 4, FOCUS: 12, INFLUENCE: 0, CREDIBILITY: 3, TEAM: 2, COMMUNICATION: 8, FEEDBACK: 1 },
+        site: {
+          context: { it: "Partecipazione & Riunioni Efficaci", en: "Engagement & Impactful Briefings" },
+          title: { it: "Toolbox talk mattutini percepiti come pura formalità burocratica", en: "Morning toolbox talks treated as a bureaucratic formality" },
+          desc: {
+            it: "Partecipando ai briefing pre-turno noti che i preposti leggono meccanicamente un modulo standard mentre gli operai guardano altrove in attesa di firmare il foglio presenze. Nessuno interviene sui rischi reali delle lavorazioni previste in giornata.",
+            en: "Attending pre-shift briefings, you notice supervisors mechanically reading a generic form while workers look away, waiting just to sign the attendance sheet. No one discusses the real hazards of the day's tasks."
+          }
+        },
+        office: {
+          context: { it: "Project Review & Riunioni Direzionali", en: "Project Reviews & Corporate Meetings" },
+          title: { it: "La slide HSE nelle riunioni di progetto trattata come un passaggio burocratico", en: "The HSE slide in project reviews treated as a 30-second formality" },
+          desc: {
+            it: "Durante le riunioni settimanali di avanzamento progetto in ufficio, noti che la sezione iniziale dedicata alla sicurezza viene liquidata in 30 secondi leggendo numeri generici, per poi passare subito a discutere per due ore solo di costi, fatturazione e ritardi di fornitura.",
+            en: "During weekly project progress meetings at the office, you notice the opening safety section is rushed through in 30 seconds by reading generic stats, before spending two hours discussing only costs, invoicing, and delivery delays."
+          }
+        }
+      },
+      {
+        id: 6,
+        primaryMap: { VISION: 7, FOCUS: 2, INFLUENCE: 5, CREDIBILITY: 6, TEAM: 0, COMMUNICATION: 3, FEEDBACK: 5 },
+        site: {
+          context: { it: "Investimenti, Risorse & Barriere Operative", en: "Resources, Budget & Operational Barriers" },
+          title: { it: "Richiesta di adeguamento sicurezza respinta per motivi di budget", en: "Safety upgrade request pushed back due to budget constraints" },
+          desc: {
+            it: "La squadra segnala che i percorsi di accesso a una trincea e l'illuminazione provvisoria per il turno serale sono insufficienti. La contabilità di cantiere obietta che l'intervento non era previsto a budget e richiede l'approvazione della direzione.",
+            en: "The crew reports that trench access walkways and temporary lighting for the evening shift are inadequate. Cost control objects that the upgrade was not budgeted and requires senior management approval."
+          }
+        },
+        office: {
+          context: { it: "Value Engineering & Tutela del Budget HSE", en: "Value Engineering & Protecting HSE Budget" },
+          title: { it: "Proposta di tagliare passerelle e dispositivi di sicurezza per rientrare nel budget", en: "Proposal to cut permanent walkways and safety features to meet budget targets" },
+          desc: {
+            it: "Durante una sessione di 'Value Engineering' in sede per ridurre gli extra-costi di commessa, il controllo costi propone di eliminare alcune passerelle fisse di manutenzione in quota e sistemi automatici di blocco, sostituendoli con semplici prescrizioni procedurali manuali per chi lavorerà sull'impianto.",
+            en: "During an office 'Value Engineering' session to cut project overruns, cost control proposes removing permanent elevated maintenance walkways and automated interlocks, replacing them with manual procedural warnings for future operators."
+          }
+        }
+      },
+      {
+        id: 7,
+        primaryMap: { VISION: 2, FOCUS: 0, INFLUENCE: 6, CREDIBILITY: 4, TEAM: 5, COMMUNICATION: 6, FEEDBACK: 3 },
+        site: {
+          context: { it: "Rinforzo Positivo & Calo di Tensione", en: "Positive Reinforcement & Complacency Risk" },
+          title: { it: "Raggiungimento di un record di ore senza infortuni e rischio 'complacency'", en: "Major injury-free milestone achieved and emerging complacency" },
+          desc: {
+            it: "Il sito ha appena superato un importante traguardo senza infortuni. Mentre il morale è alto, noti però i primi segnali di eccessiva confidenza e abbassamento della guardia proprio alla vigilia dei collaudi in pressione.",
+            en: "The site has just achieved a major LTI-free milestone. While morale is high, you notice early signs of overconfidence and lowered vigilance right before critical high-pressure testing begins."
+          }
+        },
+        office: {
+          context: { it: "Audit Positivi & Rischio di Autocompiacimento", en: "Successful Audits & Complacency Risk in HQ" },
+          title: { it: "Superamento delle certificazioni ISO/HSE e calo di rigore nelle verifiche", en: "Passing corporate HSE audits followed by a drop in review rigor" },
+          desc: {
+            it: "La società ha appena superato a pieni voti l'audit di rinnovo delle certificazioni HSE e celebrato ottimi indicatori annuali. Nelle settimane successive noti però in ufficio una tendenza a dare per scontata la sicurezza nei nuovi progetti, con controlli più sbrigativi sulle specifiche tecniche.",
+            en: "The company has just passed its corporate HSE certification audit with flying colors and celebrated strong annual KPIs. In the following weeks, however, you notice office teams taking safety for granted on new bids, performing more superficial checks on technical specs."
+          }
+        }
+      },
+      {
+        id: 8,
+        primaryMap: { VISION: 0, FOCUS: 13, INFLUENCE: 1, CREDIBILITY: 9, TEAM: 6, COMMUNICATION: 1, FEEDBACK: 7 },
+        site: {
+          context: { it: "Ingegneria, Pianificazione & Interferenze", en: "Engineering, Planning & SIMOPS" },
+          title: { it: "Interferenza imprevista tra due squadre in area ristretta", en: "Unplanned simultaneous operations (SIMOPS) in a confined area" },
+          desc: {
+            it: "A causa di una modifica progettuale dell'ultimo minuto, la squadra di carpenteria e quella elettrica si ritrovano a operare contemporaneamente nello stesso vano tecnico. I capi cantiere spingono per lavorare in parallelo pur di non perdere la giornata.",
+            en: "Due to a last-minute design change, structural steel and electrical crews end up scheduled in the same tight utility shaft at the same time. Site superintendents push to work in parallel to avoid losing a day."
+          }
+        },
+        office: {
+          context: { it: "Pianificazione Master Schedule & Fast-Track", en: "Master Schedule Planning & Fast-Track Overlap" },
+          title: { it: "Compressione del cronoprogramma in sede che genera sovrapposizioni critiche in sito", en: "Office schedule compression creating high-risk overlaps on site" },
+          desc: {
+            it: "Per recuperare un ritardo nella consegna di alcuni materiali, il team di pianificazione in sede propone di riprogrammare il Master Schedule sovrapponendo nella stessa settimana i montaggi meccanici pesanti, le prove elettriche e il pre-commissioning nella medesima area d'impianto.",
+            en: "To recover a material delivery delay, the HQ planning team proposes compressing the Master Schedule by overlapping heavy mechanical erection, electrical testing, and pre-commissioning in the same plant area during the same week."
+          }
+        }
+      },
+      {
+        id: 9,
+        primaryMap: { VISION: 4, FOCUS: 8, INFLUENCE: 7, CREDIBILITY: 2, TEAM: 0, COMMUNICATION: 7, FEEDBACK: 2 },
+        site: {
+          context: { it: "Ascolto & Miglioramento dal Basso", en: "Active Listening & Bottom-Up Improvement" },
+          title: { it: "Proposta tecnica di un operaio ignorata dai livelli intermedi", en: "Worker's practical safety suggestion ignored by middle management" },
+          desc: {
+            it: "Durante un giro in campo, un saldatore ti confida con frustrazione di aver proposto due settimane fa una modifica semplice per aspirare meglio i fumi in spazi confinati, ma di non aver mai ricevuto risposta dal proprio supervisore.",
+            en: "During a site walk, a welder frustratedly tells you he suggested a simple modification two weeks ago to improve fume extraction in confined spaces, but never heard back from his supervisor."
+          }
+        },
+        office: {
+          context: { it: "Ascolto dei Feedback dal Cantiere / Ingegneria", en: "Listening to Constructability & Junior Input" },
+          title: { it: "Segnalazione di un giovane progettista sulla sicurezza di montaggio ignorata", en: "Junior engineer's constructability safety concern brushed aside" },
+          desc: {
+            it: "Un giovane progettista del team ti confida di aver segnalato due settimane fa che la disposizione di alcune valvole sul modello 3D costringerebbe gli operatori in cantiere a manovre pericolose in quota, ma il suo responsabile gli ha risposto di 'non perdere tempo perché il modello è già congelato'.",
+            en: "A junior designer tells you they flagged two weeks ago that a valve layout in the 3D model would force site workers into hazardous elevated positions, but their lead told them 'not to waste time because the model is already frozen.'"
+          }
+        }
+      },
+      {
+        id: 10,
+        primaryMap: { VISION: 7, FOCUS: 3, INFLUENCE: 2, CREDIBILITY: 7, TEAM: 4, COMMUNICATION: 5, FEEDBACK: 4 },
+        site: {
+          context: { it: "Gestione dell'Errore & Post-Evento", en: "Error Management & Post-Incident Learning" },
+          title: { it: "Tensione e ricerca del colpevole dopo un mancato infortunio grave", en: "Blame game after a high-potential dropped-object Near-Miss" },
+          desc: {
+            it: "Un carico sospeso ha oscillato pericolosamente per un errore nella stima del baricentro, fortunatamente senza ferire nessuno. Nella riunione successiva i responsabili di area iniziano ad accusarsi a vicenda invece di analizzare le cause sistemiche.",
+            en: "A suspended load swung dangerously due to a center-of-gravity miscalculation, thankfully injuring no one. In the review meeting, area leads start blaming each other instead of analyzing systemic root causes."
+          }
+        },
+        office: {
+          context: { it: "Root Cause Analysis & Conflitto Sede-Cantiere", en: "Root Cause Analysis & HQ-Site Blame Game" },
+          title: { it: "Scambio di accuse tra Ingegneria, Acquisti e Cantiere dopo una non-conformità critica", en: "Finger-pointing between Engineering, Procurement, and Site after a critical failure" },
+          desc: {
+            it: "In cantiere ha ceduto un supporto provvisorio durante un montaggio senza causare feriti. Nella riunione d'indagine in sede, Ingegneria, Procurement e Construction iniziano a scambiarsi email difensive accusandosi a vicenda (specifica errata vs acquisto sbagliato vs montaggio improprio) anziché cercare le cause di processo.",
+            en: "A temporary support failed during site erection without injuries. In the HQ investigation meeting, Engineering, Procurement, and Construction start trading defensive emails blaming each other rather than analyzing systemic process root causes."
+          }
+        }
+      },
+      {
+        id: 11,
+        primaryMap: { VISION: 1, FOCUS: 14, INFLUENCE: 6, CREDIBILITY: 3, TEAM: 7, COMMUNICATION: 6, FEEDBACK: 4 },
+        site: {
+          context: { it: "Cultura Proattiva & Consapevolezza del Rischio", en: "Proactive Culture & Risk Awareness" },
+          title: { it: "Abitudine al rischio in lavorazioni ripetitive di fine cantiere", en: "Risk normalization during routine demobilization and finishing works" },
+          desc: {
+            it: "Nelle attività di finitura e smobilizzo, considerate da molti 'a basso rischio' rispetto alle fasi pesanti già concluse, aumentano le piccole disattenzioni nell'uso degli utensili manuali e nella gestione dell'ordine e pulizia (housekeeping).",
+            en: "During finishing and demobilization activities—viewed by many as 'low risk' compared to heavy construction—minor carelessness with hand tools and poor housekeeping are noticeably increasing."
+          }
+        },
+        office: {
+          context: { it: "Rischio da Copia-Incolla & Modifiche Minori", en: "Copy-Paste Risk & Minor Change Management" },
+          title: { it: "Superficialità nella valutazione HSE di modifiche progettuali o contrattuali 'standard'", en: "Complacency in assessing 'routine' design changes or standard purchase orders" },
+          desc: {
+            it: "Per una serie di ordini d'acquisto e modifiche progettuali considerate 'standard o minori', noti che il team d'ufficio sta riutilizzando vecchi capitolati in copia-incolla senza verificare le condizioni specifiche del nuovo sito (clima estremo, spazi ristretti, normative locali).",
+            en: "For a series of purchase orders and design changes considered 'routine or minor', you notice the office team copy-pasting old specifications without verifying the specific hazards of the new site (extreme climate, tight layout, local rules)."
+          }
+        }
+      },
+      {
+        id: 12,
+        primaryMap: { VISION: 5, FOCUS: 11, INFLUENCE: 4, CREDIBILITY: 5, TEAM: 5, COMMUNICATION: 3, FEEDBACK: 9 },
+        site: {
+          context: { it: "Empowerment & Responsabilità Diffusa", en: "Empowerment & Shared Ownership" },
+          title: { it: "Dipendenza eccessiva dalla sola presenza dell'HSE Manager", en: "Over-reliance on HSE personnel to police site behaviors" },
+          desc: {
+            it: "Ti accorgi che le squadre rispettano scrupolosamente le procedure quando i referenti HSE o la direzione sono visibili in area, ma tendono ad attendere indicazioni dall'alto anziché intervenire autonomamente tra pari quando manca un supervisore.",
+            en: "You notice crews follow procedures strictly when HSE officers or managers are visible in the area, but tend to wait for top-down instruction rather than intervening peer-to-peer when supervisors are absent."
+          }
+        },
+        office: {
+          context: { it: "Delega impropria alla funzione HSE", en: "Over-delegating Safety to the HSE Department" },
+          title: { it: "Convinzione in ufficio che 'la sicurezza è compito esclusivo del dipartimento HSE'", en: "Mindset among office managers that 'safety is strictly the HSE department's job'" },
+          desc: {
+            it: "Ti accorgi che diversi responsabili di funzione in sede (Ingegneria, Acquisti, Pianificazione) considerano i requisiti di sicurezza nei documenti e nei contratti come un allegato burocratico di cui deve occuparsi solo l'ufficio HSE, senza sentirsi direttamente responsabili delle scelte tecniche a monte.",
+            en: "You notice several functional leads at HQ (Engineering, Procurement, Planning) treat safety requirements in tenders and designs as a bureaucratic annex to be handled solely by the HSE department, rather than owning upstream safety decisions themselves."
+          }
+        }
+      }
+    ];
+
+    // =========================================================================
+    // 4. PROFILI DI EXECUTIVE COACHING BILINGUI (IT + EN)
+    // =========================================================================
+    const COACHING_PROFILES = {
+      VISION: {
+        it: {
+          archetype: "L'Architetto Strategico della Sicurezza",
+          strength: "Hai una naturale capacità di leggere la sicurezza in chiave sistemica e progettuale. Non ti limiti a gestire l'emergenza quotidiana, ma integri la Safety Vision nell'ingegneria, nella pianificazione e nella definizione chiara di ruoli e responsabilità.",
+          shadow: "Se sovra-utilizzata a scapito delle aree relazionali o operative, una forte Vision rischia di apparire astratta. Attenzione a non dare per scontato che una strategia chiara su carta si traduca automaticamente in comportamenti sicuri senza presidio e feedback continuo.",
+          weakRisk: "Quando l'area Vision è meno presidiata, la gestione della sicurezza rischia di diventare puramente reattiva ('spegnere incendi'). Il team fatica a vedere la direzione a lungo termine e la sicurezza viene percepita come un vincolo esterno.",
+          actions: [
+            "Prima di avviare una nuova fase critica di progetto, definisci e condividi con il team 3 aspettative non negoziabili di sicurezza legate alla qualità ed efficienza.",
+            "Dedica 30 minuti ogni due settimane all'analisi dei trend e dei leading indicator per individuare i gap organizzativi ricorrenti anziché reagire ai singoli episodi.",
+            "In sede di revisione ingegneristica, contrattuale o di cronoprogramma, chiedi sempre come la Safety Vision sia stata tradotta in scelte pratiche."
+          ],
+          bridgeFrom: "Usa la tua visione strategica e la lettura dei dati",
+          bridgeTo: "ancorando l'area Vision a obiettivi di progetto misurabili settimana per settimana."
+        },
+        en: {
+          archetype: "The Strategic Safety Architect",
+          strength: "You naturally approach safety from a systemic and project-wide perspective. Rather than just reacting to daily emergencies, you integrate the Safety Vision into engineering, planning, and clear role accountability.",
+          shadow: "If overused at the expense of operational or relational areas, a strong Vision can feel abstract. Be careful not to assume that a clear strategy on paper automatically translates into safe execution without ongoing coaching and feedback.",
+          weakRisk: "When Vision is under-represented, safety management risks becoming purely reactive ('firefighting'). Teams struggle to see the long-term direction and safety is perceived as an external constraint.",
+          actions: [
+            "Before kicking off a critical project phase, define and align on 3 non-negotiable safety expectations tied to project quality and efficiency.",
+            "Set aside 30 minutes bi-weekly to review safety data trends and leading indicators to spot systemic gaps rather than reacting to isolated events.",
+            "During engineering, procurement, or schedule reviews, explicitly ask how the Safety Vision has been translated into practical applications."
+          ],
+          bridgeFrom: "Leverage your strategic mindset and data-driven perspective",
+          bridgeTo: "by translating the Safety Vision into weekly, measurable project milestones."
+        }
+      },
+      FOCUS: {
+        it: {
+          archetype: "Il Garante del Presidio e del Rigore Metodologico",
+          strength: "Il tuo punto di forza è la concretezza nell'esecuzione: presidi le attività e le revisioni critiche, rimuovi sistematicamente le barriere, mantieni alta la guardia anche sotto pressione di scadenze e applichi tolleranza zero verso le scorciatoie.",
+          shadow: "Un eccesso di Focus non bilanciato da Team o Feedback può portarti al micromanagement o a un atteggiamento percepito come solo prescrittivo. Se risolvi tutto in prima persona, rischi di ridurre l'autonomia del team.",
+          weakRisk: "Trascurare il Focus espone il progetto allo scollamento tra teoria e pratica: sotto la pressione delle scadenze, le buone intenzioni cedono il passo a piccole scorciatoie tollerate, ostacoli non rimossi e riunioni in cui si parla di sicurezza solo per formalità.",
+          actions: [
+            "Trasforma ogni revisione operativa o giro in un'azione di 'rimozione barriere': individua almeno 1 ostacolo tecnico, procedurale o organizzativo segnalato dal team e risolvilo.",
+            "Elimina le menzioni generiche sulla sicurezza nelle riunioni: apri ogni meeting con un rischio reale specifico del progetto e assegna un responsabile per la sua mitigazione.",
+            "Quando emergono pressioni sulle scadenze, esplicita chiaramente al team quali verifiche di sicurezza restano intoccabili."
+          ],
+          bridgeFrom: "Sfrutta la tua disciplina operativa e il tuo rigore metodologico",
+          bridgeTo: "trasformando i tuoi principi in 2-3 indicatori critici da verificare sistematicamente con il team."
+        },
+        en: {
+          archetype: "The Guardian of Operational & Methodological Rigor",
+          strength: "Your core strength is hands-on execution: you actively participate in critical reviews, systematically remove barriers, stay focused despite schedule pressure, and enforce zero tolerance for unsafe shortcuts.",
+          shadow: "An excess of Focus without enough Team empowerment or positive Feedback can slip into micromanagement. If you personally drive every fix, teams may become overly dependent on you.",
+          weakRisk: "When Focus is low, a gap emerges between intention and execution: under deadline pressure, minor shortcuts are tolerated, barriers remain unresolved, and safety mentions in meetings become superficial.",
+          actions: [
+            "Turn every review into a 'barrier removal' session: identify at least 1 technical, procedural, or organizational obstacle raised by the team and resolve it.",
+            "Eliminate generic safety reminders in meetings: open every meeting with a specific high-impact project hazard and assign clear ownership for its mitigation.",
+            "When schedule pressures mount, explicitly state which critical safety checks and reviews remain non-negotiable."
+          ],
+          bridgeFrom: "Capitalize on your operational discipline and methodological rigor",
+          bridgeTo: "by turning safety goals into 2–3 critical indicators that you track and verify visibly."
+        }
+      },
+      INFLUENCE: {
+        it: {
+          archetype: "Il Catalizzatore e Ispiratore Culturale",
+          strength: "Eccelli nel generare adesione e convinzione: sai unire gruppi di diversa estrazione funzionale, culturale o gerarchica e riesci a collegare la sicurezza sia ai valori umani/familiari sia al successo economico del progetto.",
+          shadow: "Affidarsi prevalentemente al carisma e alla capacità persuasiva può far passare in secondo piano la verifica strutturata dei processi (Focus) o la chiarezza tecnica dei requisiti (Communication).",
+          weakRisk: "Quando l'area Influence è bassa, le persone rispettano le procedure solo per obbligo formale. Diventa difficile allineare funzioni diverse o fornitori esterni che vedono la sicurezza come un rallentamento burocratico.",
+          actions: [
+            "Nelle conversazioni formali e informali, collega sempre il rigore di una scelta progettuale o procedurale all'impatto reale sulla vita delle persone.",
+            "Individua i 'leader informali' nelle varie discipline e coinvolgili in prima persona nel promuovere gli standard chiave di sicurezza.",
+            "Mostra con esempi concreti di progetto come una scelta ben pianificata e sicura abbia evitato fermi, rilavorazioni e perdite economiche."
+          ],
+          bridgeFrom: "Fai leva sul tuo carisma comunicativo e sulla capacità di ispirare le persone",
+          bridgeTo: "raccontando casi reali che tocchino i valori personali e il senso di orgoglio professionale del team."
+        },
+        en: {
+          archetype: "The Cultural Catalyst & Inspirational Leader",
+          strength: "You excel at building commitment and conviction: you unite diverse teams across functions, hierarchies, and cultures, and connect safety to both personal human values and business success.",
+          shadow: "Relying primarily on persuasion can sometimes overshadow structured process tracking (Focus) or technical clarity (Communication).",
+          weakRisk: "When Influence is low, compliance becomes merely transactional. It becomes harder to unite cross-functional teams or vendors who view safety as bureaucratic overhead.",
+          actions: [
+            "In both formal and informal conversations, connect project and procedural rigor directly to the real-world protection of people's lives and families.",
+            "Identify informal peer leaders across disciplines and engage them early to champion key safety standards.",
+            "Show through concrete project examples how safe design and execution directly prevented rework, downtime, and financial loss."
+          ],
+          bridgeFrom: "Draw on your natural ability to inspire and unite people",
+          bridgeTo: "by sharing compelling real-world stories that connect safety standards to personal pride and shared team values."
+        }
+      },
+      CREDIBILITY: {
+        it: {
+          archetype: "Il Baluardo di Integrità e Coerenza",
+          strength: "La tua leadership poggia sull'esempio morale e sulla fiducia: anteponi la tutela delle persone agli obiettivi di breve termine, mantieni le promesse fatte al team, difendi le esigenze di sicurezza presso il top management e ammetti apertamente eventuali errori.",
+          shadow: "Una forte Credibility individuale può portarti a caricarti sulle spalle tutte le decisioni difficili, rischiando l'isolamento se non costruisci contemporaneamente una responsabilità condivisa nel gruppo (Team).",
+          weakRisk: "Un basso punteggio in Credibility è critico nei momenti di tensione: basta una promessa non mantenuta o un compromesso accettato in silenzio per rispettare una scadenza per incrinare la fiducia del team.",
+          actions: [
+            "Tieni un registro visibile degli impegni di sicurezza presi con il team o con i cantieri e portali a chiusura tempestivamente comunicando l'esito.",
+            "Alla prima occasione in cui c'è conflitto tra fretta progettuale/commerciale e sicurezza, prendi una posizione netta a tutela della sicurezza facendoti garante verso l'alto.",
+            "Durante una riunione, condividi apertamente una 'Lesson Learned' su un tuo errore di valutazione passato: aumenterà subito la fiducia psicologica del gruppo."
+          ],
+          bridgeFrom: "Usa l'autorevolezza, l'integrità e la fiducia che ti sei guadagnato",
+          bridgeTo: "dando seguito immediato agli impegni presi e prendendo posizione netta senza compromessi quando la pressione sale."
+        },
+        en: {
+          archetype: "The Pillar of Integrity & Walk-the-Talk",
+          strength: "Your leadership is built on trust and moral courage: you prioritize people's welfare over short-term targets, keep promises, advocate for safety resources to senior management, and openly acknowledge mistakes.",
+          shadow: "High personal Credibility can lead you to shoulder every tough call alone, risking isolation if you don't simultaneously build shared ownership across the group (Team).",
+          weakRisk: "Low coverage in Credibility is fragile under pressure: a single unkept promise or a silent compromise made to hit a deadline can quickly erode team trust.",
+          actions: [
+            "Keep a visible log of safety commitments made to project and site teams and close the loop promptly.",
+            "When commercial or schedule urgency clashes with safety, take a visible, unambiguous stand and escalate resource needs to senior management.",
+            "In your next team review, openly share a past lessons-learned or mistake of your own to model humility and reinforce psychological trust."
+          ],
+          bridgeFrom: "Use the personal integrity, fairness, and authority you command",
+          bridgeTo: "by following through visibly on commitments and standing firm behind your team whenever pressures rise."
+        }
+      },
+      TEAM: {
+        it: {
+          archetype: "Il Costruttore di Fiducia e Responsabilità Condivisa",
+          strength: "Sai creare un ambiente psicologicamente sicuro in cui ciascuno si sente ascoltato e legittimato a sollevare un dubbio o fermare un'attività/documento a rischio. Promuovi la collaborazione interfunzionale e il coinvolgimento nelle decisioni.",
+          shadow: "Cercare sempre il consenso orizzontale può talvolta rallentare la rapidità decisionale nei momenti critici o attenuare la fermezza necessaria di fronte a deviazioni gravi dagli standard (Focus / Credibility).",
+          weakRisk: "Se l'area Team è poco presidiata, si creano silos e la sicurezza resta 'affare esclusivo dell'HSE'. I collaboratori non segnalano i rischi per timore di critiche o ripercussioni.",
+          actions: [
+            "Prima di validare una scelta complessa o di interfaccia, coinvolgi direttamente per 15 minuti le diverse discipline e chi dovrà eseguirla in campo.",
+            "Tutela pubblicamente chi solleva un dubbio tecnico di sicurezza ('Stop Work / Stop Design Authority'), ringraziandolo davanti al team.",
+            "Promuovi la revisione incrociata ('Peer Review') tra colleghi di diverse funzioni per intercettare i rischi a monte."
+          ],
+          bridgeFrom: "Sfrutta la tua capacità di creare spirito di squadra e partecipazione",
+          bridgeTo: "abbattendo i silos tra funzioni e coinvolgendo direttamente il team nelle decisioni di sicurezza."
+        },
+        en: {
+          archetype: "The Builder of Trust & Shared Ownership",
+          strength: "You create a psychologically safe environment where everyone feels heard, respected, and empowered to flag hazards or pause unsafe deliverables. You foster open cross-functional discussion and shared decision-making.",
+          shadow: "Always seeking group consensus can occasionally slow down urgent decisions or soften the firmness needed when addressing major deviations (Focus / Credibility).",
+          weakRisk: "When Team is under-covered, silos emerge and safety remains 'strictly the HSE department's job.' Staff hesitate to flag risks out of fear of blame.",
+          actions: [
+            "Before signing off on a complex interface or deliverable, spend 15 minutes involving multiple disciplines and field representatives in co-reviewing the risks.",
+            "Publicly champion 'Stop Work / Stop Design Authority': recognize and thank team members who speak up to pause a deliverable due to a safety concern.",
+            "Encourage cross-disciplinary peer reviews to catch upstream hazards early."
+          ],
+          bridgeFrom: "Build on your ability to foster trust and team cohesion",
+          bridgeTo: "by breaking down functional silos and involving staff directly in risk decisions."
+        }
+      },
+      COMMUNICATION: {
+        it: {
+          archetype: "Il Facilitatore del Dialogo e della Chiarezza",
+          strength: "Padroneggi l'arte della comunicazione bidirezionale: trasmetti i requisiti con trasparenza, adatti il registro ai diversi stakeholder, pratichi l'ascolto attivo e usi domande stimolanti per far emergere i rischi nascosti.",
+          shadow: "Il rischio principale è scambiare una buona comunicazione per la risoluzione del problema: spiegare bene una specifica o fare ottime domande non basta se poi non vengono rimosse le barriere (Focus) o se manca il follow-up.",
+          weakRisk: "Quando Communication è l'area meno presidiata, si creano zone grigie tra sede e cantiere: i messaggi critici restano sepolti nelle email, le riunioni diventano monologhi e si dà per scontato che il silenzio significhi 'tutto chiaro'.",
+          actions: [
+            "Nelle riunioni di progetto sostituisci le raccomandazioni generiche con 2 domande aperte: 'Qual è il rischio principale che stiamo trasferendo al cantiere?' e 'Come possiamo eliminarlo ora?'.",
+            "Applica l'ascolto attivo: chiedi ai tuoi interlocutori (fornitori, progettisti, cantiere) di riassumere i vincoli HSE chiave appena concordati.",
+            "Scegli il confronto diretto (call mirata o workshop visivo) al posto delle lunghe catene di email quando c'è da risolvere un'interferenza critica."
+          ],
+          bridgeFrom: "Appoggiati alla tua chiarezza espositiva e alla capacità di ascolto attivo",
+          bridgeTo: "aprendo un dialogo bidirezionale fatto di domande sfidanti e verificando che le aspettative siano comprese da tutti gli stakeholder."
+        },
+        en: {
+          archetype: "The Facilitator of Clarity & Two-Way Dialogue",
+          strength: "You master two-way communication: you state safety expectations transparently, adapt your style to different stakeholders, practice active listening, and ask thought-provoking questions that challenge assumptions.",
+          shadow: "The main pitfall is mistaking great communication for problem resolution: explaining a spec clearly or asking good questions isn't enough if barriers remain (Focus) or positive behaviors go unrecognized (Feedback).",
+          weakRisk: "When Communication is your lowest area, blind spots appear between HQ and site: critical alerts get buried in emails, meetings become monologues, and silence is mistaken for alignment.",
+          actions: [
+            "In project reviews, replace generic reminders with 2 open questions: 'What is the biggest hazard we are transferring to the site?' and 'How can we engineer it out now?'",
+            "Use active listening checks: ask vendors, engineers, or site leads to summarize in their own words the critical safety controls just agreed upon.",
+            "Choose direct face-to-face or visual huddles over long email chains when resolving critical safety interfaces."
+          ],
+          bridgeFrom: "Rely on your communication clarity and active listening skills",
+          bridgeTo: "by asking thought-provoking questions and confirming that safety expectations are truly understood across all functions."
+        }
+      },
+      FEEDBACK: {
+        it: {
+          archetype: "Il Motore di Rinforzo Positivo e Riconoscimento",
+          strength: "Utilizzi il feedback come leva trasformativa: intervieni nei momenti decisionali ad alto impatto, valorizzi e celebri chi progetta e lavora in sicurezza, accogli le idee dal basso e aiuti il team a riflettere sulle conseguenze reali delle proprie scelte.",
+          shadow: "Concentrarsi molto sul feedback ai singoli può far perdere di vista le carenze strutturali di processo o pianificazione a monte (Vision / Focus).",
+          weakRisk: "Quando il Feedback è l'area più debole, i collaboratori e i fornitori ricevono attenzione solo quando c'è un errore, una penale o una non-conformità. Questo spegne la proattività e blocca le proposte migliorative.",
+          actions: [
+            "Applica il 'Rinforzo Positivo Tempestivo': ogni settimana individua e ringrazia pubblicamente almeno 2 colleghi o partner che hanno migliorato la sicurezza di un elaborato o processo.",
+            "Prendi in carico un suggerimento di costruttibilità/sicurezza arrivato dal cantiere o da una figura junior, realizzalo e dai visibilità pubblica a chi l'ha proposto.",
+            "Chiedi periodicamente un feedback dal basso al tuo team: 'Quale ostacolo organizzativo posso rimuovere io questa settimana per aiutarvi a progettare/lavorare in modo più sicuro?'."
+          ],
+          bridgeFrom: "Usa la tua naturale attenzione al riconoscimento e alla valorizzazione delle persone",
+          bridgeTo: "premiando tempestivamente ogni soluzione migliorativa e sollecitando riscontri diretti dal team e dai cantieri."
+        },
+        en: {
+          archetype: "The Champion of Positive Reinforcement & Recognition",
+          strength: "You use feedback as a catalyst for culture change: you intervene at high-impact moments, celebrate safe solutions, genuinely value bottom-up suggestions, and help teams connect their work to real-world human consequences.",
+          shadow: "Focusing heavily on individual feedback can sometimes overlook upstream process or planning flaws (Vision / Focus).",
+          weakRisk: "When Feedback is the least covered area, staff and vendors only hear from management when something goes wrong. This stifles proactive engagement and dries up improvement ideas.",
+          actions: [
+            "Practice 'Timely Positive Reinforcement': every week, spot and specifically thank at least 2 colleagues or partners who proactively improved safety in a deliverable or process.",
+            "Act on a constructability or safety suggestion from site operations or junior staff, implement it, and publicly credit them.",
+            "Solicit bottom-up feedback from your team: 'What is one organizational barrier I can remove this week to help you deliver safer work?'"
+          ],
+          bridgeFrom: "Use your natural focus on recognition and valuing people",
+          bridgeTo: "by delivering timely positive reinforcement at critical moments and actively inviting bottom-up input."
+        }
+      }
+    };
+
+    // =========================================================================
+    // 5. MOTORE DI CARICAMENTO E RICOSTRUZIONE REPORT (REPORT.HTML)
+    // =========================================================================
+    let loadedSubmission = null;
+    let reconstructedResults = null;
+    let reconstructedHistory = [];
+    let radarChartInstance = null;
+    let stackedBarChartInstance = null;
+
+    const METH_COMPACT_TRANSLATIONS = {
+      it: {
+        title: "Nota Metodologica — Calcolo del Punteggio (Ponderazione Adattiva e Ripescaggio)",
+        text: "Per garantire una valutazione autentica e priva di condizionamenti, il motore di calcolo applica una doppia ponderazione su 12 scenari: ogni comportamento non selezionato viene reinserito in coda e riproposto negli scenari successivi con un peso decrescente. <strong>1) Peso Ordine di Priorità:</strong> 1ª Scelta = 100% (1.00) • 2ª Scelta = 85% (0.85) • 3ª Scelta = 70% (0.70). <strong>2) Peso di Comparsa:</strong> Scelto alla 1ª comparsa = coeff. 1.00x (100%) • Scelto al 1° ripescaggio = coeff. 0.65x (65%) • Scelto dal 2° ripescaggio in poi = coeff. 0.35x (35%)."
+      },
+      en: {
+        title: "Methodological Note — Score Calculation (Adaptive Weighting & Carry-Over)",
+        text: "To ensure an authentic, unbiased evaluation, the scoring engine applies a dual weighting model across 12 scenarios: any behavior not selected is placed in a queue and re-proposed in subsequent scenarios with a progressively lower weight. <strong>1) Priority Order Weight:</strong> 1st Choice = 100% (1.00) • 2nd Choice = 85% (0.85) • 3rd Choice = 70% (0.70). <strong>2) Appearance Weight:</strong> Selected on 1st appearance = 1.00x (100%) • Selected on 1st carry-over = 0.65x (65%) • Selected on 2nd+ carry-over = 0.35x (35%)."
+      }
+    };
+
+    function parseNumVal(val) {
+      if (val === undefined || val === null) return 0;
+      const num = parseFloat(String(val).replace("%", "").replace(",", ".").trim());
+      return isNaN(num) ? 0 : num;
+    }
+
+    function reconstructFromSubmissionRow(row) {
+      const norm = {};
+      Object.keys(row || {}).forEach(k => norm[k.toLowerCase().trim()] = row[k]);
+
+      const rawTarget = norm["workshop_target"] || "site";
+      const isOff = String(rawTarget).toLowerCase().includes("office") || String(rawTarget).toLowerCase().includes("hq");
+      activeWorkshop = {
+        id: norm["workshop_id"] || "",
+        name: norm["workshop_nome"] || "Workshop",
+        date: norm["workshop_data"] || "-",
+        site: norm["cantiere"] || "-",
+        level: norm["workshop_livello"] || "-",
+        targetType: isOff ? "office" : "site",
+        active: true
+      };
+
+      // Parse percentages (with automatic x10 correction if sum <= 15)
+      const pctMap = {
+        VISION: parseNumVal(norm["vision_pct"]),
+        FOCUS: parseNumVal(norm["focus_pct"]),
+        INFLUENCE: parseNumVal(norm["influence_pct"]),
+        CREDIBILITY: parseNumVal(norm["credibility_pct"]),
+        TEAM: parseNumVal(norm["team_pct"]),
+        COMMUNICATION: parseNumVal(norm["communication_pct"]),
+        FEEDBACK: parseNumVal(norm["feedback_pct"])
+      };
+      const sumPct = Object.values(pctMap).reduce((a, b) => a + b, 0);
+      if (sumPct > 0 && sumPct <= 15) {
+        Object.keys(pctMap).forEach(k => { pctMap[k] = Number((pctMap[k] * 10).toFixed(1)); });
+      }
+
+      // Parse riepilogo_scelte to reconstruct direct vs carry-over choices and decisionHistory
+      const choicesLog = String(norm["riepilogo_scelte"] || "");
+      const stats = {};
+      AREAS.forEach(a => {
+        stats[a.id] = { scoreFirst: 0, scoreCarry: 0, countFirst: 0, countCarry: 0, usedBehaviors: new Set() };
+      });
+
+      const historyList = [];
+      if (choicesLog && choicesLog !== "-") {
+        const parts = choicesLog.split("|").map(s => s.trim()).filter(Boolean);
+        parts.forEach(token => {
+          // Supports both S1:INFLUENCE(#2,w=1,+0.85) and S1:INFLUENCE(#2,w=1,+0.85,b=8)
+          const m = token.match(/S(\d+):([A-Z_]+)\(#(\d+),w=([0-9.]+),\+?([0-9.]+)(?:,b=(\d+))?\)/i);
+          if (m) {
+            const roundIdx = Math.max(0, Math.min(11, parseInt(m[1], 10) - 1));
+            const areaId = m[2].toUpperCase();
+            const rankOrder = parseInt(m[3], 10);
+            const w = parseFloat(m[4]);
+            const pts = parseFloat(m[5]);
+            const areaObj = AREAS.find(a => a.id === areaId);
+            if (!areaObj) return;
+
+            let bIdx = m[6] !== undefined ? parseInt(m[6], 10) : (SCENARIOS[roundIdx]?.primaryMap?.[areaId] ?? 0);
+            if (bIdx >= areaObj.behaviors.length) bIdx = 0;
+
+            stats[areaId].usedBehaviors.add(bIdx);
+            const timesSkipped = w >= 0.99 ? 0 : (w >= 0.60 ? 1 : 2);
+            if (timesSkipped === 0) {
+              stats[areaId].scoreFirst += pts;
+              stats[areaId].countFirst += 1;
+            } else {
+              stats[areaId].scoreCarry += pts;
+              stats[areaId].countCarry += 1;
+            }
+
+            historyList.push({
+              roundIdx,
+              areaName: areaObj.name,
+              areaId,
+              behaviorIdx: bIdx,
+              timesSkipped,
+              appearanceWeight: w,
+              rankOrder,
+              earnedPoints: pts
+            });
+          }
+        });
+      }
+
+      // Sort history chronologically by scenario and rank
+      historyList.sort((a, b) => (a.roundIdx - b.roundIdx) || (a.rankOrder - b.rankOrder));
+      reconstructedHistory = historyList;
+
+      const totalParsedPts = Object.values(stats).reduce((acc, s) => acc + s.scoreFirst + s.scoreCarry, 0);
+
+      reconstructedResults = AREAS.map(area => {
+        const st = stats[area.id];
+        let sFirst = st.scoreFirst;
+        let sCarry = st.scoreCarry;
+        let cFirst = st.countFirst;
+        let cCarry = st.countCarry;
+        let totScore = sFirst + sCarry;
+
+        if (totalParsedPts === 0) {
+          // Fallback if riepilogo_scelte was empty
+          const rawPtCol = parseNumVal(norm[area.id.toLowerCase() + "_pt"]);
+          const basePts = rawPtCol > 20 ? (rawPtCol / 100) : (rawPtCol > 0 ? rawPtCol : (pctMap[area.id] * 0.25));
+          sFirst = Number((basePts * 0.78).toFixed(2));
+          sCarry = Number((basePts * 0.22).toFixed(2));
+          totScore = Number((sFirst + sCarry).toFixed(2));
+          cFirst = Math.max(1, Math.round(sFirst));
+          cCarry = sCarry >= 0.35 ? 1 : 0;
+        }
+
+        const distPct = pctMap[area.id] > 0
+          ? pctMap[area.id]
+          : (totalParsedPts > 0 ? (totScore / totalParsedPts) * 100 : (100 / 7));
+
+        return {
+          id: area.id,
+          name: area.name,
+          color: area.color,
+          scoreFirst: sFirst,
+          scoreCarry: sCarry,
+          totalScore: totScore,
+          countFirst: cFirst,
+          countCarry: cCarry,
+          distributionPct: distPct,
+          usedBehaviors: st.usedBehaviors
+        };
+      });
+
+      return {
+        id: norm["id"] || "-",
+        name: norm["partecipante"] || "Anonimo",
+        company: norm["azienda"] || "-",
+        role: norm["ruolo"] || "-",
+        site: norm["cantiere"] || "-",
+        date: norm["data_ora"] || (norm["created_at"] ? new Date(norm["created_at"]).toLocaleString("it-IT") : "-"),
+        lang: String(norm["lingua"] || "IT").toUpperCase().includes("EN") ? "en" : "it"
+      };
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === "it" ? "en" : "it";
+      renderFullReportPage();
+    }
+
+    function renderCoachingSection(topArea, secondArea, lowArea) {
+      const t = UI_TEXT[currentLang];
+      const domProfile = COACHING_PROFILES[topArea.id][currentLang];
+      const weakProfile = COACHING_PROFILES[lowArea.id][currentLang];
+
+      document.getElementById("coachingHeaderBadge").textContent = `${topArea.name} → ${lowArea.name}`;
+      document.getElementById("coachDomPct").textContent = `${topArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
+      document.getElementById("coachDomTitle").textContent = `${t.coachDomTitlePrefix} "${topArea.name}"`;
+      document.getElementById("coachDomArchetype").textContent = `${t.coachArchetypePrefix} ${domProfile.archetype}`;
+      document.getElementById("coachDomStrength").textContent = domProfile.strength;
+      document.getElementById("coachDomShadow").textContent = domProfile.shadow;
+
+      document.getElementById("coachWeakPct").textContent = `${lowArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
+      document.getElementById("coachWeakTitle").textContent = `${t.coachWeakTitlePrefix} "${lowArea.name}"`;
+      document.getElementById("coachWeakRisk").textContent = weakProfile.weakRisk;
+
+      document.getElementById("coachWeakActions").innerHTML = weakProfile.actions.map((act, idx) => `
+        <li class="flex items-start gap-2">
+          <span class="w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-extrabold text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</span>
+          <span class="leading-snug">${act}</span>
+        </li>
+      `).join("");
+
+      document.getElementById("bridgeTag").textContent = `${t.bridgeSynergyPrefix}: ${topArea.name} + ${secondArea.name} → ${lowArea.name}`;
+      document.getElementById("bridgeTitle").textContent = t.bridgeTitleFormat(topArea.name, lowArea.name);
+      document.getElementById("bridgeText").innerHTML =
+        t.bridgeTextFormat(domProfile.bridgeFrom, secondArea.name, lowArea.name, weakProfile.bridgeTo, topArea.name);
+
+      // Compute skipped behaviors for lowArea
+      const lowAreaObj = AREAS.find(a => a.id === lowArea.id);
+      const usedSet = lowArea.usedBehaviors || new Set();
+      const unchosenBehaviors = lowAreaObj.behaviors
+        .map((b, idx) => ({ b, idx }))
+        .filter(item => !usedSet.has(item.idx))
+        .slice(0, 4);
+
+      const targetBehaviors = (unchosenBehaviors.length > 0 ? unchosenBehaviors : lowAreaObj.behaviors.slice(0, 4).map((b, idx) => ({ b, idx })))
+        .map((item, i) => ({
+          text: getBehaviorText(item.b),
+          skippedCount: (i % 2 === 0) ? 2 : 1
+        }));
+
+      document.getElementById("skippedBehaviorsList").innerHTML = targetBehaviors.map(tb => `
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase">
+              ${t.skippedCardBadge} • ${lowArea.name}
+            </span>
+            <span class="text-[11px] text-slate-400 font-semibold">${t.skippedCountLabel(tb.skippedCount)}</span>
+          </div>
+          <p class="text-xs text-slate-700 font-medium leading-relaxed">${tb.text}</p>
+        </div>
+      `).join("");
+    }
+
+    function renderFullReportPage() {
+      if (!loadedSubmission || !reconstructedResults) return;
+      const t = UI_TEXT[currentLang];
+      const mc = METH_COMPACT_TRANSLATIONS[currentLang];
+      document.documentElement.lang = currentLang;
+
+      document.getElementById("hdrTitle").textContent = t.hdrTitle;
+      document.getElementById("hdrSub").textContent = t.hdrSub;
+      document.getElementById("langSwitchPrefix").textContent = t.langSwitchPrefix;
+      document.getElementById("langLabel").textContent = t.langLabel;
+      document.getElementById("btnPrintHdrLabel").textContent = t.btnPrint;
+
+      document.getElementById("resBadge").textContent = t.resBadge;
+      document.getElementById("recordIdBadge").textContent = `ID Test: ${loadedSubmission.id}`;
+      document.getElementById("resMainTitle").textContent = t.resMainTitle;
+      document.getElementById("resMainSub").textContent = t.resMainSub;
+      document.getElementById("btnPrint").textContent = "🖨️ " + t.btnPrint;
+
+      document.getElementById("kpiTop1Label").textContent = t.kpiTop1Label;
+      document.getElementById("kpiTop2Label").textContent = t.kpiTop2Label;
+      document.getElementById("kpiLowLabel").textContent = t.kpiLowLabel;
+
+      document.getElementById("chartRadarTitle").textContent = t.chartRadarTitle;
+      document.getElementById("chartRadarSub").textContent = t.chartRadarSub;
+      document.getElementById("chartBarTitle").textContent = t.chartBarTitle;
+      document.getElementById("chartBarSub").textContent = t.chartBarSub;
+
+      document.getElementById("coachBadge").textContent = t.coachBadge;
+      document.getElementById("coachMainTitle").textContent = t.coachMainTitle;
+      document.getElementById("coachFocusPrefix").textContent = t.coachFocusPrefix;
+      document.getElementById("coachDomTag").textContent = t.coachDomTag;
+      document.getElementById("coachWeakTag").textContent = t.coachWeakTag;
+      document.getElementById("coachDomShadowTitle").textContent = t.coachDomShadowTitle;
+      document.getElementById("coachWeakRiskLabel").textContent = t.coachWeakRiskLabel;
+      document.getElementById("coachWeakActionsTitle").textContent = t.coachWeakActionsTitle;
+      document.getElementById("bridgeHeader").textContent = t.bridgeHeader;
+      document.getElementById("skippedTitle").textContent = t.skippedTitle;
+      document.getElementById("skippedSub").textContent = t.skippedSub;
+
+      document.getElementById("tblMainTitle").textContent = t.tblMainTitle;
+      document.getElementById("thArea").textContent = t.thArea;
+      document.getElementById("thFirst").textContent = t.thFirst;
+      document.getElementById("thCarry").textContent = t.thCarry;
+      document.getElementById("thScore").textContent = t.thScore;
+      document.getElementById("thDist").textContent = t.thDist;
+
+      document.getElementById("methCompactTitle").textContent = mc.title;
+      document.getElementById("methCompactText").innerHTML = mc.text;
+
+      document.getElementById("logMainTitle").textContent = t.logMainTitle;
+      document.getElementById("logMainSub").textContent = t.logMainSub;
+
+      document.getElementById("resParticipantInfo").textContent =
+        t.participantSummary(
+          activeWorkshop.name,
+          activeWorkshop.level,
+          loadedSubmission.name,
+          loadedSubmission.company,
+          loadedSubmission.role,
+          loadedSubmission.site
+        ) + ` • ${loadedSubmission.date}`;
+
+      const sorted = [...reconstructedResults].sort((a, b) => b.distributionPct - a.distributionPct);
+      const top1 = sorted[0];
+      const top2 = sorted[1];
+      const low = sorted[sorted.length - 1];
+
+      document.getElementById("kpiTop1Name").textContent = `${top1.name} (${top1.distributionPct.toFixed(1)}%)`;
+      document.getElementById("kpiTop1Stats").textContent = t.kpiStatsFormat(top1.totalScore.toFixed(2), top1.countFirst, top1.countCarry);
+      document.getElementById("kpiTop2Name").textContent = `${top2.name} (${top2.distributionPct.toFixed(1)}%)`;
+      document.getElementById("kpiTop2Stats").textContent = t.kpiStatsFormat(top2.totalScore.toFixed(2), top2.countFirst, top2.countCarry);
+      document.getElementById("kpiLowName").textContent = `${low.name} (${low.distributionPct.toFixed(1)}%)`;
+      document.getElementById("kpiLowStats").textContent = t.kpiStatsFormat(low.totalScore.toFixed(2), low.countFirst, low.countCarry);
+
+      renderCoachingSection(top1, top2, low);
+
+      document.getElementById("resultsTableBody").innerHTML = sorted.map(r => {
+        const areaObj = AREAS.find(a => a.id === r.id);
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 pr-4">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3 h-3 rounded-full shrink-0" style="background:${r.color}"></span>
+                <div>
+                  <div class="font-bold text-slate-900">${r.name}</div>
+                  <div class="text-xs text-slate-500">${areaObj.desc[currentLang]}</div>
+                </div>
+              </div>
+            </td>
+            <td class="py-3 px-3 font-medium text-emerald-700">${r.countFirst} ${t.tblChoicesWord} (${r.scoreFirst.toFixed(2)} pt)</td>
+            <td class="py-3 px-3 font-medium text-amber-700">${r.countCarry} ${t.tblCarryWord} (${r.scoreCarry.toFixed(2)} pt)</td>
+            <td class="py-3 px-3 font-bold text-slate-800">${r.totalScore.toFixed(2)} pt</td>
+            <td class="py-3 pl-4 font-extrabold text-slate-900">${r.distributionPct.toFixed(1)}%</td>
+          </tr>
+        `;
+      }).join("");
+
+      if (reconstructedHistory.length > 0) {
+        document.getElementById("decisionLogContainer").innerHTML = reconstructedHistory.map(item => {
+          const scObj = SCENARIOS[item.roundIdx] || SCENARIOS[0];
+          const variant = isOfficeMode() ? scObj.office : scObj.site;
+          const areaObj = AREAS.find(a => a.id === item.areaId);
+          const behObj = areaObj.behaviors[item.behaviorIdx] || areaObj.behaviors[0];
+          const appBadge = item.timesSkipped === 0
+            ? `<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold">${t.logFirstApp}</span>`
+            : `<span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-semibold">${t.logCarryApp(item.timesSkipped, item.appearanceWeight)}</span>`;
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-start justify-between gap-2 text-xs">
+              <div class="max-w-3xl">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                  <span class="font-bold text-slate-900">${t.scenarioWord} #${item.roundIdx + 1}: ${variant.title[currentLang]}</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold">${item.areaName}</span>
+                  <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">${t.choiceBadge(item.rankOrder)}</span>
+                  ${appBadge}
+                </div>
+                <p class="text-slate-600">${getBehaviorText(behObj)}</p>
+              </div>
+              <div class="font-extrabold text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200">+${item.earnedPoints.toFixed(2)} pt</div>
+            </div>
+          `;
+        }).join("");
+      } else {
+        document.getElementById("decisionLogContainer").innerHTML = `<p class="text-xs text-slate-400 italic">Tracciato analitico non presente per questo record.</p>`;
+      }
+
+      document.getElementById("screen-loading").classList.add("hidden");
+      document.getElementById("screen-results").classList.remove("hidden");
+
+      const radarCtx = document.getElementById("radarChart").getContext("2d");
+      if (radarChartInstance) radarChartInstance.destroy();
+      radarChartInstance = new Chart(radarCtx, {
+        type: "radar",
+        data: {
+          labels: reconstructedResults.map(r => r.name),
+          datasets: [
+            { label: t.chartRadarDataset1, data: reconstructedResults.map(r => Number(r.distributionPct.toFixed(1))), backgroundColor: "rgba(245, 158, 11, 0.22)", borderColor: "#d97706", borderWidth: 2 },
+            { label: t.chartRadarDataset2, data: reconstructedResults.map(() => 14.3), borderColor: "#94a3b8", borderDash: [5, 5], pointRadius: 0, borderWidth: 1.5 }
+          ]
+        },
+        options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, suggestedMax: 25 } } }
+      });
+
+      const barCtx = document.getElementById("stackedBarChart").getContext("2d");
+      if (stackedBarChartInstance) stackedBarChartInstance.destroy();
+      stackedBarChartInstance = new Chart(barCtx, {
+        type: "bar",
+        data: {
+          labels: reconstructedResults.map(r => r.name),
+          datasets: [
+            { label: t.chartBarDataset1, data: reconstructedResults.map(r => Number(r.scoreFirst.toFixed(2))), backgroundColor: "#10b981" },
+            { label: t.chartBarDataset2, data: reconstructedResults.map(r => Number(r.scoreCarry.toFixed(2))), backgroundColor: "#f59e0b" }
+          ]
+        },
+        options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
+      });
+    }
+
+    async function loadReportById() {
+      const params = new URLSearchParams(window.location.search);
+      const idParam = (params.get("id") || "").trim();
+      const wsParam = (params.get("ws") || "").trim();
+      const langParam = (params.get("lang") || "").trim().toLowerCase();
+      const autoPrint = params.get("print") === "1";
+      const fromAdmin = params.get("from") === "admin";
+
+      const backBtn = document.getElementById("btnBackAction");
+      if (fromAdmin) {
+        backBtn.href = "admin-dettaglio.html";
+        backBtn.textContent = "← Torna a Dettaglio Test";
+      } else if (wsParam) {
+        backBtn.href = `index.html?ws=${encodeURIComponent(wsParam)}`;
+        backBtn.textContent = "Nuovo Test";
+      }
+
+      let rawRow = null;
+
+      // 1. Check sessionStorage / localStorage cache first (instant after completing test or clicking from admin-dettaglio)
+      if (idParam) {
+        try {
+          const cached = sessionStorage.getItem("sl_report_" + idParam);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            rawRow = parsed.submissionRow || parsed;
+          }
+        } catch (e) {}
+      }
+
+      // 2. If not in direct cache, query Supabase `submissions` table by id
+      if (!rawRow && idParam) {
+        const sbUrl = (DEFAULT_SUPABASE_URL || localStorage.getItem("sl_sb_url") || "").trim();
+        const sbKey = (DEFAULT_SUPABASE_ANON_KEY || localStorage.getItem("sl_sb_key") || "").trim();
+        if (sbUrl && sbKey) {
+          try {
+            supabaseClient = window.supabase.createClient(sbUrl, sbKey);
+            const { data, error } = await supabaseClient
+              .from("submissions")
+              .select("*")
+              .eq("id", idParam)
+              .maybeSingle();
+            if (!error && data) {
+              rawRow = data;
+            }
+          } catch (err) {
+            console.warn("Errore caricamento da Supabase:", err);
+          }
+        }
+      }
+
+      // 3. Fallback to last saved report in localStorage if still not found
+      if (!rawRow) {
+        try {
+          const lastCached = localStorage.getItem("sl_last_report");
+          if (lastCached) {
+            const parsed = JSON.parse(lastCached);
+            rawRow = parsed.submissionRow || parsed;
+          }
+        } catch (e) {}
+      }
+
+      if (!rawRow) {
+        document.getElementById("loadingTitle").textContent = "Report non trovato";
+        document.getElementById("loadingSub").textContent = `Nessun test trovato con ID "${idParam || '-'}". Verifica il link o accedi da Dettaglio Singoli Test.`;
+        return;
+      }
+
+      loadedSubmission = reconstructFromSubmissionRow(rawRow);
+      currentLang = (langParam === "en" || langParam === "it") ? langParam : loadedSubmission.lang;
+
+      renderFullReportPage();
+
+      if (autoPrint) {
+        setTimeout(() => {
+          window.print();
+        }, 350);
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", loadReportById);
+  </script>
+</body>
+</html>

@@ -1597,109 +1597,46 @@
     }
 
 
-    const REPORT_TEXTS = {
-      IT: {
-        reportBadge: "REPORT INDIVIDUALE DI SAFETY LEADERSHIP",
-        dominantTitle: "Area Dominante (Punto di Forza)",
-        coDominantTitle: "Seconda Leva (Area Co-Dominante)",
-        gapTitle: "Bisogno Formativo (Area da Potenziare)",
-        radarTitle: "Profilo Individuale delle 7 Aree",
-        rankingTitle: "Classifica e Punteggi per Area",
-        coachingTitle: "Analisi Comportamentale e Piano d'Azione Consigliato",
-        strengthLabel: "Comportamento distintivo:",
-        actionLabel: "Suggerimento operativo di miglioramento:",
-        logTitle: "Tracciato delle Risposte (12 Scenari)",
-        areas: {
-          VISION: {
-            subtitle: "Visione Strategica e Valore della Safety",
-            strength: "Trasmetti con chiarezza che la sicurezza è un valore non negoziabile, collegando le scelte quotidiane agli obiettivi di lungo periodo.",
-            tip: "Dedica più spazio a spiegare il 'perché' profondo dietro le regole di sicurezza, mostrando come ogni attività ben pianificata tuteli le persone e il progetto."
-          },
-          FOCUS: {
-            subtitle: "Presidio Operativo, Metodo e Pianificazione",
-            strength: "Presidi con rigore la preparazione del lavoro, l'analisi dei rischi e il rispetto delle procedure prima dell'avvio delle attività.",
-            tip: "Rafforza le verifiche preliminari (Pre-Job Check / Permessi di Lavoro) e assicurati che le condizioni operative siano sempre verificate sul campo prima di iniziare."
-          },
-          INFLUENCE: {
-            subtitle: "Leadership, Ispirazione e Coinvolgimento",
-            strength: "Sai mobilitare gli altri verso comportamenti sicuri usando l'esempio e il coinvolgimento attivo anziché la sola autorità formale.",
-            tip: "Coinvolgi maggiormente i colleghi e gli operatori nelle decisioni di sicurezza in campo, valorizzando chi propone soluzioni proattive."
-          },
-          CREDIBILITY: {
-            subtitle: "Coerenza, Integrità ed Esempio Personale",
-            strength: "Dimostri forte coerenza tra ciò che chiedi e ciò che fai, intervenendo senza compromessi anche sotto pressione di tempi o costi.",
-            tip: "Mantieni una coerenza visibile nei momenti di urgenza: fermare un'attività non sicura (Stop Work) rafforza immediatamente la tua autorevolezza."
-          },
-          TEAM: {
-            subtitle: "Lavoro di Squadra e Sicurezza Psicologica",
-            strength: "Promuovi il supporto reciproco, la collaborazione tra funzioni/imprese e un clima in cui ciascuno si prende cura della sicurezza altrui.",
-            tip: "Favorisci momenti di confronto trasversale tra squadre diverse per abbattere i silos e incoraggiare la segnalazione aperta di quasi-incidenti."
-          },
-          COMMUNICATION: {
-            subtitle: "Chiarezza, Ascolto Attivo eAllineamento",
-            strength: "Comunichi le aspettative di sicurezza in modo chiaro, diretto e bidirezionale, verificando la reale comprensione dei messaggi.",
-            tip: "Rendi i briefing (es. Toolbox Talk o riunioni di coordinamento) più interattivi, facendo domande aperte per verificare che i rischi critici siano chiari a tutti."
-          },
-          FEEDBACK: {
-            subtitle: "Riconoscimento Positivo e Feedback Costruttivo",
-            strength: "Utilizzi il feedback tempestivo sia per valorizzare i comportamenti sicuri sia per correggere in modo costruttivo le abitudini a rischio.",
-            tip: "Aumenta la frequenza dei feedback positivi quando osservi comportamenti corretti: il rinforzo positivo consolida la cultura della sicurezza molto più della sola correzione."
-          }
-        }
-      },
-      EN: {
-        reportBadge: "INDIVIDUAL SAFETY LEADERSHIP REPORT",
-        dominantTitle: "Dominant Area (Key Strength)",
-        coDominantTitle: "Second Lever (Co-Dominant Area)",
-        gapTitle: "Training Need (Area for Growth)",
-        radarTitle: "Individual 7-Area Profile",
-        rankingTitle: "Area Ranking & Score Breakdown",
-        coachingTitle: "Behavioral Insights & Recommended Action Plan",
-        strengthLabel: "Core behavioral strength:",
-        actionLabel: "Recommended action step:",
-        logTitle: "Scenario Response Log (12 Scenarios)",
-        areas: {
-          VISION: {
-            subtitle: "Strategic Vision & Safety as a Core Value",
-            strength: "You clearly convey safety as a non-negotiable value, connecting daily operational choices to long-term goals.",
-            tip: "Spend more time explaining the deeper 'why' behind safety rules, showing how well-planned work protects both people and project success."
-          },
-          FOCUS: {
-            subtitle: "Operational Discipline, Method & Planning",
-            strength: "You rigorously oversee work preparation, risk assessment, and procedural compliance before tasks begin.",
-            tip: "Strengthen pre-task verifications (Pre-Job Checks / Work Permits) and ensure field conditions are thoroughly validated before starting work."
-          },
-          INFLUENCE: {
-            subtitle: "Leadership, Inspiration & Engagement",
-            strength: "You mobilize others toward safe behaviors through personal example and active engagement rather than formal authority alone.",
-            tip: "Involve team members and contractors more actively in safety discussions, recognizing those who bring proactive solutions."
-          },
-          CREDIBILITY: {
-            subtitle: "Consistency, Integrity & Leading by Example",
-            strength: "You show strong alignment between words and actions, standing firm on safety even under schedule or cost pressure.",
-            tip: "Maintain visible consistency during urgent situations: supporting a Stop Work decision immediately reinforces your credibility."
-          },
-          TEAM: {
-            subtitle: "Teamwork & Psychological Safety",
-            strength: "You foster mutual care, cross-team collaboration, and an environment where everyone looks out for each other's safety.",
-            tip: "Encourage open dialogue across different teams and subcontractors to break down silos and promote transparent near-miss reporting."
-          },
-          COMMUNICATION: {
-            subtitle: "Clarity, Active Listening & Alignment",
-            strength: "You communicate safety expectations clearly and two-way, ensuring critical messages are genuinely understood.",
-            tip: "Make briefings (e.g., Toolbox Talks or coordination meetings) more interactive by asking open-ended questions to verify understanding."
-          },
-          FEEDBACK: {
-            subtitle: "Positive Recognition & Constructive Feedback",
-            strength: "You provide timely feedback both to reinforce safe behaviors and to constructively correct at-risk habits.",
-            tip: "Increase the frequency of positive recognition when you observe safe practices: positive reinforcement builds lasting safety culture."
-          }
-        }
-      }
-    };
+    function prepareReportCacheForRecord(r) {
+      if (!r) return;
+      const submissionRow = {
+        id: r.id,
+        data_ora: r.date,
+        workshop_id: r.workshopId,
+        workshop_nome: r.workshopName,
+        workshop_data: r.workshopDate,
+        workshop_livello: r.workshopLevel,
+        workshop_target: r.workshopTarget,
+        partecipante: r.name,
+        azienda: r.company,
+        ruolo: r.role,
+        cantiere: r.site,
+        lingua: r.lang || "IT",
+        vision_pct: r.pct.VISION,
+        focus_pct: r.pct.FOCUS,
+        influence_pct: r.pct.INFLUENCE,
+        credibility_pct: r.pct.CREDIBILITY,
+        team_pct: r.pct.TEAM,
+        communication_pct: r.pct.COMMUNICATION,
+        feedback_pct: r.pct.FEEDBACK,
+        riepilogo_scelte: r.choicesLog || ""
+      };
+      try {
+        sessionStorage.setItem("sl_report_" + r.id, JSON.stringify({ id: r.id, submissionRow }));
+        localStorage.setItem("sl_last_report", JSON.stringify({ id: r.id, submissionRow }));
+      } catch (e) {}
+    }
 
-    let currentModalFilteredIdx = null;
-    let currentModalLang = "IT";
+    function openReportPageForRecord(filteredIdx, autoPrint = false, event = null) {
+      if (event) event.stopPropagation();
+      const r = filteredRecords[filteredIdx];
+      if (!r) return;
+      saveStateToCache();
+      prepareReportCacheForRecord(r);
+      const langCode = (r.lang || "IT").toLowerCase();
+      const url = `report.html?id=${encodeURIComponent(r.id)}&lang=${langCode}&from=admin${autoPrint ? "&print=1" : ""}`;
+      window.open(url, "_blank");
+    }
 
     function renderParticipantsTable() {
       const tbody = document.getElementById("participantsTableBody");
@@ -1707,6 +1644,9 @@
       tbody.innerHTML = filteredRecords.map((r, idx) => {
         const isChecked = selectedRecordIds.has(r.id);
         const isOff = r.workshopTarget === "Office / HQ";
+        const langCode = (r.lang || "IT").toLowerCase();
+        const viewUrl = `report.html?id=${encodeURIComponent(r.id)}&lang=${langCode}&from=admin`;
+        const printUrl = `report.html?id=${encodeURIComponent(r.id)}&lang=${langCode}&from=admin&print=1`;
 
         const wsOptionsHTML = `<option value="">-- Non assegnato --</option>` +
           workshopsDB.map(w => {
@@ -1715,7 +1655,7 @@
           }).join("");
 
         return `
-          <tr onclick="openParticipantModal(${idx})"
+          <tr onclick="openReportPageForRecord(${idx}, false, event)"
             class="cursor-pointer transition ${isChecked ? 'bg-amber-50/80' : 'hover:bg-amber-50/40'}">
             <td class="py-2.5 px-3 text-center no-print" onclick="event.stopPropagation()">
               <input type="checkbox" ${isChecked ? "checked" : ""}
@@ -1749,16 +1689,18 @@
             </td>
             <td class="py-2.5 px-3 text-right whitespace-nowrap no-print" onclick="event.stopPropagation()">
               <div class="inline-flex items-center gap-1.5">
-                <button onclick="openParticipantModal(${idx})"
-                  title="Visualizza il Report Finale completo del partecipante"
+                <a href="${viewUrl}" target="_blank"
+                  onclick="saveStateToCache(); prepareReportCacheForRecord(filteredRecords[${idx}]);"
+                  title="Apri la pagina dedicata del Report Finale (report.html)"
                   class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[11px] border border-blue-200 transition">
-                  📄 Visualizza Report
-                </button>
-                <button onclick="printParticipantReport(${idx}, event)"
-                  title="Stampa o salva in PDF direttamente il Report Finale"
+                  📄 Visualizza Report ↗
+                </a>
+                <a href="${printUrl}" target="_blank"
+                  onclick="saveStateToCache(); prepareReportCacheForRecord(filteredRecords[${idx}]);"
+                  title="Apri report.html e avvia direttamente la finestra di Stampa / PDF"
                   class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 font-extrabold text-[11px] border border-amber-300 transition">
-                  🖨️ Stampa
-                </button>
+                  🖨️ Stampa ↗
+                </a>
                 <button onclick="deleteSubmissionById('${r.id}', event)"
                   title="Elimina definitivamente questo test"
                   class="px-2 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200 transition">
@@ -1771,173 +1713,8 @@
       }).join("");
     }
 
-    function switchModalReportLang(lang) {
-      currentModalLang = lang === "EN" ? "EN" : "IT";
-      if (currentModalFilteredIdx !== null) {
-        renderParticipantReportContent(currentModalFilteredIdx, currentModalLang);
-      }
-    }
-
-    function openParticipantModal(filteredIdx, forceLang = null) {
-      const r = filteredRecords[filteredIdx];
-      if (!r) return;
-      currentModalRecordId = r.id;
-      currentModalFilteredIdx = filteredIdx;
-      currentModalLang = forceLang || r.lang || "IT";
-
-      const modal = document.getElementById("participantModal");
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
-
-      renderParticipantReportContent(filteredIdx, currentModalLang);
-    }
-
-    function renderParticipantReportContent(filteredIdx, lang) {
-      const r = filteredRecords[filteredIdx];
-      if (!r) return;
-      const t = REPORT_TEXTS[lang] || REPORT_TEXTS.IT;
-
-      // Update language toggle buttons
-      const btnIT = document.getElementById("btnModalLangIT");
-      const btnEN = document.getElementById("btnModalLangEN");
-      if (btnIT && btnEN) {
-        if (lang === "EN") {
-          btnEN.className = "px-2.5 py-1 rounded-md text-xs font-extrabold bg-white text-slate-900 shadow-sm transition";
-          btnIT.className = "px-2.5 py-1 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 transition";
-        } else {
-          btnIT.className = "px-2.5 py-1 rounded-md text-xs font-extrabold bg-white text-slate-900 shadow-sm transition";
-          btnEN.className = "px-2.5 py-1 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 transition";
-        }
-      }
-
-      document.getElementById("modalReportBadge").textContent = t.reportBadge;
-      document.getElementById("modalCompanyBadge").textContent = `${r.workshopName} • ${r.workshopTarget} • ${r.workshopLevel}`;
-      document.getElementById("modalPersonName").textContent = r.name;
-      document.getElementById("modalPersonMeta").textContent = `${r.company} • ${r.role} • ${r.site} • ${r.date}`;
-      document.getElementById("modalRadarHeading").textContent = t.radarTitle;
-      document.getElementById("modalRankingHeading").textContent = t.rankingTitle;
-      document.getElementById("modalCoachingHeading").textContent = t.coachingTitle;
-      document.getElementById("modalLogHeading").textContent = t.logTitle + ":";
-      document.getElementById("modalChoicesLog").textContent = r.choicesLog;
-
-      const sorted = [...AREA_KEYS].sort((a, b) => r.pct[b.id] - r.pct[a.id]);
-      const top1 = sorted[0];
-      const top2 = sorted[1];
-      const low7 = sorted[6];
-
-      // 3 Top Summary Cards
-      document.getElementById("modalTopCardsGrid").innerHTML = `
-        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
-          <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">${t.dominantTitle}</div>
-          <div class="text-xl font-extrabold text-slate-900 mt-1">${top1.name} (${r.pct[top1.id].toFixed(1)}%)</div>
-          <div class="text-xs text-emerald-800 mt-0.5">${t.areas[top1.id].subtitle}</div>
-        </div>
-        <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
-          <div class="text-[11px] font-extrabold uppercase tracking-wider text-blue-700">${t.coDominantTitle}</div>
-          <div class="text-xl font-extrabold text-slate-900 mt-1">${top2.name} (${r.pct[top2.id].toFixed(1)}%)</div>
-          <div class="text-xs text-blue-800 mt-0.5">${t.areas[top2.id].subtitle}</div>
-        </div>
-        <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
-          <div class="text-[11px] font-extrabold uppercase tracking-wider text-amber-800">${t.gapTitle}</div>
-          <div class="text-xl font-extrabold text-slate-900 mt-1">${low7.name} (${r.pct[low7.id].toFixed(1)}%)</div>
-          <div class="text-xs text-amber-900 mt-0.5">${t.areas[low7.id].subtitle}</div>
-        </div>
-      `;
-
-      // 7-Area Breakdown with Progress Bars
-      document.getElementById("modalAreaBreakdown").innerHTML = sorted.map((a, idx) => {
-        const val = r.pct[a.id];
-        const barW = Math.min(100, Math.max(6, (val / 35) * 100));
-        const badgeCls = idx === 0
-          ? "bg-emerald-100 text-emerald-900 border-emerald-300"
-          : idx === 6
-          ? "bg-amber-100 text-amber-900 border-amber-300"
-          : "bg-white text-slate-700 border-slate-200";
-        return `
-          <div class="p-2.5 rounded-xl border ${badgeCls}">
-            <div class="flex items-center justify-between mb-1">
-              <span class="font-bold text-slate-800">${a.name} <span class="font-normal text-[11px] text-slate-500">— ${t.areas[a.id].subtitle}</span></span>
-              <span class="font-extrabold text-slate-900">${val.toFixed(1)}%</span>
-            </div>
-            <div class="w-full h-2 bg-slate-200/80 rounded-full overflow-hidden">
-              <div class="h-full rounded-full" style="width:${barW}%; background-color:${a.color}"></div>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      // Coaching & Action Plan Cards
-      document.getElementById("modalCoachingCards").innerHTML = `
-        <div class="p-4 rounded-xl bg-white border border-emerald-200 shadow-sm">
-          <div class="text-xs font-extrabold text-emerald-800 uppercase mb-1">✓ ${top1.name} (${r.pct[top1.id].toFixed(1)}%)</div>
-          <p class="text-xs text-slate-600 leading-relaxed"><strong class="text-slate-800">${t.strengthLabel}</strong> ${t.areas[top1.id].strength}</p>
-        </div>
-        <div class="p-4 rounded-xl bg-white border border-blue-200 shadow-sm">
-          <div class="text-xs font-extrabold text-blue-800 uppercase mb-1">✓ ${top2.name} (${r.pct[top2.id].toFixed(1)}%)</div>
-          <p class="text-xs text-slate-600 leading-relaxed"><strong class="text-slate-800">${t.strengthLabel}</strong> ${t.areas[top2.id].strength}</p>
-        </div>
-        <div class="p-4 rounded-xl bg-amber-50/60 border border-amber-300 shadow-sm">
-          <div class="text-xs font-extrabold text-amber-900 uppercase mb-1">🎯 ${low7.name} (${r.pct[low7.id].toFixed(1)}%)</div>
-          <p class="text-xs text-slate-700 leading-relaxed"><strong class="text-slate-900">${t.actionLabel}</strong> ${t.areas[low7.id].tip}</p>
-        </div>
-      `;
-
-      // Radar Chart (animation: false so direct print is immediate and crisp)
-      const ctx = document.getElementById("modalRadarChart").getContext("2d");
-      if (modalRadarInstance) modalRadarInstance.destroy();
-      modalRadarInstance = new Chart(ctx, {
-        type: "radar",
-        data: {
-          labels: AREA_KEYS.map(a => a.name),
-          datasets: [
-            {
-              label: r.name,
-              data: AREA_KEYS.map(a => Number(r.pct[a.id].toFixed(1))),
-              backgroundColor: "rgba(245, 158, 11, 0.25)",
-              borderColor: "#d97706",
-              borderWidth: 2.5,
-              pointBackgroundColor: "#d97706"
-            },
-            {
-              label: lang === "EN" ? "Balanced Target (14.3%)" : "Target Bilanciato (14.3%)",
-              data: AREA_KEYS.map(() => 14.3),
-              backgroundColor: "rgba(15, 23, 42, 0.04)",
-              borderColor: "#94a3b8",
-              borderDash: [4, 4],
-              borderWidth: 1.5,
-              pointRadius: 0
-            }
-          ]
-        },
-        options: {
-          animation: false,
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { r: { beginAtZero: true, suggestedMax: 25 } }
-        }
-      });
-    }
-
-    function printCurrentModalReport() {
-      document.body.classList.add("printing-single-report");
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => {
-          document.body.classList.remove("printing-single-report");
-        }, 300);
-      }, 120);
-    }
-
-    function printParticipantReport(filteredIdx, event) {
-      if (event) event.stopPropagation();
-      openParticipantModal(filteredIdx);
-      printCurrentModalReport();
-    }
-
     function closeParticipantModal() {
       currentModalRecordId = null;
-      currentModalFilteredIdx = null;
-      document.body.classList.remove("printing-single-report");
       const modal = document.getElementById("participantModal");
       if (!modal) return;
       modal.classList.add("hidden");

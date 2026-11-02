@@ -298,220 +298,22 @@
       </div>
     </section>
 
-    <!-- 3. SCHERMATA RISULTATI & COACHING -->
-    <section id="screen-results" class="hidden space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
-        <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
-          <div>
-            <div class="flex flex-wrap items-center gap-2 mb-2">
-              <span id="resBadge" class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                Analisi Completata • 12 Scenari
-              </span>
-              <span id="syncStatusBadge" class="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold no-print">
-                Database Supabase: In attesa
-              </span>
-              <button id="btnRetrySync" onclick="sendResultsToSupabaseDB()" class="hidden px-2.5 py-1 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold no-print transition">
-                Riprova salvataggio
-              </button>
-            </div>
-            <h2 id="resMainTitle" class="text-2xl md:text-3xl font-extrabold text-slate-900">
-              Profilo delle tue Abilità di Safety Leadership
-            </h2>
-            <p id="resParticipantInfo" class="text-xs font-bold text-slate-600 mt-1.5 bg-slate-100 inline-block px-3 py-1 rounded-lg"></p>
-            <p id="resMainSub" class="text-sm text-slate-600 mt-2">
-              Distribuzione percentuale delle tue competenze nelle 7 aree in base alle priorità espresse negli scenari.
-            </p>
-          </div>
-          <div class="flex gap-2 no-print">
-            <button id="btnPrint" onclick="window.print()" class="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition">
-              Stampa / PDF
-            </button>
-            <button id="btnNewTest" onclick="resetApp()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-xs font-bold text-slate-950 transition">
-              Ricomincia
-            </button>
-          </div>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-4 mt-6">
-          <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
-            <div id="kpiTop1Label" class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">Area Dominante (#1)</div>
-            <div class="text-xl font-extrabold text-slate-900" id="kpiTop1Name">-</div>
-            <div class="text-xs text-slate-600 mt-1" id="kpiTop1Stats">-</div>
-          </div>
-          <div class="p-4 rounded-xl bg-blue-50 border border-blue-200">
-            <div id="kpiTop2Label" class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">Area Co-Dominante (#2)</div>
-            <div class="text-xl font-extrabold text-slate-900" id="kpiTop2Name">-</div>
-            <div class="text-xs text-slate-600 mt-1" id="kpiTop2Stats">-</div>
-          </div>
-          <div class="p-4 rounded-xl bg-amber-50 border border-amber-200">
-            <div id="kpiLowLabel" class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">Area Meno Presidiata (#7)</div>
-            <div class="text-xl font-extrabold text-slate-900" id="kpiLowName">-</div>
-            <div class="text-xs text-slate-600 mt-1" id="kpiLowStats">-</div>
-          </div>
-        </div>
+        <!-- 3. SCHERMATA DI SALVATAGGIO E REINDIRIZZAMENTO A REPORT.HTML -->
+    <section id="screen-saving" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12 text-center max-w-xl mx-auto my-8">
+      <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 text-2xl font-extrabold animate-pulse">
+        ⏳
       </div>
-
-      <!-- Grafici -->
-      <div class="grid md:grid-cols-2 gap-6 print-break">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h3 id="chartRadarTitle" class="font-bold text-slate-900 text-base mb-1">Mappa Radar della Distribuzione</h3>
-          <p id="chartRadarSub" class="text-xs text-slate-500 mb-4">Confronto tra la tua distribuzione (%) e un profilo bilanciato (14.3% per area)</p>
-          <div class="relative h-72 flex items-center justify-center">
-            <canvas id="radarChart"></canvas>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h3 id="chartBarTitle" class="font-bold text-slate-900 text-base mb-1">Scomposizione Punti: Scelte Dirette vs Ripescate</h3>
-          <p id="chartBarSub" class="text-xs text-slate-500 mb-4">Mostra quanto del punteggio di ogni area deriva da scelte immediate o da comportamenti riproposti</p>
-          <div class="relative h-72 flex items-center justify-center">
-            <canvas id="stackedBarChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- SEZIONE EXECUTIVE COACHING -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print-break">
-        <div class="bg-slate-900 text-white px-6 py-5 md:px-8 flex flex-wrap items-center justify-between gap-4 border-b-4 border-amber-500">
-          <div>
-            <span id="coachBadge" class="inline-block px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider mb-1">
-              Executive Safety Coaching
-            </span>
-            <h3 id="coachMainTitle" class="text-xl md:text-2xl font-extrabold">
-              Analisi Comportamentale e Piano d'Azione Personalizzato
-            </h3>
-          </div>
-          <div class="text-xs text-slate-300 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700">
-            <span id="coachFocusPrefix">Focus calibrato su:</span> <strong id="coachingHeaderBadge" class="text-amber-400">-</strong>
-          </div>
-        </div>
-
-        <div class="p-6 md:p-8 space-y-6">
-          <div class="grid md:grid-cols-2 gap-6">
-            <div class="rounded-2xl border-2 border-emerald-200 bg-emerald-50/30 p-5 md:p-6 flex flex-col justify-between space-y-4">
-              <div>
-                <div class="flex items-center justify-between gap-2 mb-3">
-                  <span id="coachDomTag" class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold uppercase tracking-wide">
-                    Leva Principale • Area Dominante
-                  </span>
-                  <span id="coachDomPct" class="text-sm font-extrabold text-emerald-700">0%</span>
-                </div>
-                <h4 id="coachDomTitle" class="text-lg md:text-xl font-extrabold text-slate-900 mb-1">-</h4>
-                <p id="coachDomArchetype" class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-3">-</p>
-                <p id="coachDomStrength" class="text-sm text-slate-700 leading-relaxed mb-4">-</p>
-              </div>
-              <div class="bg-white rounded-xl p-4 border border-emerald-200/80 shadow-sm">
-                <div id="coachDomShadowTitle" class="text-xs font-extrabold uppercase tracking-wider text-amber-700 mb-1">
-                  ⚠️ Attenzione all'Effetto Ombra (Rischio da Eccesso)
-                </div>
-                <p id="coachDomShadow" class="text-xs text-slate-600 leading-relaxed">-</p>
-              </div>
-            </div>
-
-            <div class="rounded-2xl border-2 border-amber-200 bg-amber-50/30 p-5 md:p-6 flex flex-col justify-between space-y-4">
-              <div>
-                <div class="flex items-center justify-between gap-2 mb-3">
-                  <span id="coachWeakTag" class="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold uppercase tracking-wide">
-                    Area di Sviluppo • Meno Presidiata
-                  </span>
-                  <span id="coachWeakPct" class="text-sm font-extrabold text-amber-800">0%</span>
-                </div>
-                <h4 id="coachWeakTitle" class="text-lg md:text-xl font-extrabold text-slate-900 mb-1">-</h4>
-                <p id="coachWeakRiskLabel" class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-2">
-                  Impatto se trascurata:
-                </p>
-                <p id="coachWeakRisk" class="text-sm text-slate-700 leading-relaxed mb-4">-</p>
-              </div>
-              <div class="bg-white rounded-xl p-4 border border-amber-200/80 shadow-sm">
-                <div id="coachWeakActionsTitle" class="text-xs font-extrabold uppercase tracking-wider text-slate-800 mb-2.5">
-                  🎯 3 Azioni Pratiche di Coaching (Quick Wins)
-                </div>
-                <ul id="coachWeakActions" class="space-y-2 text-xs text-slate-700"></ul>
-              </div>
-            </div>
-          </div>
-
-          <div class="rounded-2xl bg-slate-900 text-white p-5 md:p-6 border border-slate-800">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <span id="bridgeHeader" class="text-xs font-extrabold uppercase tracking-wider text-amber-400">
-                🔗 Strategia Ponte Personalizzata (Sinergia di Leadership)
-              </span>
-              <span id="bridgeTag" class="text-xs text-slate-400 font-semibold">-</span>
-            </div>
-            <h4 id="bridgeTitle" class="text-base md:text-lg font-bold text-white mb-2">-</h4>
-            <p id="bridgeText" class="text-sm text-slate-300 leading-relaxed">-</p>
-          </div>
-
-          <div class="rounded-2xl bg-slate-50 border border-slate-200 p-5 md:p-6">
-            <h4 id="skippedTitle" class="font-bold text-slate-900 text-sm md:text-base mb-1">
-              📌 Allenamento Mirato: Comportamenti di quest'area che hai lasciato in secondo piano
-            </h4>
-            <p id="skippedSub" class="text-xs text-slate-500 mb-3">
-              Questi comportamenti specifici dell'area meno presidiata sono comparsi negli scenari ma non sono stati scelti. Scegline uno da mettere in pratica nella prossima settimana:
-            </p>
-            <div id="skippedBehaviorsList" class="grid sm:grid-cols-2 gap-3 mt-3"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- NOTA METODOLOGICA -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="px-2.5 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider" id="methBadge">
-            Nota Metodologica
-          </span>
-        </div>
-        <h3 id="methTitle" class="font-bold text-slate-900 text-lg mb-2">
-          Come è stato calcolato il tuo punteggio (Ponderazione Adattiva e Ripescaggio)
-        </h3>
-        <p id="methDesc" class="text-xs md:text-sm text-slate-600 leading-relaxed mb-4">
-          Per garantire una valutazione autentica e priva di condizionamenti durante il test, il motore di calcolo ha applicato dietro le quinte una <strong>doppia ponderazione</strong>: ogni comportamento non selezionato in uno scenario non è andato perso, ma è stato reinserito in coda e riproposto negli scenari successivi con un peso progressivamente minore.
-        </p>
-        <div class="grid sm:grid-cols-2 gap-4 text-xs">
-          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <div id="methBox1Title" class="font-bold text-slate-900 mb-1.5">1. Peso dell'Ordine di Priorità (Scelta 1ª, 2ª, 3ª)</div>
-            <ul id="methBox1List" class="space-y-1 text-slate-600"></ul>
-          </div>
-          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <div id="methBox2Title" class="font-bold text-slate-900 mb-1.5">2. Peso di Comparsa (Immediato vs Ripescato)</div>
-            <ul id="methBox2List" class="space-y-1 text-slate-600"></ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tabella Analitica -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
-        <h3 id="tblMainTitle" class="font-bold text-slate-900 text-lg mb-4">Dettaglio Analitico delle 7 Aree</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th id="thArea" class="py-3 pr-4">Area di Competenza</th>
-                <th id="thFirst" class="py-3 px-3">Scelte alla 1ª Comparsa (1.0x)</th>
-                <th id="thCarry" class="py-3 px-3">Scelte Ripescate (0.65x / 0.35x)</th>
-                <th id="thScore" class="py-3 px-3">Punteggio Ponderato</th>
-                <th id="thDist" class="py-3 pl-4">Distribuzione Finale (100%)</th>
-              </tr>
-            </thead>
-            <tbody id="resultsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Registro Storico delle Scelte Effettuate -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
-        <h3 id="logMainTitle" class="font-bold text-slate-900 text-lg mb-1">Riepilogo Comportamenti Scelti nei 12 Scenari</h3>
-        <p id="logMainSub" class="text-xs text-slate-500 mb-4">Elenco cronologico delle soluzioni che hai adottato, con l'indicazione della priorità e dell'eventuale ripescaggio.</p>
-        <div id="decisionLogContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
-      </div>
+      <h2 id="savingTitle" class="text-xl md:text-2xl font-extrabold text-slate-900 mb-2">
+        Elaborazione e salvataggio del tuo Report Finale...
+      </h2>
+      <p id="savingSub" class="text-xs md:text-sm text-slate-500">
+        Tra un istante verrai reindirizzato automaticamente alla pagina dedicata del tuo Report (`report.html`).
+      </p>
     </section>
 
   </main>
 
   <script>
-    // =========================================================================
-    // CONFIGURAZIONE SUPABASE (INCOLLA QUI IL TUO PROJECT URL E ANON PUBLIC KEY)
-    // =========================================================================
     const DEFAULT_SUPABASE_URL = "https://axiilxpcvevqlctjfpjj.supabase.co";      // es. "https://xyzabcdef.supabase.co"
     const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4aWlseHBjdmV2cWxjdGpmcGpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzOTM1NzksImV4cCI6MjEwODk2OTU3OX0.m5oHRZA7lo4bl3ys9LnJpGKnpjYZneh-Unxf5CDbA7A"; // es. "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
 
@@ -610,9 +412,9 @@
           `Workshop: ${wsName} (${wsLevel}) • Azienda: ${company} • Ruolo: ${role} • Sede/Cantiere: ${site} • Partecipante: ${name}`,
         btnPrint: "Stampa / PDF",
         btnNewTest: "Ricomincia",
-        kpiTop1Label: "Area Dominante (#1)",
-        kpiTop2Label: "Area Co-Dominante (#2)",
-        kpiLowLabel: "Area Meno Presidiata (#7)",
+        kpiTop1Label: "Area Dominante",
+        kpiTop2Label: "Area Co-Dominante",
+        kpiLowLabel: "Bisogno Formativo",
         kpiStatsFormat: (pts, c1, c2) => `${pts} pt ponderati (${c1} dirette, ${c2} ripescate)`,
         chartRadarTitle: "Mappa Radar della Distribuzione",
         chartRadarSub: "Confronto tra la tua distribuzione (%) e un profilo bilanciato (14.3% per area)",
@@ -748,9 +550,9 @@
           `Workshop: ${wsName} (${wsLevel}) • Company: ${company} • Role: ${role} • Location: ${site} • Participant: ${name}`,
         btnPrint: "Print / PDF",
         btnNewTest: "Restart",
-        kpiTop1Label: "Dominant Area (#1)",
-        kpiTop2Label: "Co-Dominant Area (#2)",
-        kpiLowLabel: "Least Covered Area (#7)",
+        kpiTop1Label: "Dominant Area",
+        kpiTop2Label: "Co-Dominant Area",
+        kpiLowLabel: "Training Need",
         kpiStatsFormat: (pts, c1, c2) => `${pts} weighted pts (${c1} direct, ${c2} re-proposed)`,
         chartRadarTitle: "Competency Distribution Radar",
         chartRadarSub: "Comparison between your distribution (%) and a balanced profile (14.3% per area)",
@@ -1757,7 +1559,7 @@
     };
 
     // =========================================================================
-    // 5. LETTURA WORKSHOP E LISTE DA SUPABASE + LOGICA DEL TEST
+    // 5. LETTURA WORKSHOP E LISTE DA SUPABASE + LOGICA DEL TEST (INDEX.HTML)
     // =========================================================================
     let parsedCompaniesList = [];
     let parsedRolesList = [];
@@ -1783,10 +1585,6 @@
     let currentSelectedIds = [];
     let decisionHistory = [];
     let lastComputedResults = null;
-    let lastSyncState = "idle";
-
-    let radarChartInstance = null;
-    let stackedBarChartInstance = null;
 
     function parseLineItem(line) {
       const parts = String(line).split("|").map(p => p.trim());
@@ -1833,7 +1631,6 @@
       try {
         supabaseClient = window.supabase.createClient(sbUrl, sbKey);
 
-        // 1. Legge in parallelo il Workshop richiesto e le Liste (Aziende, Ruoli, Cantieri)
         const [wsRes, cfgRes] = await Promise.all([
           supabaseClient.from("workshops").select("*").eq("id", wsIdParam).maybeSingle(),
           supabaseClient.from("app_config").select("*").eq("id", 1).single()
@@ -1854,7 +1651,6 @@
           active: wsRes.data.active !== false
         };
 
-        // Se il Workshop è stato CHIUSO nella Dashboard, blocca l'accesso
         if (!foundWs.active) {
           showLockedScreen("closed", foundWs.name);
           return;
@@ -1893,7 +1689,7 @@
 
       document.getElementById("screen-welcome").classList.add("hidden");
       document.getElementById("screen-quiz").classList.add("hidden");
-      document.getElementById("screen-results").classList.add("hidden");
+      document.getElementById("screen-saving").classList.add("hidden");
       document.getElementById("btnResetHdr").classList.add("hidden");
 
       if (reason === "closed") {
@@ -2035,9 +1831,6 @@
       if (!document.getElementById("screen-quiz").classList.contains("hidden")) {
         updateQuizTexts();
         renderScenarioOptions();
-      } else if (!document.getElementById("screen-results").classList.contains("hidden") && lastComputedResults) {
-        renderDashboard(lastComputedResults, false);
-        updateSyncBadgeUI();
       }
     }
 
@@ -2092,51 +1885,6 @@
       document.getElementById("btnStart").textContent = t.btnStart;
 
       document.getElementById("validationWarning").textContent = t.validationWarning;
-
-      document.getElementById("resBadge").textContent = t.resBadge;
-      document.getElementById("btnRetrySync").textContent = t.btnRetrySync;
-      document.getElementById("resMainTitle").textContent = t.resMainTitle;
-      document.getElementById("resMainSub").textContent = t.resMainSub;
-      document.getElementById("btnPrint").textContent = t.btnPrint;
-      document.getElementById("btnNewTest").textContent = t.btnNewTest;
-      document.getElementById("kpiTop1Label").textContent = t.kpiTop1Label;
-      document.getElementById("kpiTop2Label").textContent = t.kpiTop2Label;
-      document.getElementById("kpiLowLabel").textContent = t.kpiLowLabel;
-
-      document.getElementById("chartRadarTitle").textContent = t.chartRadarTitle;
-      document.getElementById("chartRadarSub").textContent = t.chartRadarSub;
-      document.getElementById("chartBarTitle").textContent = t.chartBarTitle;
-      document.getElementById("chartBarSub").textContent = t.chartBarSub;
-
-      document.getElementById("coachBadge").textContent = t.coachBadge;
-      document.getElementById("coachMainTitle").textContent = t.coachMainTitle;
-      document.getElementById("coachFocusPrefix").textContent = t.coachFocusPrefix;
-      document.getElementById("coachDomTag").textContent = t.coachDomTag;
-      document.getElementById("coachWeakTag").textContent = t.coachWeakTag;
-      document.getElementById("coachDomShadowTitle").textContent = t.coachDomShadowTitle;
-      document.getElementById("coachWeakRiskLabel").textContent = t.coachWeakRiskLabel;
-      document.getElementById("coachWeakActionsTitle").textContent = t.coachWeakActionsTitle;
-      document.getElementById("bridgeHeader").textContent = t.bridgeHeader;
-      document.getElementById("skippedTitle").textContent = t.skippedTitle;
-      document.getElementById("skippedSub").textContent = t.skippedSub;
-
-      document.getElementById("methBadge").textContent = t.methBadge;
-      document.getElementById("methTitle").textContent = t.methTitle;
-      document.getElementById("methDesc").innerHTML = t.methDesc;
-      document.getElementById("methBox1Title").textContent = t.methBox1Title;
-      document.getElementById("methBox1List").innerHTML = t.methBox1List;
-      document.getElementById("methBox2Title").textContent = t.methBox2Title;
-      document.getElementById("methBox2List").innerHTML = t.methBox2List;
-
-      document.getElementById("tblMainTitle").textContent = t.tblMainTitle;
-      document.getElementById("thArea").textContent = t.thArea;
-      document.getElementById("thFirst").textContent = t.thFirst;
-      document.getElementById("thCarry").textContent = t.thCarry;
-      document.getElementById("thScore").textContent = t.thScore;
-      document.getElementById("thDist").textContent = t.thDist;
-
-      document.getElementById("logMainTitle").textContent = t.logMainTitle;
-      document.getElementById("logMainSub").textContent = t.logMainSub;
     }
 
     function startAssessment() {
@@ -2202,7 +1950,7 @@
       });
 
       document.getElementById("screen-welcome").classList.add("hidden");
-      document.getElementById("screen-results").classList.add("hidden");
+      document.getElementById("screen-saving").classList.add("hidden");
       document.getElementById("screen-quiz").classList.remove("hidden");
 
       prepareRound(0);
@@ -2389,55 +2137,52 @@
         currentRoundIndex++;
         prepareRound(currentRoundIndex);
       } else {
-        showFinalResults();
+        finalizeAndRedirectToReport();
       }
     }
 
-    function updateSyncBadgeUI() {
-      const t = UI_TEXT[currentLang];
-      const badge = document.getElementById("syncStatusBadge");
-      const retryBtn = document.getElementById("btnRetrySync");
-      retryBtn.classList.add("hidden");
+    async function finalizeAndRedirectToReport() {
+      document.getElementById("screen-quiz").classList.add("hidden");
+      document.getElementById("screen-saving").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
 
-      if (lastSyncState === "sending") {
-        badge.className = "inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold no-print";
-        badge.textContent = t.syncSending;
-      } else if (lastSyncState === "success") {
-        badge.className = "inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold no-print";
-        badge.textContent = t.syncSuccess;
-      } else if (lastSyncState === "error") {
-        badge.className = "inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold no-print";
-        badge.textContent = t.syncError;
-        retryBtn.classList.remove("hidden");
-      } else {
-        badge.className = "inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold no-print";
-        badge.textContent = t.syncLocalPreview;
-      }
-    }
+      let totalWeightedPoints = 0;
+      const results = AREAS.map(area => {
+        const pool = areaPools[area.id];
+        const totalAreaScore = pool.scoreFirstAppearance + pool.scoreCarryOver;
+        totalWeightedPoints += totalAreaScore;
+        return {
+          id: area.id,
+          name: area.name,
+          color: area.color,
+          scoreFirst: pool.scoreFirstAppearance,
+          scoreCarry: pool.scoreCarryOver,
+          totalScore: totalAreaScore,
+          countFirst: pool.countFirstChosen,
+          countCarry: pool.countCarryOverChosen,
+          distributionPct: 0
+        };
+      });
 
-    // Salva il risultato direttamente nella tabella public.submissions di Supabase
-    async function sendResultsToSupabaseDB() {
-      if (!lastComputedResults || !activeWorkshop || !supabaseClient) {
-        lastSyncState = "local_preview";
-        updateSyncBadgeUI();
-        return;
-      }
+      results.forEach(r => {
+        r.distributionPct = totalWeightedPoints > 0 ? (r.totalScore / totalWeightedPoints) * 100 : (100 / 7);
+      });
 
-      lastSyncState = "sending";
-      updateSyncBadgeUI();
+      lastComputedResults = results;
 
       const t = UI_TEXT[currentLang];
-      const sorted = [...lastComputedResults].sort((a, b) => b.distributionPct - a.distributionPct);
+      const sorted = [...results].sort((a, b) => b.distributionPct - a.distributionPct);
       const pctMap = {};
       const ptsMap = {};
 
-      lastComputedResults.forEach(r => {
+      results.forEach(r => {
         pctMap[r.id] = Number(r.distributionPct.toFixed(1));
         ptsMap[r.id] = Number(r.totalScore.toFixed(2));
       });
 
+      // Salva anche l'indice del comportamento (b=...) per una ricostruzione esatta al 100% in report.html
       const choicesCompact = decisionHistory.map(d =>
-        `S${d.roundIdx + 1}:${d.areaId}(#${d.rankOrder},w=${d.appearanceWeight},+${d.earnedPoints.toFixed(2)})`
+        `S${d.roundIdx + 1}:${d.areaId}(#${d.rankOrder},w=${d.appearanceWeight},+${d.earnedPoints.toFixed(2)},b=${d.behaviorIdx})`
       ).join(" | ");
 
       const resolvedCompany = participantInfo.companyIdx >= 0
@@ -2489,214 +2234,43 @@
         riepilogo_scelte: choicesCompact
       };
 
+      let insertedId = "local_" + Date.now();
+
+      if (supabaseClient) {
+        try {
+          const { data, error } = await supabaseClient
+            .from("submissions")
+            .insert([rowPayload])
+            .select("id")
+            .single();
+          if (!error && data && data.id !== undefined) {
+            insertedId = String(data.id);
+          }
+        } catch (err) {
+          console.warn("Fallback cache locale per il report:", err);
+        }
+      }
+
+      const fullReportCacheObj = {
+        id: insertedId,
+        submissionRow: { id: insertedId, ...rowPayload },
+        decisionHistory: decisionHistory,
+        results: results,
+        wsId: activeWorkshop.id
+      };
+
       try {
-        const { error } = await supabaseClient.from("submissions").insert([rowPayload]);
-        lastSyncState = error ? "error" : "success";
-        if (error) console.error("Errore insert Supabase:", error);
-        updateSyncBadgeUI();
-      } catch (err) {
-        lastSyncState = "error";
-        updateSyncBadgeUI();
-      }
-    }
+        sessionStorage.setItem("sl_report_" + insertedId, JSON.stringify(fullReportCacheObj));
+        localStorage.setItem("sl_last_report", JSON.stringify(fullReportCacheObj));
+      } catch (e) {}
 
-    function showFinalResults() {
-      let totalWeightedPoints = 0;
-      const results = AREAS.map(area => {
-        const pool = areaPools[area.id];
-        const totalAreaScore = pool.scoreFirstAppearance + pool.scoreCarryOver;
-        totalWeightedPoints += totalAreaScore;
-        return {
-          id: area.id,
-          name: area.name,
-          color: area.color,
-          scoreFirst: pool.scoreFirstAppearance,
-          scoreCarry: pool.scoreCarryOver,
-          totalScore: totalAreaScore,
-          countFirst: pool.countFirstChosen,
-          countCarry: pool.countCarryOverChosen,
-          distributionPct: 0
-        };
-      });
-
-      results.forEach(r => {
-        r.distributionPct = totalWeightedPoints > 0 ? (r.totalScore / totalWeightedPoints) * 100 : (100 / 7);
-      });
-
-      lastComputedResults = results;
-      renderDashboard(results, true);
-      sendResultsToSupabaseDB();
-    }
-
-    function renderCoachingAdvice(topArea, secondArea, lowArea) {
-      const t = UI_TEXT[currentLang];
-      const domProfile = COACHING_PROFILES[topArea.id][currentLang];
-      const weakProfile = COACHING_PROFILES[lowArea.id][currentLang];
-
-      document.getElementById("coachingHeaderBadge").textContent = `${topArea.name} (#1) → ${lowArea.name} (#7)`;
-      document.getElementById("coachDomPct").textContent = `${topArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
-      document.getElementById("coachDomTitle").textContent = `${t.coachDomTitlePrefix} "${topArea.name}"`;
-      document.getElementById("coachDomArchetype").textContent = `${t.coachArchetypePrefix} ${domProfile.archetype}`;
-      document.getElementById("coachDomStrength").textContent = domProfile.strength;
-      document.getElementById("coachDomShadow").textContent = domProfile.shadow;
-
-      document.getElementById("coachWeakPct").textContent = `${lowArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
-      document.getElementById("coachWeakTitle").textContent = `${t.coachWeakTitlePrefix} "${lowArea.name}"`;
-      document.getElementById("coachWeakRisk").textContent = weakProfile.weakRisk;
-
-      document.getElementById("coachWeakActions").innerHTML = weakProfile.actions.map((act, idx) => `
-        <li class="flex items-start gap-2">
-          <span class="w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-extrabold text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</span>
-          <span class="leading-snug">${act}</span>
-        </li>
-      `).join("");
-
-      document.getElementById("bridgeTag").textContent = `${t.bridgeSynergyPrefix}: ${topArea.name} + ${secondArea.name} → ${lowArea.name}`;
-      document.getElementById("bridgeTitle").textContent = t.bridgeTitleFormat(topArea.name, lowArea.name);
-      document.getElementById("bridgeText").innerHTML =
-        t.bridgeTextFormat(domProfile.bridgeFrom, secondArea.name, lowArea.name, weakProfile.bridgeTo, topArea.name);
-
-      const lowAreaObj = AREAS.find(a => a.id === lowArea.id);
-      const pool = areaPools[lowArea.id];
-      let targetBehaviors = [];
-
-      if (pool && pool.carryOverQueue && pool.carryOverQueue.length > 0) {
-        const uniqueIndices = [...new Set(pool.carryOverQueue.map(item => item.behaviorIdx))].slice(0, 4);
-        targetBehaviors = uniqueIndices.map(idx => ({
-          text: getBehaviorText(lowAreaObj.behaviors[idx]),
-          skippedCount: pool.carryOverQueue.find(i => i.behaviorIdx === idx)?.timesSkipped || 1
-        }));
-      }
-      if (targetBehaviors.length === 0) {
-        targetBehaviors = lowAreaObj.behaviors.slice(0, 4).map((b, i) => ({
-          text: getBehaviorText(b),
-          skippedCount: i % 2 === 0 ? 2 : 1
-        }));
-      }
-
-      document.getElementById("skippedBehaviorsList").innerHTML = targetBehaviors.map(tb => `
-        <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div class="flex items-center justify-between gap-2 mb-1.5">
-            <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase">
-              ${t.skippedCardBadge} • ${lowArea.name}
-            </span>
-            <span class="text-[11px] text-slate-400 font-semibold">${t.skippedCountLabel(tb.skippedCount)}</span>
-          </div>
-          <p class="text-xs text-slate-700 font-medium leading-relaxed">${tb.text}</p>
-        </div>
-      `).join("");
-    }
-
-    function renderDashboard(results, scrollToTop = true) {
-      const t = UI_TEXT[currentLang];
-      document.getElementById("screen-welcome").classList.add("hidden");
-      document.getElementById("screen-quiz").classList.add("hidden");
-      document.getElementById("screen-results").classList.remove("hidden");
-
-      const displayCompany = participantInfo.companyIdx >= 0
-        ? (parsedCompaniesList[participantInfo.companyIdx]?.[currentLang] || participantInfo.companyText)
-        : participantInfo.companyText;
-      const displayRole = participantInfo.roleIdx >= 0
-        ? (parsedRolesList[participantInfo.roleIdx]?.[currentLang] || participantInfo.roleText)
-        : participantInfo.roleText;
-      const displaySite = participantInfo.siteIdx >= 0
-        ? (parsedSitesList[participantInfo.siteIdx]?.[currentLang] || participantInfo.siteText)
-        : participantInfo.siteText;
-      const displayName = participantInfo.name || t.anonymousLabel;
-
-      document.getElementById("resParticipantInfo").textContent =
-        t.participantSummary(activeWorkshop.name, activeWorkshop.level, displayName, displayCompany, displayRole, displaySite);
-
-      const sorted = [...results].sort((a, b) => b.distributionPct - a.distributionPct);
-      const top1 = sorted[0];
-      const top2 = sorted[1];
-      const low = sorted[sorted.length - 1];
-
-      document.getElementById("kpiTop1Name").textContent = `${top1.name} (${top1.distributionPct.toFixed(1)}%)`;
-      document.getElementById("kpiTop1Stats").textContent = t.kpiStatsFormat(top1.totalScore.toFixed(2), top1.countFirst, top1.countCarry);
-      document.getElementById("kpiTop2Name").textContent = `${top2.name} (${top2.distributionPct.toFixed(1)}%)`;
-      document.getElementById("kpiTop2Stats").textContent = t.kpiStatsFormat(top2.totalScore.toFixed(2), top2.countFirst, top2.countCarry);
-      document.getElementById("kpiLowName").textContent = `${low.name} (${low.distributionPct.toFixed(1)}%)`;
-      document.getElementById("kpiLowStats").textContent = t.kpiStatsFormat(low.totalScore.toFixed(2), low.countFirst, low.countCarry);
-
-      renderCoachingAdvice(top1, top2, low);
-
-      document.getElementById("resultsTableBody").innerHTML = sorted.map(r => {
-        const areaObj = AREAS.find(a => a.id === r.id);
-        return `
-          <tr class="hover:bg-slate-50">
-            <td class="py-3.5 pr-4">
-              <div class="flex items-center gap-2.5">
-                <span class="w-3 h-3 rounded-full shrink-0" style="background:${r.color}"></span>
-                <div>
-                  <div class="font-bold text-slate-900">${r.name}</div>
-                  <div class="text-xs text-slate-500">${areaObj.desc[currentLang]}</div>
-                </div>
-              </div>
-            </td>
-            <td class="py-3.5 px-3 font-medium text-emerald-700">${r.countFirst} ${t.tblChoicesWord} (${r.scoreFirst.toFixed(2)} pt)</td>
-            <td class="py-3.5 px-3 font-medium text-amber-700">${r.countCarry} ${t.tblCarryWord} (${r.scoreCarry.toFixed(2)} pt)</td>
-            <td class="py-3.5 px-3 font-bold text-slate-800">${r.totalScore.toFixed(2)} pt</td>
-            <td class="py-3.5 pl-4 font-extrabold text-slate-900">${r.distributionPct.toFixed(1)}%</td>
-          </tr>
-        `;
-      }).join("");
-
-      document.getElementById("decisionLogContainer").innerHTML = decisionHistory.map(item => {
-        const scObj = SCENARIOS[item.roundIdx];
-        const variant = isOfficeMode() ? scObj.office : scObj.site;
-        const areaObj = AREAS.find(a => a.id === item.areaId);
-        const behObj = areaObj.behaviors[item.behaviorIdx];
-        return `
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-start justify-between gap-2 text-xs">
-            <div class="max-w-3xl">
-              <div class="flex flex-wrap items-center gap-2 mb-1">
-                <span class="font-bold text-slate-900">${t.scenarioWord} #${item.roundIdx + 1}: ${variant.title[currentLang]}</span>
-                <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold">${item.areaName}</span>
-                <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">${t.choiceBadge(item.rankOrder)}</span>
-              </div>
-              <p class="text-slate-600">${getBehaviorText(behObj)}</p>
-            </div>
-            <div class="font-extrabold text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200">+${item.earnedPoints.toFixed(2)} pt</div>
-          </div>
-        `;
-      }).join("");
-
-      const radarCtx = document.getElementById("radarChart").getContext("2d");
-      if (radarChartInstance) radarChartInstance.destroy();
-      radarChartInstance = new Chart(radarCtx, {
-        type: "radar",
-        data: {
-          labels: results.map(r => r.name),
-          datasets: [
-            { label: t.chartRadarDataset1, data: results.map(r => Number(r.distributionPct.toFixed(1))), backgroundColor: "rgba(245, 158, 11, 0.22)", borderColor: "#d97706", borderWidth: 2 },
-            { label: t.chartRadarDataset2, data: results.map(() => 14.3), borderColor: "#94a3b8", borderDash: [5, 5], pointRadius: 0, borderWidth: 1.5 }
-          ]
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, suggestedMax: 25 } } }
-      });
-
-      const barCtx = document.getElementById("stackedBarChart").getContext("2d");
-      if (stackedBarChartInstance) stackedBarChartInstance.destroy();
-      stackedBarChartInstance = new Chart(barCtx, {
-        type: "bar",
-        data: {
-          labels: results.map(r => r.name),
-          datasets: [
-            { label: t.chartBarDataset1, data: results.map(r => Number(r.scoreFirst.toFixed(2))), backgroundColor: "#10b981" },
-            { label: t.chartBarDataset2, data: results.map(r => Number(r.scoreCarry.toFixed(2))), backgroundColor: "#f59e0b" }
-          ]
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
-      });
-
-      if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
+      window.location.href = `report.html?id=${encodeURIComponent(insertedId)}&ws=${encodeURIComponent(activeWorkshop.id)}&lang=${currentLang}`;
     }
 
     function resetApp() {
       if (!activeWorkshop) { showLockedScreen("missing"); return; }
       document.getElementById("screen-quiz").classList.add("hidden");
-      document.getElementById("screen-results").classList.add("hidden");
+      document.getElementById("screen-saving").classList.add("hidden");
       document.getElementById("screen-welcome").classList.remove("hidden");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
