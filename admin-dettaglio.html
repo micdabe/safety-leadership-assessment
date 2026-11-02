@@ -1597,8 +1597,8 @@
     }
 
 
-    function prepareReportCacheForRecord(r) {
-      if (!r) return;
+    function buildPostPayloadForRecord(r, autoPrint = false) {
+      if (!r) return null;
       const submissionRow = {
         id: r.id,
         data_ora: r.date,
@@ -1621,10 +1621,14 @@
         feedback_pct: r.pct.FEEDBACK,
         riepilogo_scelte: r.choicesLog || ""
       };
-      try {
-        sessionStorage.setItem("sl_report_" + r.id, JSON.stringify({ id: r.id, submissionRow }));
-        localStorage.setItem("sl_last_report", JSON.stringify({ id: r.id, submissionRow }));
-      } catch (e) {}
+      return {
+        id: r.id,
+        ws: r.workshopId || "",
+        lang: (r.lang || "IT").toLowerCase(),
+        print: Boolean(autoPrint),
+        from: "admin",
+        submissionRow
+      };
     }
 
     function openReportPageForRecord(filteredIdx, autoPrint = false, event = null) {
@@ -1632,10 +1636,27 @@
       const r = filteredRecords[filteredIdx];
       if (!r) return;
       saveStateToCache();
-      prepareReportCacheForRecord(r);
-      const langCode = (r.lang || "IT").toLowerCase();
-      const url = `report.html?id=${encodeURIComponent(r.id)}&lang=${langCode}&from=admin${autoPrint ? "&print=1" : ""}`;
-      window.open(url, "_blank");
+
+      const postPayload = buildPostPayloadForRecord(r, autoPrint);
+      const serialized = JSON.stringify(postPayload);
+
+      try {
+        sessionStorage.setItem("sl_post_report", serialized);
+        localStorage.setItem("sl_post_report", serialized);
+        sessionStorage.setItem("sl_report_" + r.id, serialized);
+        localStorage.setItem("sl_last_report", serialized);
+      } catch (e) {}
+
+      // Apre report.html senza alcun parametro GET nella barra degli indirizzi e inietta il payload nel window.name della scheda
+      const win = window.open("report.html", "_blank");
+      if (win) {
+        try {
+          win.name = "SL_REPORT_POST:" + serialized;
+        } catch (e) {}
+      } else {
+        window.name = "SL_REPORT_POST:" + serialized;
+        window.location.href = "report.html";
+      }
     }
 
     function renderParticipantsTable() {
@@ -1644,9 +1665,6 @@
       tbody.innerHTML = filteredRecords.map((r, idx) => {
         const isChecked = selectedRecordIds.has(r.id);
         const isOff = r.workshopTarget === "Office / HQ";
-        const langCode = (r.lang || "IT").toLowerCase();
-        const viewUrl = `report.html?id=${encodeURIComponent(r.id)}&lang=${langCode}&from=admin`;
-        const printUrl = `report.html?id=${encodeURIComponent(r.id)}&lang=${langCode}&from=admin&print=1`;
 
         const wsOptionsHTML = `<option value="">-- Non assegnato --</option>` +
           workshopsDB.map(w => {
@@ -1689,19 +1707,17 @@
             </td>
             <td class="py-2.5 px-3 text-right whitespace-nowrap no-print" onclick="event.stopPropagation()">
               <div class="inline-flex items-center gap-1.5">
-                <a href="${viewUrl}" target="_blank"
-                  onclick="saveStateToCache(); prepareReportCacheForRecord(filteredRecords[${idx}]);"
-                  title="Apri la pagina dedicata del Report Finale (report.html)"
+                <button type="button" onclick="openReportPageForRecord(${idx}, false, event)"
+                  title="Apri la pagina dedicata del Report Finale (report.html) senza parametri GET nell'URL"
                   class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[11px] border border-blue-200 transition">
                   📄 Visualizza Report ↗
-                </a>
-                <a href="${printUrl}" target="_blank"
-                  onclick="saveStateToCache(); prepareReportCacheForRecord(filteredRecords[${idx}]);"
+                </button>
+                <button type="button" onclick="openReportPageForRecord(${idx}, true, event)"
                   title="Apri report.html e avvia direttamente la finestra di Stampa / PDF"
                   class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 font-extrabold text-[11px] border border-amber-300 transition">
                   🖨️ Stampa ↗
-                </a>
-                <button onclick="deleteSubmissionById('${r.id}', event)"
+                </button>
+                <button type="button" onclick="deleteSubmissionById('${r.id}', event)"
                   title="Elimina definitivamente questo test"
                   class="px-2 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200 transition">
                   🗑️

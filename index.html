@@ -2251,20 +2251,28 @@
         }
       }
 
-      const fullReportCacheObj = {
+      const postPayload = {
         id: insertedId,
+        ws: activeWorkshop.id,
+        lang: currentLang,
+        print: false,
+        from: "quiz",
         submissionRow: { id: insertedId, ...rowPayload },
         decisionHistory: decisionHistory,
-        results: results,
-        wsId: activeWorkshop.id
+        results: results
       };
 
       try {
-        sessionStorage.setItem("sl_report_" + insertedId, JSON.stringify(fullReportCacheObj));
-        localStorage.setItem("sl_last_report", JSON.stringify(fullReportCacheObj));
+        const serialized = JSON.stringify(postPayload);
+        sessionStorage.setItem("sl_post_report", serialized);
+        localStorage.setItem("sl_post_report", serialized);
+        sessionStorage.setItem("sl_report_" + insertedId, serialized);
+        localStorage.setItem("sl_last_report", serialized);
+        window.name = "SL_REPORT_POST:" + serialized;
       } catch (e) {}
 
-      window.location.href = `report.html?id=${encodeURIComponent(insertedId)}&ws=${encodeURIComponent(activeWorkshop.id)}&lang=${currentLang}`;
+      // Navigazione pulita a report.html senza parametri GET nell'URL
+      window.location.href = "report.html";
     }
 
     function resetApp() {
