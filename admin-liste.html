@@ -59,6 +59,7 @@
     html.is-authenticated #btnChangeSource { display: inline-block !important; }
     html.is-authenticated #btnPrintReport { display: inline-block !important; }
     html.is-authenticated #screen-dashboard,
+    html.is-authenticated #screen-details,
     html.is-authenticated #screen-workshops,
     html.is-authenticated #screen-lists { display: block !important; }
   </style>
@@ -93,11 +94,14 @@
       </div>
     </div>
 
-    <!-- Barra di Navigazione a 3 Pagine Separate -->
+    <!-- Barra di Navigazione a 4 Pagine Separate -->
     <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
       <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 pt-2">
         <a href="admin-risultati.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
-          <span>📊</span> <span>Analisi Risultati</span>
+          <span>📊</span> <span>Analisi Risultati Globali</span>
+        </a>
+        <a href="admin-dettaglio.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+          <span>📋</span> <span>Dettaglio Singoli Test</span>
         </a>
         <a href="admin-workshop.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>🎯</span> <span>Gestione Workshop (Link & QR)</span>
@@ -295,7 +299,7 @@
   </main>
 
   <script>
-    const PAGE_MODE = "lists"; // 'analytics' | 'workshops' | 'lists'
+    const PAGE_MODE = "lists"; // 'analytics' | 'details' | 'workshops' | 'lists'
     const DEFAULT_SUPABASE_URL = "https://axiilxpcvevqlctjfpjj.supabase.co";
     const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4aWlseHBjdmV2cWxjdGpmcGpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzOTM1NzksImV4cCI6MjEwODk2OTU3OX0.m5oHRZA7lo4bl3ys9LnJpGKnpjYZneh-Unxf5CDbA7A";
 
@@ -568,7 +572,7 @@
         const dataChanged = (allRecords.length !== prevCount) || (workshopsDB.length !== prevWsCount);
         if (!forceRedraw && !dataChanged) return;
 
-        if (PAGE_MODE === "analytics") {
+        if (PAGE_MODE === "analytics" || PAGE_MODE === "details") {
           populateFilterDropdowns(true);
           applyFilters();
         } else if (PAGE_MODE === "workshops") {
@@ -599,7 +603,7 @@
 
     function getParticipantTestBaseUrl() {
       const loc = window.location;
-      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-workshop|admin-liste).*$/i, "");
+      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-dettaglio|admin-workshop|admin-liste).*$/i, "");
       return `${loc.origin}${basePath.endsWith("/") ? basePath : basePath + "/"}index.html`;
     }
 
@@ -1207,8 +1211,9 @@
       const btnPrint = document.getElementById("btnPrintReport");
       if (btnPrint) btnPrint.classList.remove("hidden");
 
-      if (PAGE_MODE === "analytics") {
-        const sec = document.getElementById("screen-dashboard");
+      if (PAGE_MODE === "analytics" || PAGE_MODE === "details") {
+        const secId = PAGE_MODE === "analytics" ? "screen-dashboard" : "screen-details";
+        const sec = document.getElementById(secId);
         if (sec) sec.classList.remove("hidden");
         populateFilterDropdowns(preserveFilters);
         const params = new URLSearchParams(window.location.search);
@@ -1243,7 +1248,7 @@
       const liveCtrl = document.getElementById("liveControls");
       if (liveCtrl) liveCtrl.classList.add("hidden");
       document.getElementById("adminNavTabs").classList.add("hidden");
-      ["screen-dashboard", "screen-workshops", "screen-lists"].forEach(id => {
+      ["screen-dashboard", "screen-details", "screen-workshops", "screen-lists"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add("hidden");
       });
@@ -1293,7 +1298,7 @@
     }
 
     function applyFilters() {
-      if (PAGE_MODE !== "analytics") return;
+      if (PAGE_MODE !== "analytics" && PAGE_MODE !== "details") return;
       const wVal = document.getElementById("filterWorkshop").value;
       const tVal = document.getElementById("filterTarget").value;
       const lVal = document.getElementById("filterLevel").value;
@@ -1313,7 +1318,14 @@
         return true;
       });
 
-      renderAllAnalytics();
+      if (PAGE_MODE === "analytics") {
+        renderAllAnalytics();
+      } else if (PAGE_MODE === "details") {
+        const badge = document.getElementById("activeRecordsBadge");
+        if (badge) badge.textContent = `${filteredRecords.length} di ${allRecords.length} test selezionati`;
+        renderParticipantsTable();
+        updateBulkSelectionUI();
+      }
     }
 
     function computeGroupAverages(records) {
@@ -1396,8 +1408,6 @@
       });
 
       renderGroupComparison();
-      renderParticipantsTable();
-      updateBulkSelectionUI();
     }
 
     function renderGroupComparison() {

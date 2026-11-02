@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Safety Leadership — Analisi Risultati (Supabase)</title>
+  <title>Safety Leadership — Analisi Risultati Globali (Supabase)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -59,6 +59,7 @@
     html.is-authenticated #btnChangeSource { display: inline-block !important; }
     html.is-authenticated #btnPrintReport { display: inline-block !important; }
     html.is-authenticated #screen-dashboard,
+    html.is-authenticated #screen-details,
     html.is-authenticated #screen-workshops,
     html.is-authenticated #screen-lists { display: block !important; }
   </style>
@@ -96,11 +97,14 @@
       </div>
     </div>
 
-    <!-- Barra di Navigazione a 3 Pagine Separate -->
+    <!-- Barra di Navigazione a 4 Pagine Separate -->
     <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
       <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 pt-2">
         <a href="admin-risultati.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
-          <span>📊</span> <span>Analisi Risultati</span>
+          <span>📊</span> <span>Analisi Risultati Globali</span>
+        </a>
+        <a href="admin-dettaglio.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+          <span>📋</span> <span>Dettaglio Singoli Test</span>
         </a>
         <a href="admin-workshop.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>🎯</span> <span>Gestione Workshop (Link & QR)</span>
@@ -187,7 +191,7 @@
       </div>
     </section>
 
-    <!-- 2. SCHEDA A: ANALISI RISULTATI -->
+    <!-- 2A. SCHEDA ANALISI RISULTATI GLOBALI -->
     <section id="screen-dashboard" class="hidden space-y-6">
 
       <!-- Barra Filtri Interattivi a 7 Colonne -->
@@ -345,93 +349,11 @@
         </div>
       </div>
 
-      <!-- TABELLA PARTECIPANTI CON ASSEGNAZIONE WORKSHOP EDITABILE -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <div>
-            <h3 class="font-bold text-slate-900 text-lg">Dettaglio Singoli Test Completati</h3>
-            <p class="text-xs text-slate-500">
-              Usa il menu a discesa nella colonna "Workshop" per associare o spostare qualsiasi test in tempo reale su Supabase.
-            </p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2.5 no-print">
-            <button id="btnDeleteSelected" onclick="deleteSelectedSubmissions()"
-              class="hidden px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-1.5">
-              <span>🗑️</span> <span id="btnDeleteSelectedLabel">Elimina selezionati (0)</span>
-            </button>
-            <button onclick="exportFilteredCSV()"
-              class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-              Esporta Vista Filtrata (CSV)
-            </button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto max-h-96 overflow-y-auto">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead class="sticky top-0 bg-slate-100 text-slate-600 uppercase z-10">
-              <tr>
-                <th class="py-3 px-3 w-10 text-center no-print">
-                  <input id="chkSelectAllRows" type="checkbox" onchange="toggleSelectAllFiltered(this.checked)"
-                    class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
-                </th>
-                <th class="py-3 px-3">Data</th>
-                <th class="py-3 px-3">Workshop (Editabile)</th>
-                <th class="py-3 px-3">Profilo</th>
-                <th class="py-3 px-3">Livello</th>
-                <th class="py-3 px-3">Partecipante</th>
-                <th class="py-3 px-3">Azienda</th>
-                <th class="py-3 px-3">Ruolo</th>
-                <th class="py-3 px-3">Cantiere/Sede</th>
-                <th class="py-3 px-3">Area Dominante</th>
-                <th class="py-3 px-3">Bisogno Formativo</th>
-                <th class="py-3 px-3 text-right no-print">Azioni</th>
-              </tr>
-            </thead>
-            <tbody id="participantsTableBody" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </div>
-
     </section>
   </main>
 
-  <!-- MODALE ISPEZIONE SINGOLO PARTECIPANTE -->
-  <div id="participantModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 no-print">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 md:p-8 border border-slate-200 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
-        <div>
-          <span id="modalCompanyBadge" class="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 text-xs font-bold">Workshop</span>
-          <h3 id="modalPersonName" class="text-xl font-extrabold text-slate-900 mt-1">Nome Partecipante</h3>
-          <p id="modalPersonMeta" class="text-xs text-slate-500 mt-0.5">Ruolo • Cantiere • Data</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="deleteCurrentModalParticipant()"
-            class="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs border border-red-200 transition">
-            🗑️ Elimina Test
-          </button>
-          <button onclick="closeParticipantModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm">
-            ✕
-          </button>
-        </div>
-      </div>
-
-      <div class="grid sm:grid-cols-2 gap-6 my-5 items-center">
-        <div class="h-60 flex items-center justify-center">
-          <canvas id="modalRadarChart"></canvas>
-        </div>
-        <div id="modalAreaBreakdown" class="space-y-2 text-xs"></div>
-      </div>
-
-      <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 text-xs text-slate-600">
-        <strong class="text-slate-800">Log Scelte (12 Scenari):</strong>
-        <p id="modalChoicesLog" class="font-mono text-[11px] text-slate-500 mt-1 break-all">-</p>
-      </div>
-    </div>
-  </div>
-
   <script>
-    const PAGE_MODE = "analytics"; // 'analytics' | 'workshops' | 'lists'
+    const PAGE_MODE = "analytics"; // 'analytics' | 'details' | 'workshops' | 'lists'
     const DEFAULT_SUPABASE_URL = "https://axiilxpcvevqlctjfpjj.supabase.co";
     const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4aWlseHBjdmV2cWxjdGpmcGpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzOTM1NzksImV4cCI6MjEwODk2OTU3OX0.m5oHRZA7lo4bl3ys9LnJpGKnpjYZneh-Unxf5CDbA7A";
 
@@ -704,7 +626,7 @@
         const dataChanged = (allRecords.length !== prevCount) || (workshopsDB.length !== prevWsCount);
         if (!forceRedraw && !dataChanged) return;
 
-        if (PAGE_MODE === "analytics") {
+        if (PAGE_MODE === "analytics" || PAGE_MODE === "details") {
           populateFilterDropdowns(true);
           applyFilters();
         } else if (PAGE_MODE === "workshops") {
@@ -735,7 +657,7 @@
 
     function getParticipantTestBaseUrl() {
       const loc = window.location;
-      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-workshop|admin-liste).*$/i, "");
+      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-dettaglio|admin-workshop|admin-liste).*$/i, "");
       return `${loc.origin}${basePath.endsWith("/") ? basePath : basePath + "/"}index.html`;
     }
 
@@ -1343,8 +1265,9 @@
       const btnPrint = document.getElementById("btnPrintReport");
       if (btnPrint) btnPrint.classList.remove("hidden");
 
-      if (PAGE_MODE === "analytics") {
-        const sec = document.getElementById("screen-dashboard");
+      if (PAGE_MODE === "analytics" || PAGE_MODE === "details") {
+        const secId = PAGE_MODE === "analytics" ? "screen-dashboard" : "screen-details";
+        const sec = document.getElementById(secId);
         if (sec) sec.classList.remove("hidden");
         populateFilterDropdowns(preserveFilters);
         const params = new URLSearchParams(window.location.search);
@@ -1379,7 +1302,7 @@
       const liveCtrl = document.getElementById("liveControls");
       if (liveCtrl) liveCtrl.classList.add("hidden");
       document.getElementById("adminNavTabs").classList.add("hidden");
-      ["screen-dashboard", "screen-workshops", "screen-lists"].forEach(id => {
+      ["screen-dashboard", "screen-details", "screen-workshops", "screen-lists"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add("hidden");
       });
@@ -1429,7 +1352,7 @@
     }
 
     function applyFilters() {
-      if (PAGE_MODE !== "analytics") return;
+      if (PAGE_MODE !== "analytics" && PAGE_MODE !== "details") return;
       const wVal = document.getElementById("filterWorkshop").value;
       const tVal = document.getElementById("filterTarget").value;
       const lVal = document.getElementById("filterLevel").value;
@@ -1449,7 +1372,14 @@
         return true;
       });
 
-      renderAllAnalytics();
+      if (PAGE_MODE === "analytics") {
+        renderAllAnalytics();
+      } else if (PAGE_MODE === "details") {
+        const badge = document.getElementById("activeRecordsBadge");
+        if (badge) badge.textContent = `${filteredRecords.length} di ${allRecords.length} test selezionati`;
+        renderParticipantsTable();
+        updateBulkSelectionUI();
+      }
     }
 
     function computeGroupAverages(records) {
@@ -1532,8 +1462,6 @@
       });
 
       renderGroupComparison();
-      renderParticipantsTable();
-      updateBulkSelectionUI();
     }
 
     function renderGroupComparison() {

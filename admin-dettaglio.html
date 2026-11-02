@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safety Leadership — Dettaglio Singoli Test (Supabase)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Ripristina stato da window.name (funziona anche in locale file://) o localStorage/sessionStorage
+    (function() {
+      let isAuth = false;
+      try {
+        if (window.name && window.name.startsWith("SL_STATE:")) {
+          const parsed = JSON.parse(window.name.slice(9));
+          if (parsed && parsed.authMode) {
+            isAuth = true;
+            try {
+              sessionStorage.setItem("sl_auth_mode", parsed.authMode);
+              localStorage.setItem("sl_auth_mode", parsed.authMode);
+              if (parsed.url) { sessionStorage.setItem("sl_sb_url", parsed.url); localStorage.setItem("sl_sb_url", parsed.url); }
+              if (parsed.key) { sessionStorage.setItem("sl_sb_key", parsed.key); localStorage.setItem("sl_sb_key", parsed.key); }
+              if (parsed.pwd) { sessionStorage.setItem("sl_sb_pwd", parsed.pwd); localStorage.setItem("sl_sb_pwd", parsed.pwd); }
+              if (parsed.lists) sessionStorage.setItem("sl_cache_lists", JSON.stringify(parsed.lists));
+              if (parsed.workshops) sessionStorage.setItem("sl_cache_workshops", JSON.stringify(parsed.workshops));
+              if (parsed.records) sessionStorage.setItem("sl_cache_records", JSON.stringify(parsed.records));
+              if (parsed.time) sessionStorage.setItem("sl_cache_time", parsed.time);
+            } catch (err) {}
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const authMode = sessionStorage.getItem("sl_auth_mode") || localStorage.getItem("sl_auth_mode");
+        if (authMode === "supabase" || authMode === "demo" || authMode === "csv") {
+          isAuth = true;
+        }
+      } catch (e) {}
+
+      if (isAuth) {
+        document.documentElement.classList.add("is-authenticated");
+      }
+    })();
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; }
+      .print-break { page-break-inside: avoid; }
+    }
+    /* Regole ad alta priorità per nascondere subito il login quando già autenticati */
+    html.is-authenticated #screen-upload { display: none !important; }
+    html.is-authenticated #adminNavTabs { display: block !important; }
+    html.is-authenticated #btnChangeSource { display: inline-block !important; }
+    html.is-authenticated #btnPrintReport { display: inline-block !important; }
+    html.is-authenticated #screen-dashboard,
+    html.is-authenticated #screen-details,
+    html.is-authenticated #screen-workshops,
+    html.is-authenticated #screen-lists { display: block !important; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-slate-900 text-white shadow-md no-print">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-slate-950 text-lg shadow">
+          SL
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">Safety Leadership — Admin & Workshop Console</h1>
+          <p class="text-xs text-slate-400">Architettura GitHub Pages + Database Cloud Supabase</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <div id="liveControls" class="hidden items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="lastSyncText" class="text-[11px] text-slate-300 font-medium">Supabase Live</span>
+          <button onclick="refreshFromSupabase(true)" class="ml-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] transition">
+            ↻ Aggiorna ora
+          </button>
+        </div>
+
+        <button id="btnChangeSource" onclick="logoutAndShowLogin()" class="hidden px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
+          Esci
+        </button>
+        <button id="btnPrintReport" onclick="window.print()" class="hidden px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition">
+          Stampa / PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra di Navigazione a 4 Pagine Separate -->
+    <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
+      <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 pt-2">
+        <a href="admin-risultati.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+          <span>📊</span> <span>Analisi Risultati Globali</span>
+        </a>
+        <a href="admin-dettaglio.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
+          <span>📋</span> <span>Dettaglio Singoli Test</span>
+        </a>
+        <a href="admin-workshop.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+          <span>🎯</span> <span>Gestione Workshop (Link & QR)</span>
+        </a>
+        <a href="admin-liste.html" onclick="saveStateToCache()" class="px-5 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+          <span>🗂️</span> <span>Gestione Liste (Aziende, Ruoli, Cantieri)</span>
+        </a>
+      </div>
+    </div>
+  </header>
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
+
+    <!-- 1. SCHERMATA DI LOGIN SUPABASE -->
+    <section id="screen-upload" class="max-w-3xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-900 text-white px-6 py-5 border-b-4 border-amber-500 flex items-center justify-between">
+          <div>
+            <span class="inline-block px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[11px] font-bold uppercase tracking-wider mb-1">
+              GitHub Pages + Supabase Cloud DB
+            </span>
+            <h2 class="text-xl md:text-2xl font-extrabold">
+              Accedi alla Console di Amministrazione
+            </h2>
+          </div>
+          <div class="text-2xl">⚡</div>
+        </div>
+
+        <div class="p-6 md:p-8 space-y-4">
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Inserisci il <strong>Project URL</strong> e la <strong>Anon Public Key</strong> del tuo progetto Supabase (se non li hai già salvati nel codice) insieme alla tua <strong>Password Admin</strong> (di default <code>Safety2026!</code>):
+          </p>
+
+          <div id="supabaseConfigInputs" class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Supabase Project URL</label>
+              <input id="inputSbUrl" type="text" placeholder="https://xxxx.supabase.co"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-amber-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Supabase Anon Public Key</label>
+              <input id="inputSbKey" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-amber-500" />
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <input id="inputAdminPassword" type="password" placeholder="Password Admin (es. Safety2026!)"
+              onkeydown="if(event.key==='Enter') connectToSupabase()"
+              class="flex-grow px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-amber-500" />
+            <button onclick="connectToSupabase()" id="btnConnectSb"
+              class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm shadow-sm transition shrink-0">
+              Connetti a Supabase →
+            </button>
+          </div>
+
+          <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer pt-1">
+            <input id="chkRememberSb" type="checkbox" checked class="accent-amber-600" />
+            <span>Ricorda URL, Key e Sessione Admin mentre navigo tra le pagine</span>
+          </label>
+
+          <p id="uploadError" class="hidden mt-4 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-3.5"></p>
+        </div>
+      </div>
+
+      <!-- Modalità Offline / Demo -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm">Modalità Offline: Carica CSV o Apri Demo</h3>
+            <p class="text-xs text-slate-500">Prova subito i Workshop (Cantiere vs Ufficio), l'interruttore Aperto/Chiuso e i grafici senza database.</p>
+          </div>
+          <div class="flex flex-wrap gap-2.5">
+            <button onclick="document.getElementById('csvFileInput').click()"
+              class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
+              Sfoglia file CSV...
+            </button>
+            <input id="csvFileInput" type="file" accept=".csv,text/csv" class="hidden" onchange="handleFileSelect(event)" />
+            <button onclick="loadDemoDataset()"
+              class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+              Apri Console Demo (Cantiere + Ufficio) →
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2B. SCHEDA DETTAGLIO SINGOLI TEST COMPLETATI -->
+    <section id="screen-details" class="hidden space-y-6">
+
+      <!-- Barra Filtri Interattivi a 7 Colonne -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 no-print">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div class="flex items-center gap-2">
+            <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-800">Filtri di Analisi</h2>
+            <span id="activeRecordsBadge" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
+              0 test selezionati
+            </span>
+          </div>
+          <button onclick="resetFilters()" class="text-xs font-bold text-amber-700 hover:underline">
+            Azzera filtri
+          </button>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-7 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Workshop</label>
+            <select id="filterWorkshop" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti i Workshop</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Profilo (Site / HQ)</label>
+            <select id="filterTarget" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-amber-300 text-xs font-bold bg-amber-50/40 focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti (Cantiere + Ufficio)</option>
+              <option value="Site / Field">🏗️ Cantiere / Site</option>
+              <option value="Office / HQ">🏢 Ufficio / Sede (HQ)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Livello Workshop</label>
+            <select id="filterLevel" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti i Livelli</option>
+              <option value="Top manager">Top manager</option>
+              <option value="Second level">Second level</option>
+              <option value="Baseline">Baseline</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Azienda</label>
+            <select id="filterCompany" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutte le Aziende</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Cantiere / Sede</label>
+            <select id="filterSite" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti i Cantieri/Sedi</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Ruolo / Funzione</label>
+            <select id="filterRole" onchange="applyFilters()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:border-amber-500">
+              <option value="ALL">Tutti i Ruoli</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Cerca Partecipante</label>
+            <input id="filterSearch" type="text" oninput="applyFilters()" placeholder="Nome o Anonimo..."
+              class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
+          </div>
+        </div>
+      </div>
+
+      <!-- TABELLA PARTECIPANTI CON ASSEGNAZIONE WORKSHOP EDITABILE -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-break">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 class="font-bold text-slate-900 text-lg">Dettaglio Singoli Test Completati</h3>
+            <p class="text-xs text-slate-500">
+              Usa il menu a discesa nella colonna "Workshop" per associare o spostare qualsiasi test in tempo reale su Supabase.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5 no-print">
+            <button id="btnDeleteSelected" onclick="deleteSelectedSubmissions()"
+              class="hidden px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-1.5">
+              <span>🗑️</span> <span id="btnDeleteSelectedLabel">Elimina selezionati (0)</span>
+            </button>
+            <button onclick="exportFilteredCSV()"
+              class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+              Esporta Vista Filtrata (CSV)
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto max-h-[65vh] overflow-y-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="sticky top-0 bg-slate-100 text-slate-600 uppercase z-10">
+              <tr>
+                <th class="py-3 px-3 w-10 text-center no-print">
+                  <input id="chkSelectAllRows" type="checkbox" onchange="toggleSelectAllFiltered(this.checked)"
+                    class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
+                </th>
+                <th class="py-3 px-3">Data</th>
+                <th class="py-3 px-3">Workshop (Editabile)</th>
+                <th class="py-3 px-3">Profilo</th>
+                <th class="py-3 px-3">Livello</th>
+                <th class="py-3 px-3">Partecipante</th>
+                <th class="py-3 px-3">Azienda</th>
+                <th class="py-3 px-3">Ruolo</th>
+                <th class="py-3 px-3">Cantiere/Sede</th>
+                <th class="py-3 px-3">Area Dominante</th>
+                <th class="py-3 px-3">Bisogno Formativo</th>
+                <th class="py-3 px-3 text-right no-print">Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="participantsTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- MODALE ISPEZIONE SINGOLO PARTECIPANTE -->
+  <div id="participantModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 md:p-8 border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+        <div>
+          <span id="modalCompanyBadge" class="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 text-xs font-bold">Workshop</span>
+          <h3 id="modalPersonName" class="text-xl font-extrabold text-slate-900 mt-1">Nome Partecipante</h3>
+          <p id="modalPersonMeta" class="text-xs text-slate-500 mt-0.5">Ruolo • Cantiere • Data</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="deleteCurrentModalParticipant()"
+            class="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs border border-red-200 transition">
+            🗑️ Elimina Test
+          </button>
+          <button onclick="closeParticipantModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-6 my-5 items-center">
+        <div class="h-60 flex items-center justify-center">
+          <canvas id="modalRadarChart"></canvas>
+        </div>
+        <div id="modalAreaBreakdown" class="space-y-2 text-xs"></div>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 text-xs text-slate-600">
+        <strong class="text-slate-800">Log Scelte (12 Scenari):</strong>
+        <p id="modalChoicesLog" class="font-mono text-[11px] text-slate-500 mt-1 break-all">-</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+    const PAGE_MODE = "details"; // 'analytics' | 'details' | 'workshops' | 'lists'
+    const DEFAULT_SUPABASE_URL = "https://axiilxpcvevqlctjfpjj.supabase.co";
+    const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4aWlseHBjdmV2cWxjdGpmcGpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzOTM1NzksImV4cCI6MjEwODk2OTU3OX0.m5oHRZA7lo4bl3ys9LnJpGKnpjYZneh-Unxf5CDbA7A";
+
+    const AREA_KEYS = [
+      { id: "VISION", name: "Vision", csvPct: "vision_pct", color: "#2563eb" },
+      { id: "FOCUS", name: "Focus", csvPct: "focus_pct", color: "#d97706" },
+      { id: "INFLUENCE", name: "Influence", csvPct: "influence_pct", color: "#7c3aed" },
+      { id: "CREDIBILITY", name: "Credibility", csvPct: "credibility_pct", color: "#059669" },
+      { id: "TEAM", name: "Team", csvPct: "team_pct", color: "#0891b2" },
+      { id: "COMMUNICATION", name: "Communication", csvPct: "communication_pct", color: "#db2777" },
+      { id: "FEEDBACK", name: "Feedback", csvPct: "feedback_pct", color: "#4f46e5" }
+    ];
+
+    let supabaseClient = null;
+    let activeConnectionMode = null; // 'supabase' | 'csv' | 'demo'
+
+    let allRecords = [];
+    let filteredRecords = [];
+    let selectedRecordIds = new Set();
+    let currentModalRecordId = null;
+
+    let workshopsDB = [];
+    let currentQrModalUrl = "";
+    let editableLists = { companies: [], roles: [], sites: [] };
+    let hasUnsavedListChanges = false;
+
+    let aggRadarInstance = null;
+    let domWeakBarInstance = null;
+    let groupCompChartInstance = null;
+    let modalRadarInstance = null;
+
+    // =========================================================================
+    // PERSISTENZA UNIVERSALE (window.name + localStorage + sessionStorage)
+    // Funziona sia su GitHub Pages (https://) sia aprendo i file dal PC (file://)
+    // =========================================================================
+    function getWindowNameData() {
+      try {
+        if (window.name && window.name.startsWith("SL_STATE:")) {
+          return JSON.parse(window.name.slice(9)) || {};
+        }
+      } catch (e) {}
+      return {};
+    }
+
+    function getStoredVal(key) {
+      try {
+        const sVal = sessionStorage.getItem(key);
+        if (sVal) return sVal;
+      } catch (e) {}
+      try {
+        const lVal = localStorage.getItem(key);
+        if (lVal) return lVal;
+      } catch (e) {}
+      const wn = getWindowNameData();
+      if (key === "sl_auth_mode") return wn.authMode || "";
+      if (key === "sl_sb_url") return wn.url || "";
+      if (key === "sl_sb_key") return wn.key || "";
+      if (key === "sl_sb_pwd") return wn.pwd || "";
+      return "";
+    }
+
+    function setStoredVal(key, val) {
+      try { sessionStorage.setItem(key, val); } catch (e) {}
+      try { localStorage.setItem(key, val); } catch (e) {}
+    }
+
+    function removeStoredVal(key) {
+      try { sessionStorage.removeItem(key); } catch (e) {}
+      try { localStorage.removeItem(key); } catch (e) {}
+    }
+
+    function saveStateToCache() {
+      const nowTime = new Date().toLocaleTimeString("it-IT");
+      try {
+        setStoredVal("sl_cache_lists", JSON.stringify(editableLists));
+        setStoredVal("sl_cache_workshops", JSON.stringify(workshopsDB));
+        setStoredVal("sl_cache_records", JSON.stringify(allRecords));
+        setStoredVal("sl_cache_time", nowTime);
+      } catch (e) {}
+
+      try {
+        const wn = getWindowNameData();
+        const stateObj = {
+          authMode: activeConnectionMode || getStoredVal("sl_auth_mode") || wn.authMode || "",
+          url: getStoredVal("sl_sb_url") || wn.url || DEFAULT_SUPABASE_URL,
+          key: getStoredVal("sl_sb_key") || wn.key || DEFAULT_SUPABASE_ANON_KEY,
+          pwd: getStoredVal("sl_sb_pwd") || wn.pwd || "",
+          lists: editableLists,
+          workshops: workshopsDB,
+          records: allRecords,
+          time: nowTime
+        };
+        window.name = "SL_STATE:" + JSON.stringify(stateObj);
+      } catch (e) {
+        console.warn("window.name cache warning:", e);
+      }
+    }
+
+    function restoreStateFromCache() {
+      try {
+        const wn = getWindowNameData();
+        if (wn && Array.isArray(wn.workshops) && Array.isArray(wn.records)) {
+          editableLists = wn.lists || { companies: [], roles: [], sites: [] };
+          workshopsDB = wn.workshops;
+          allRecords = wn.records;
+          const syncTxt = document.getElementById("lastSyncText");
+          if (syncTxt && wn.time) syncTxt.textContent = `Sync: ${wn.time}`;
+          return true;
+        }
+        const cLists = getStoredVal("sl_cache_lists");
+        const cWs = getStoredVal("sl_cache_workshops");
+        const cRecs = getStoredVal("sl_cache_records");
+        if (!cLists || !cWs || !cRecs) return false;
+
+        editableLists = JSON.parse(cLists);
+        workshopsDB = JSON.parse(cWs);
+        allRecords = JSON.parse(cRecs);
+        const cTime = getStoredVal("sl_cache_time") || new Date().toLocaleTimeString("it-IT");
+        const syncTxt = document.getElementById("lastSyncText");
+        if (syncTxt) syncTxt.textContent = `Sync: ${cTime}`;
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function showError(msg) {
+      document.documentElement.classList.remove("is-authenticated");
+      const errEl = document.getElementById("uploadError");
+      if (!errEl) return;
+      errEl.textContent = msg;
+      errEl.classList.remove("hidden");
+    }
+
+    async function connectToSupabase(silentAutoLogin = false) {
+      const urlInput = document.getElementById("inputSbUrl");
+      const keyInput = document.getElementById("inputSbKey");
+      const pwdInput = document.getElementById("inputAdminPassword");
+
+      const cachedPwd = getStoredVal("sl_sb_pwd");
+      const urlVal = ((urlInput && urlInput.value) || getStoredVal("sl_sb_url") || DEFAULT_SUPABASE_URL).trim();
+      const keyVal = ((keyInput && keyInput.value) || getStoredVal("sl_sb_key") || DEFAULT_SUPABASE_ANON_KEY).trim();
+      const pwdVal = silentAutoLogin ? cachedPwd : (pwdInput ? pwdInput.value.trim() : "");
+
+      if (!urlVal || !keyVal) {
+        if (!silentAutoLogin) showError("Inserisci sia il Supabase Project URL sia la Anon Public Key.");
+        return;
+      }
+      if (!pwdVal && !silentAutoLogin) {
+        showError("Inserisci la Password Admin.");
+        return;
+      }
+
+      supabaseClient = window.supabase.createClient(urlVal, keyVal);
+
+      // Se stiamo cambiando scheda ed esiste la cache, mostra istantaneamente la scheda senza attendere la rete
+      if (silentAutoLogin && restoreStateFromCache()) {
+        activeConnectionMode = "supabase";
+        document.documentElement.classList.add("is-authenticated");
+        const liveCtrl = document.getElementById("liveControls");
+        if (liveCtrl) {
+          liveCtrl.classList.remove("hidden");
+          liveCtrl.classList.add("flex");
+        }
+        initDashboardWithData(false);
+        refreshFromSupabase(false);
+        return;
+      }
+
+      const btn = document.getElementById("btnConnectSb");
+      if (btn) {
+        btn.textContent = "Connessione a Supabase...";
+        btn.disabled = true;
+      }
+      const errEl = document.getElementById("uploadError");
+      if (errEl) errEl.classList.add("hidden");
+
+      try {
+        const { data: cfg, error: cfgErr } = await supabaseClient
+          .from("app_config")
+          .select("*")
+          .eq("id", 1)
+          .single();
+
+        if (cfgErr) throw new Error("Errore lettura tabella app_config: " + cfgErr.message);
+
+        if (!silentAutoLogin && cfg.admin_password && cfg.admin_password !== pwdVal) {
+          throw new Error("Password Admin errata.");
+        }
+
+        setStoredVal("sl_sb_url", urlVal);
+        setStoredVal("sl_sb_key", keyVal);
+        if (pwdVal) setStoredVal("sl_sb_pwd", pwdVal);
+        setStoredVal("sl_auth_mode", "supabase");
+        activeConnectionMode = "supabase";
+        document.documentElement.classList.add("is-authenticated");
+
+        editableLists.companies = Array.isArray(cfg.companies) ? cfg.companies : [];
+        editableLists.roles = Array.isArray(cfg.roles) ? cfg.roles : [];
+        editableLists.sites = Array.isArray(cfg.sites) ? cfg.sites : [];
+
+        await fetchWorkshopsAndSubmissionsFromSupabase();
+        saveStateToCache();
+
+        const liveCtrl = document.getElementById("liveControls");
+        if (liveCtrl) {
+          liveCtrl.classList.remove("hidden");
+          liveCtrl.classList.add("flex");
+        }
+        initDashboardWithData(false);
+
+      } catch (err) {
+        if (silentAutoLogin) {
+          logoutAndShowLogin();
+        } else {
+          showError(err.message);
+        }
+      } finally {
+        if (btn) {
+          btn.textContent = "Connetti a Supabase →";
+          btn.disabled = false;
+        }
+      }
+    }
+
+    async function fetchWorkshopsAndSubmissionsFromSupabase() {
+      const [wsRes, subRes] = await Promise.all([
+        supabaseClient.from("workshops").select("*").order("created_at", { ascending: false }),
+        supabaseClient.from("submissions").select("*").order("created_at", { ascending: false })
+      ]);
+
+      if (wsRes.error) throw new Error(wsRes.error.message);
+      if (subRes.error) throw new Error(subRes.error.message);
+
+      workshopsDB = (wsRes.data || []).map(w => ({
+        id: w.id,
+        name: w.name,
+        date: w.date,
+        site: w.site,
+        level: w.level,
+        targetType: w.target_type || "site",
+        active: w.active !== false
+      }));
+
+      allRecords = normalizeRows(subRes.data || []);
+      const nowStr = new Date().toLocaleTimeString("it-IT");
+      const syncTxt = document.getElementById("lastSyncText");
+      if (syncTxt) syncTxt.textContent = `Sync: ${nowStr}`;
+    }
+
+    async function refreshFromSupabase(forceRedraw = true) {
+      if (activeConnectionMode !== "supabase" || !supabaseClient) return;
+      try {
+        const prevCount = allRecords.length;
+        const prevWsCount = workshopsDB.length;
+
+        const [cfgRes] = await Promise.all([
+          supabaseClient.from("app_config").select("*").eq("id", 1).single(),
+          fetchWorkshopsAndSubmissionsFromSupabase()
+        ]);
+
+        if (cfgRes && cfgRes.data && !hasUnsavedListChanges) {
+          editableLists.companies = Array.isArray(cfgRes.data.companies) ? cfgRes.data.companies : [];
+          editableLists.roles = Array.isArray(cfgRes.data.roles) ? cfgRes.data.roles : [];
+          editableLists.sites = Array.isArray(cfgRes.data.sites) ? cfgRes.data.sites : [];
+        }
+
+        saveStateToCache();
+
+        const dataChanged = (allRecords.length !== prevCount) || (workshopsDB.length !== prevWsCount);
+        if (!forceRedraw && !dataChanged) return;
+
+        if (PAGE_MODE === "analytics" || PAGE_MODE === "details") {
+          populateFilterDropdowns(true);
+          applyFilters();
+        } else if (PAGE_MODE === "workshops") {
+          populateWorkshopSiteDropdown();
+          renderWorkshopsTable();
+        } else if (PAGE_MODE === "lists" && !hasUnsavedListChanges) {
+          renderEditableListsUI();
+        }
+      } catch (e) {
+        console.warn("Background sync warning:", e);
+      }
+    }
+
+    function populateWorkshopSiteDropdown() {
+      const sel = document.getElementById("selectWsSite");
+      if (!sel) return;
+      if (editableLists.sites.length === 0) {
+        sel.innerHTML = `<option value="">-- Aggiungi prima un Cantiere/Sede nella scheda Liste --</option>`;
+        return;
+      }
+      const prev = sel.value;
+      sel.innerHTML = editableLists.sites.map(s => {
+        const label = s.split("|")[0].trim();
+        return `<option value="${s}">${label}</option>`;
+      }).join("");
+      if (prev && editableLists.sites.includes(prev)) sel.value = prev;
+    }
+
+    function getParticipantTestBaseUrl() {
+      const loc = window.location;
+      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-dettaglio|admin-workshop|admin-liste).*$/i, "");
+      return `${loc.origin}${basePath.endsWith("/") ? basePath : basePath + "/"}index.html`;
+    }
+
+    async function createNewWorkshop() {
+      const nameVal = document.getElementById("inputWsName").value.trim();
+      const dateVal = document.getElementById("inputWsDate").value;
+      const siteVal = document.getElementById("selectWsSite").value;
+      const levelVal = document.getElementById("selectWsLevel").value;
+      const targetVal = document.getElementById("selectWsTarget").value;
+      const banner = document.getElementById("wsFeedbackBanner");
+
+      if (!nameVal || !dateVal || !siteVal) {
+        banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-red-50 border-red-200 text-red-700";
+        banner.textContent = "Compila tutti i campi obbligatori del Workshop: Nome, Data e Cantiere/Sede.";
+        banner.classList.remove("hidden");
+        return;
+      }
+
+      const newWs = {
+        id: "ws_" + Math.random().toString(36).substring(2, 8) + Date.now().toString(36).slice(-3),
+        name: nameVal,
+        date: dateVal,
+        site: siteVal,
+        level: levelVal,
+        targetType: targetVal,
+        active: true
+      };
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        const { error } = await supabaseClient.from("workshops").insert([{
+          id: newWs.id,
+          name: newWs.name,
+          date: newWs.date,
+          site: newWs.site,
+          level: newWs.level,
+          target_type: newWs.targetType,
+          active: true
+        }]);
+        if (error) {
+          alert("Errore salvataggio Workshop su Supabase: " + error.message);
+          return;
+        }
+      }
+
+      workshopsDB.unshift(newWs);
+      saveStateToCache();
+      document.getElementById("inputWsName").value = "";
+
+      const typeLabel = targetVal === "office" ? "🏢 Ufficio / Sede (HQ)" : "🏗️ Cantiere / Site";
+      banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
+      banner.textContent = `✓ Workshop "${newWs.name}" (${typeLabel}) salvato! Copia il link qui sotto per i partecipanti.`;
+      banner.classList.remove("hidden");
+
+      renderWorkshopsTable();
+    }
+
+    async function toggleWorkshopActive(wsId) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+      ws.active = !(ws.active !== false);
+      saveStateToCache();
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        await supabaseClient.from("workshops").update({ active: ws.active }).eq("id", wsId);
+      }
+      renderWorkshopsTable();
+    }
+
+    async function deleteWorkshopRecord(wsId) {
+      const target = workshopsDB.find(w => w.id === wsId);
+      if (!target) return;
+      if (!window.confirm(`Vuoi davvero eliminare il workshop "${target.name}"?`)) return;
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        await supabaseClient.from("workshops").delete().eq("id", wsId);
+      }
+      workshopsDB = workshopsDB.filter(w => w.id !== wsId);
+      saveStateToCache();
+      renderWorkshopsTable();
+    }
+
+    function viewWorkshopReport(wsId) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+      saveStateToCache();
+      window.location.href = `admin-risultati.html?ws_name=${encodeURIComponent(ws.name)}`;
+    }
+
+    function renderWorkshopsTable() {
+      const tbody = document.getElementById("workshopsTableBody");
+      if (!tbody) return;
+
+      if (workshopsDB.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 italic">Nessun Workshop registrato. Creane uno qui sopra per generare il link per i partecipanti.</td></tr>`;
+        return;
+      }
+
+      const baseUrl = getParticipantTestBaseUrl();
+
+      tbody.innerHTML = workshopsDB.map(ws => {
+        const isOpen = ws.active !== false;
+        const isOffice = ws.targetType === "office";
+        const wsLink = `${baseUrl}?ws=${encodeURIComponent(ws.id)}`;
+        const siteLabel = String(ws.site || "").split("|")[0].trim();
+        const linkedCount = allRecords.filter(r => r.workshopId === ws.id || r.workshopName === ws.name).length;
+
+        const levelBadgeColor =
+          ws.level === "Top manager" ? "bg-purple-100 text-purple-900 border-purple-200" :
+          ws.level === "Second level" ? "bg-blue-100 text-blue-900 border-blue-200" :
+          "bg-emerald-100 text-emerald-900 border-emerald-200";
+
+        const targetBadge = isOffice
+          ? `<span class="ml-1.5 px-2 py-0.5 rounded bg-indigo-100 text-indigo-900 border border-indigo-200 text-[10px] font-extrabold">🏢 Ufficio / HQ</span>`
+          : `<span class="ml-1.5 px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-extrabold">🏗️ Cantiere</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50 transition ${!isOpen ? 'opacity-65 bg-slate-50/60' : ''}">
+            <td class="py-3 px-3 font-mono text-[11px] font-bold text-slate-500">${ws.id}</td>
+            <td class="py-3 px-3 font-extrabold text-slate-900">${ws.name} ${targetBadge}</td>
+            <td class="py-3 px-3 text-slate-600 whitespace-nowrap">${ws.date}</td>
+            <td class="py-3 px-3 text-slate-700 font-medium">${siteLabel}</td>
+            <td class="py-3 px-3">
+              <span class="px-2.5 py-0.5 rounded-full border font-bold text-[11px] ${levelBadgeColor}">${ws.level}</span>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <button onclick="toggleWorkshopActive('${ws.id}')"
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full font-extrabold text-[11px] border transition ${
+                  isOpen
+                    ? 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200'
+                    : 'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300'
+                }">
+                <span class="w-2 h-2 rounded-full ${isOpen ? 'bg-emerald-600 animate-pulse' : 'bg-slate-500'}"></span>
+                <span>${isOpen ? 'APERTO' : 'CHIUSO'}</span>
+              </button>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <span class="px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-extrabold text-xs">${linkedCount}</span>
+            </td>
+            <td class="py-3 px-3">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button onclick="copyWorkshopLink('${wsLink}')" ${!isOpen ? 'disabled' : ''}
+                  class="px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition ${
+                    isOpen ? 'bg-amber-500 hover:bg-amber-600 text-slate-950' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }">
+                  📋 Copia Link
+                </button>
+                <button onclick="openWorkshopQrModal('${ws.id}')" ${!isOpen ? 'disabled' : ''}
+                  class="px-2.5 py-1 rounded-lg font-bold text-[11px] transition ${
+                    isOpen ? 'bg-slate-900 hover:bg-slate-800 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }">
+                  📱 QR Code
+                </button>
+                <a href="${wsLink}" target="_blank"
+                  class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                  Verifica ↗
+                </a>
+              </div>
+            </td>
+            <td class="py-3 px-3 text-right whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5">
+                <button onclick="viewWorkshopReport('${ws.id}')"
+                  class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[11px] border border-blue-200 transition">
+                  📊 Vedi Report
+                </button>
+                <button onclick="deleteWorkshopRecord('${ws.id}')"
+                  class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200 transition">
+                  🗑️ Elimina
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function copyWorkshopLink(url) {
+      navigator.clipboard.writeText(url);
+      const banner = document.getElementById("wsFeedbackBanner");
+      if (!banner) return;
+      banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
+      banner.textContent = `✓ Link del Workshop copiato negli appunti: ${url}`;
+      banner.classList.remove("hidden");
+    }
+
+    function openWorkshopQrModal(wsId) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+      const wsLink = `${getParticipantTestBaseUrl()}?ws=${encodeURIComponent(ws.id)}`;
+      currentQrModalUrl = wsLink;
+
+      document.getElementById("qrModalLevelBadge").textContent = `${ws.level} • ${ws.targetType === 'office' ? '🏢 Ufficio/HQ' : '🏗️ Cantiere'}`;
+      document.getElementById("qrModalTitle").textContent = ws.name;
+      document.getElementById("qrModalMeta").textContent = `${ws.date} • ${ws.site.split("|")[0].trim()}`;
+      document.getElementById("qrModalLinkText").textContent = wsLink;
+
+      const box = document.getElementById("qrCodeCanvasBox");
+      box.innerHTML = "";
+      new QRCode(box, { text: wsLink, width: 200, height: 200, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+
+      const modal = document.getElementById("workshopQrModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeWorkshopQrModal() {
+      const modal = document.getElementById("workshopQrModal");
+      if (!modal) return;
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function copyModalWsLink() {
+      if (!currentQrModalUrl) return;
+      navigator.clipboard.writeText(currentQrModalUrl);
+      alert("Link copiato:\n" + currentQrModalUrl);
+    }
+
+    async function assignRecordToWorkshop(recordId, newWorkshopId) {
+      const rec = allRecords.find(r => r.id === recordId);
+      if (!rec) return;
+
+      const wsObj = workshopsDB.find(w => w.id === newWorkshopId);
+      if (wsObj) {
+        rec.workshopId = wsObj.id;
+        rec.workshopName = wsObj.name;
+        rec.workshopDate = wsObj.date;
+        rec.workshopLevel = wsObj.level;
+        rec.workshopTarget = wsObj.targetType === "office" ? "Office / HQ" : "Site / Field";
+      } else {
+        rec.workshopId = "";
+        rec.workshopName = "Non assegnato";
+        rec.workshopDate = "-";
+        rec.workshopLevel = "Non assegnato";
+      }
+
+      saveStateToCache();
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        await supabaseClient.from("submissions").update({
+          workshop_id: rec.workshopId,
+          workshop_nome: rec.workshopName,
+          workshop_data: rec.workshopDate,
+          workshop_livello: rec.workshopLevel,
+          workshop_target: rec.workshopTarget
+        }).eq("id", recordId);
+      }
+
+      populateFilterDropdowns(true);
+      applyFilters();
+    }
+
+    function toggleRowSelection(recordId, isChecked) {
+      if (isChecked) selectedRecordIds.add(recordId);
+      else selectedRecordIds.delete(recordId);
+      updateBulkSelectionUI();
+    }
+
+    function toggleSelectAllFiltered(isChecked) {
+      filteredRecords.forEach(r => {
+        if (isChecked) selectedRecordIds.add(r.id);
+        else selectedRecordIds.delete(r.id);
+      });
+      renderParticipantsTable();
+      updateBulkSelectionUI();
+    }
+
+    function updateBulkSelectionUI() {
+      const bulkBtn = document.getElementById("btnDeleteSelected");
+      if (!bulkBtn) return;
+      const validIds = new Set(allRecords.map(r => r.id));
+      for (const id of selectedRecordIds) {
+        if (!validIds.has(id)) selectedRecordIds.delete(id);
+      }
+      const count = selectedRecordIds.size;
+      if (count > 0) {
+        document.getElementById("btnDeleteSelectedLabel").textContent = `Elimina selezionati (${count})`;
+        bulkBtn.classList.remove("hidden");
+      } else {
+        bulkBtn.classList.add("hidden");
+      }
+    }
+
+    async function deleteSelectedSubmissions() {
+      const idsArray = Array.from(selectedRecordIds);
+      if (idsArray.length === 0) return;
+      if (!window.confirm(`Vuoi eliminare definitivamente i ${idsArray.length} test selezionati da Supabase?`)) return;
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        const { error } = await supabaseClient.from("submissions").delete().in("id", idsArray);
+        if (error) { alert("Errore eliminazione: " + error.message); return; }
+      }
+
+      const deletedSet = new Set(idsArray);
+      allRecords = allRecords.filter(r => !deletedSet.has(r.id));
+      selectedRecordIds.clear();
+      saveStateToCache();
+      populateFilterDropdowns(true);
+      applyFilters();
+    }
+
+    async function deleteSubmissionById(recordId, event) {
+      if (event) event.stopPropagation();
+      const targetRec = allRecords.find(r => r.id === recordId);
+      if (!targetRec) return;
+      if (!window.confirm(`Eliminare definitivamente il test di "${targetRec.name}"?`)) return;
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        const { error } = await supabaseClient.from("submissions").delete().eq("id", recordId);
+        if (error) { alert("Errore: " + error.message); return; }
+      }
+
+      allRecords = allRecords.filter(r => r.id !== recordId);
+      selectedRecordIds.delete(recordId);
+      saveStateToCache();
+      if (currentModalRecordId === recordId) closeParticipantModal();
+      populateFilterDropdowns(true);
+      applyFilters();
+    }
+
+    function deleteCurrentModalParticipant() {
+      if (!currentModalRecordId) return;
+      deleteSubmissionById(currentModalRecordId, null);
+    }
+
+    async function saveListsToSupabase() {
+      const banner = document.getElementById("listsSaveBanner");
+      const btn = document.getElementById("btnSaveSbLists");
+      btn.disabled = true;
+      btn.textContent = "Salvataggio...";
+      banner.classList.add("hidden");
+
+      try {
+        if (activeConnectionMode === "supabase" && supabaseClient) {
+          const { error } = await supabaseClient.from("app_config").update({
+            companies: editableLists.companies,
+            roles: editableLists.roles,
+            sites: editableLists.sites,
+            updated_at: new Date().toISOString()
+          }).eq("id", 1);
+
+          if (error) throw new Error(error.message);
+        }
+
+        hasUnsavedListChanges = false;
+        saveStateToCache();
+        document.getElementById("unsavedChangesBadge").classList.add("hidden");
+
+        banner.className = "rounded-xl p-4 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
+        banner.textContent = "✓ Liste salvate istantaneamente su Supabase! I menu di index.html sono già aggiornati.";
+        banner.classList.remove("hidden");
+      } catch (err) {
+        banner.className = "rounded-xl p-4 text-xs font-bold border bg-red-50 border-red-200 text-red-700";
+        banner.textContent = "Errore salvataggio: " + err.message;
+        banner.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "💾 Salva Liste su Supabase";
+      }
+    }
+
+    function renderEditableListsUI() {
+      ["companies", "roles", "sites"].forEach(category => {
+        const container = document.getElementById(`listContainer-${category}`);
+        if (!container) return;
+        const list = editableLists[category] || [];
+        const countBadgeId =
+          category === "companies" ? "countCompaniesBadge" :
+          category === "roles" ? "countRolesBadge" : "countSitesBadge";
+        const badgeEl = document.getElementById(countBadgeId);
+        if (badgeEl) badgeEl.textContent = list.length;
+
+        if (list.length === 0) {
+          container.innerHTML = `<p class="text-xs text-slate-400 italic py-6 text-center">Lista vuota</p>`;
+          return;
+        }
+
+        container.innerHTML = list.map((item, idx) => {
+          const parts = String(item).split("|").map(p => p.trim());
+          return `
+            <div class="py-2.5 px-2 flex items-center justify-between gap-2 hover:bg-slate-50 rounded-lg">
+              <div class="text-xs leading-snug">
+                <div class="font-bold text-slate-800">${parts[0]}</div>
+                ${parts[1] && parts[1] !== parts[0] ? `<div class="text-[11px] text-slate-400">🇬🇧 ${parts[1]}</div>` : ""}
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button onclick="moveListItem('${category}', ${idx}, -1)" class="w-6 h-6 rounded hover:bg-slate-200 text-xs font-bold ${idx === 0 ? 'invisible' : ''}">↑</button>
+                <button onclick="moveListItem('${category}', ${idx}, 1)" class="w-6 h-6 rounded hover:bg-slate-200 text-xs font-bold ${idx === list.length - 1 ? 'invisible' : ''}">↓</button>
+                <button onclick="removeListItem('${category}', ${idx})" class="w-6 h-6 rounded bg-red-50 hover:bg-red-100 text-red-600 text-xs font-extrabold">✕</button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      });
+    }
+
+    function addListItem(category) {
+      const prefix = category === "companies" ? "newComp" : category === "roles" ? "newRole" : "newSite";
+      const inputIT = document.getElementById(`${prefix}IT`);
+      const inputEN = document.getElementById(`${prefix}EN`);
+      const valIT = inputIT.value.trim();
+      const valEN = inputEN.value.trim();
+      if (!valIT) { inputIT.focus(); return; }
+
+      editableLists[category].push(valEN && valEN !== valIT ? `${valIT} | ${valEN}` : valIT);
+      inputIT.value = "";
+      inputEN.value = "";
+      hasUnsavedListChanges = true;
+      saveStateToCache();
+      document.getElementById("unsavedChangesBadge").classList.remove("hidden");
+      renderEditableListsUI();
+    }
+
+    function removeListItem(category, index) {
+      editableLists[category].splice(index, 1);
+      hasUnsavedListChanges = true;
+      saveStateToCache();
+      document.getElementById("unsavedChangesBadge").classList.remove("hidden");
+      renderEditableListsUI();
+    }
+
+    function moveListItem(category, index, direction) {
+      const list = editableLists[category];
+      const targetIdx = index + direction;
+      if (targetIdx < 0 || targetIdx >= list.length) return;
+      [list[index], list[targetIdx]] = [list[targetIdx], list[index]];
+      hasUnsavedListChanges = true;
+      saveStateToCache();
+      document.getElementById("unsavedChangesBadge").classList.remove("hidden");
+      renderEditableListsUI();
+    }
+
+    function downloadAllTxtFiles() {
+      const files = [
+        { name: "aziende.txt", data: editableLists.companies },
+        { name: "ruoli.txt", data: editableLists.roles },
+        { name: "cantieri.txt", data: editableLists.sites }
+      ];
+      files.forEach((f, i) => {
+        setTimeout(() => {
+          const blob = new Blob([f.data.join("\n") + "\n"], { type: "text/plain;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = f.name;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, i * 200);
+      });
+    }
+
+    function parseNumericPct(val) {
+      if (val === undefined || val === null) return 0;
+      const num = parseFloat(String(val).replace("%", "").replace(",", ".").trim());
+      return isNaN(num) ? 0 : num;
+    }
+
+    function normalizeRows(rawRows) {
+      const valid = [];
+      rawRows.forEach((row, index) => {
+        const norm = {};
+        Object.keys(row).forEach(k => norm[k.toLowerCase().trim()] = row[k]);
+
+        const pcts = {};
+        let sumPct = 0;
+        AREA_KEYS.forEach(a => {
+          const v = parseNumericPct(norm[a.csvPct]);
+          pcts[a.id] = v;
+          sumPct += v;
+        });
+
+        if (sumPct === 0) return;
+
+        // Auto-correzione scala: se la somma delle 7 percentuali è ~10 (es. 3.19 invece di 31.9%), moltiplica per 10
+        if (sumPct > 0 && sumPct <= 15) {
+          AREA_KEYS.forEach(a => {
+            pcts[a.id] = Number((pcts[a.id] * 10).toFixed(1));
+          });
+        }
+
+        const sortedAreas = [...AREA_KEYS].sort((a, b) => pcts[b.id] - pcts[a.id]);
+        const recordId = String(norm["id"] || norm["submission_id"] || `local_${index}`);
+        const wsId = norm["workshop_id"] || "";
+        const wsFromDb = workshopsDB.find(w => w.id === wsId);
+
+        const wsName = wsFromDb?.name || norm["workshop_nome"] || "Non assegnato";
+        const wsDate = wsFromDb?.date || norm["workshop_data"] || "-";
+        const wsLevel = wsFromDb?.level || norm["workshop_livello"] || "Non assegnato";
+
+        const rawTarget = wsFromDb?.targetType || norm["workshop_target"] || "site";
+        const isOffice = String(rawTarget).toLowerCase().includes("office") || String(rawTarget).toLowerCase().includes("hq");
+        const wsTarget = isOffice ? "Office / HQ" : "Site / Field";
+
+        valid.push({
+          id: recordId,
+          date: norm["data_ora"] || (norm["created_at"] ? new Date(norm["created_at"]).toLocaleString("it-IT") : "-"),
+          workshopId: wsId,
+          workshopName: wsName,
+          workshopDate: wsDate,
+          workshopLevel: wsLevel,
+          workshopTarget: wsTarget,
+          name: norm["partecipante"] || "Anonimo",
+          company: norm["azienda"] || "Non specificata",
+          role: norm["ruolo"] || "Non specificato",
+          site: norm["cantiere"] || "Non specificato",
+          pct: pcts,
+          top1Id: sortedAreas[0].id,
+          top1Name: sortedAreas[0].name,
+          top1Val: pcts[sortedAreas[0].id],
+          low7Id: sortedAreas[6].id,
+          low7Name: sortedAreas[6].name,
+          low7Val: pcts[sortedAreas[6].id],
+          choicesLog: norm["riepilogo_scelte"] || "-"
+        });
+      });
+      return valid;
+    }
+
+    function handleFileSelect(event) {
+      if (event.target.files && event.target.files.length > 0) {
+        Papa.parse(event.target.files[0], {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            allRecords = normalizeRows(results.data);
+            activeConnectionMode = "csv";
+            setStoredVal("sl_auth_mode", "csv");
+            document.documentElement.classList.add("is-authenticated");
+            saveStateToCache();
+            initDashboardWithData(false);
+          }
+        });
+      }
+    }
+
+    function loadDemoDataset() {
+      if (getStoredVal("sl_auth_mode") === "demo" && restoreStateFromCache()) {
+        activeConnectionMode = "demo";
+        document.documentElement.classList.add("is-authenticated");
+        initDashboardWithData(false);
+        return;
+      }
+
+      editableLists = {
+        companies: ["General Contractor SpA", "Tech Engineering Srl", "SafeWorks Costruzioni"],
+        roles: ["Project Manager", "Lead Engineer (HQ)", "Procurement Buyer (HQ)", "Site Manager", "HSE Manager", "Preposto"],
+        sites: ["Cantiere Nord - Lotto 1", "Cantiere Sud - Lotto 2", "Sede Ingegneria / Direzione HQ"]
+      };
+
+      workshopsDB = [
+        { id: "ws_hq01", name: "Engineering & PM Leadership HQ", date: "2026-10-15", site: "Sede Ingegneria / Direzione HQ", level: "Top manager", targetType: "office", active: true },
+        { id: "ws_site02", name: "Supervisors Safety Bootcamp Nord", date: "2026-10-22", site: "Cantiere Nord - Lotto 1", level: "Second level", targetType: "site", active: true },
+        { id: "ws_site03", name: "Field Safety Kickoff Sud", date: "2026-10-28", site: "Cantiere Sud - Lotto 2", level: "Baseline", targetType: "site", active: false }
+      ];
+
+      const demoRows = [];
+      for (let i = 0; i < 25; i++) {
+        const ws = workshopsDB[i % workshopsDB.length];
+        const isOff = ws.targetType === "office";
+        const raw = {
+          VISION: 11 + ((i * 3) % 8) + (isOff ? 4 : 0),
+          FOCUS: 12 + ((i * 5) % 9) + (!isOff ? 3 : 0),
+          INFLUENCE: 9 + ((i * 7) % 8),
+          CREDIBILITY: 13 + ((i * 2) % 9),
+          TEAM: 10 + ((i * 4) % 9),
+          COMMUNICATION: 10 + ((i * 6) % 8) + (isOff ? 2 : 0),
+          FEEDBACK: 8 + ((i * 3) % 7)
+        };
+        const tot = Object.values(raw).reduce((a, b) => a + b, 0);
+
+        demoRows.push({
+          id: `demo_${i + 1}`,
+          data_ora: `${10 + (i % 18)}/10/2026`,
+          workshop_id: ws.id,
+          workshop_nome: ws.name,
+          workshop_data: ws.date,
+          workshop_livello: ws.level,
+          workshop_target: isOff ? "Office / HQ" : "Site / Field",
+          partecipante: i % 2 === 0 ? `Partecipante #${i + 1}` : "Anonimo",
+          azienda: editableLists.companies[i % editableLists.companies.length],
+          ruolo: isOff ? (i % 2 === 0 ? "Lead Engineer (HQ)" : "Procurement Buyer (HQ)") : "Preposto",
+          cantiere: ws.site,
+          vision_pct: ((raw.VISION / tot) * 100).toFixed(1),
+          focus_pct: ((raw.FOCUS / tot) * 100).toFixed(1),
+          influence_pct: ((raw.INFLUENCE / tot) * 100).toFixed(1),
+          credibility_pct: ((raw.CREDIBILITY / tot) * 100).toFixed(1),
+          team_pct: ((raw.TEAM / tot) * 100).toFixed(1),
+          communication_pct: ((raw.COMMUNICATION / tot) * 100).toFixed(1),
+          feedback_pct: ((raw.FEEDBACK / tot) * 100).toFixed(1)
+        });
+      }
+
+      activeConnectionMode = "demo";
+      setStoredVal("sl_auth_mode", "demo");
+      document.documentElement.classList.add("is-authenticated");
+      allRecords = normalizeRows(demoRows);
+      saveStateToCache();
+      initDashboardWithData(false);
+    }
+
+    function initDashboardWithData(preserveFilters = false) {
+      document.documentElement.classList.add("is-authenticated");
+      document.getElementById("screen-upload").classList.add("hidden");
+      document.getElementById("adminNavTabs").classList.remove("hidden");
+      document.getElementById("btnChangeSource").classList.remove("hidden");
+      const btnPrint = document.getElementById("btnPrintReport");
+      if (btnPrint) btnPrint.classList.remove("hidden");
+
+      if (PAGE_MODE === "analytics" || PAGE_MODE === "details") {
+        const secId = PAGE_MODE === "analytics" ? "screen-dashboard" : "screen-details";
+        const sec = document.getElementById(secId);
+        if (sec) sec.classList.remove("hidden");
+        populateFilterDropdowns(preserveFilters);
+        const params = new URLSearchParams(window.location.search);
+        const wsParam = params.get("ws_name");
+        if (wsParam && document.getElementById("filterWorkshop")) {
+          document.getElementById("filterWorkshop").value = wsParam;
+          if (document.getElementById("selectGroupBy")) document.getElementById("selectGroupBy").value = "ruolo";
+        }
+        applyFilters();
+      } else if (PAGE_MODE === "workshops") {
+        const sec = document.getElementById("screen-workshops");
+        if (sec) sec.classList.remove("hidden");
+        populateWorkshopSiteDropdown();
+        renderWorkshopsTable();
+      } else if (PAGE_MODE === "lists") {
+        const sec = document.getElementById("screen-lists");
+        if (sec) sec.classList.remove("hidden");
+        renderEditableListsUI();
+      }
+    }
+
+    function logoutAndShowLogin() {
+      selectedRecordIds.clear();
+      removeStoredVal("sl_auth_mode");
+      removeStoredVal("sl_sb_pwd");
+      removeStoredVal("sl_cache_lists");
+      removeStoredVal("sl_cache_workshops");
+      removeStoredVal("sl_cache_records");
+      window.name = "";
+      document.documentElement.classList.remove("is-authenticated");
+
+      const liveCtrl = document.getElementById("liveControls");
+      if (liveCtrl) liveCtrl.classList.add("hidden");
+      document.getElementById("adminNavTabs").classList.add("hidden");
+      ["screen-dashboard", "screen-details", "screen-workshops", "screen-lists"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      });
+      document.getElementById("btnChangeSource").classList.add("hidden");
+      const btnPrint = document.getElementById("btnPrintReport");
+      if (btnPrint) btnPrint.classList.add("hidden");
+      document.getElementById("screen-upload").classList.remove("hidden");
+    }
+
+    function populateFilterDropdowns(preserve = false) {
+      const selW = document.getElementById("filterWorkshop");
+      if (!selW) return;
+      const wsNames = [...new Set([...workshopsDB.map(w => w.name), ...allRecords.map(r => r.workshopName)])].filter(Boolean).sort();
+      const companies = [...new Set(allRecords.map(r => r.company))].sort();
+      const sites = [...new Set(allRecords.map(r => r.site))].sort();
+      const roles = [...new Set(allRecords.map(r => r.role))].sort();
+
+      const selC = document.getElementById("filterCompany");
+      const selS = document.getElementById("filterSite");
+      const selR = document.getElementById("filterRole");
+
+      const prevW = preserve ? selW.value : "ALL";
+      const prevC = preserve ? selC.value : "ALL";
+      const prevS = preserve ? selS.value : "ALL";
+      const prevR = preserve ? selR.value : "ALL";
+
+      selW.innerHTML = `<option value="ALL">Tutti i Workshop</option>` + wsNames.map(w => `<option value="${w}">${w}</option>`).join("");
+      selC.innerHTML = `<option value="ALL">Tutte le Aziende</option>` + companies.map(c => `<option value="${c}">${c}</option>`).join("");
+      selS.innerHTML = `<option value="ALL">Tutti i Cantieri/Sedi</option>` + sites.map(s => `<option value="${s}">${s}</option>`).join("");
+      selR.innerHTML = `<option value="ALL">Tutti i Ruoli</option>` + roles.map(r => `<option value="${r}">${r}</option>`).join("");
+
+      if (wsNames.includes(prevW)) selW.value = prevW;
+      if (companies.includes(prevC)) selC.value = prevC;
+      if (sites.includes(prevS)) selS.value = prevS;
+      if (roles.includes(prevR)) selR.value = prevR;
+    }
+
+    function resetFilters() {
+      document.getElementById("filterWorkshop").value = "ALL";
+      document.getElementById("filterTarget").value = "ALL";
+      document.getElementById("filterLevel").value = "ALL";
+      document.getElementById("filterCompany").value = "ALL";
+      document.getElementById("filterSite").value = "ALL";
+      document.getElementById("filterRole").value = "ALL";
+      document.getElementById("filterSearch").value = "";
+      applyFilters();
+    }
+
+    function applyFilters() {
+      if (PAGE_MODE !== "analytics" && PAGE_MODE !== "details") return;
+      const wVal = document.getElementById("filterWorkshop").value;
+      const tVal = document.getElementById("filterTarget").value;
+      const lVal = document.getElementById("filterLevel").value;
+      const cVal = document.getElementById("filterCompany").value;
+      const sVal = document.getElementById("filterSite").value;
+      const rVal = document.getElementById("filterRole").value;
+      const qVal = document.getElementById("filterSearch").value.trim().toLowerCase();
+
+      filteredRecords = allRecords.filter(rec => {
+        if (wVal !== "ALL" && rec.workshopName !== wVal) return false;
+        if (tVal !== "ALL" && rec.workshopTarget !== tVal) return false;
+        if (lVal !== "ALL" && rec.workshopLevel !== lVal) return false;
+        if (cVal !== "ALL" && rec.company !== cVal) return false;
+        if (sVal !== "ALL" && rec.site !== sVal) return false;
+        if (rVal !== "ALL" && rec.role !== rVal) return false;
+        if (qVal && !rec.name.toLowerCase().includes(qVal)) return false;
+        return true;
+      });
+
+      if (PAGE_MODE === "analytics") {
+        renderAllAnalytics();
+      } else if (PAGE_MODE === "details") {
+        const badge = document.getElementById("activeRecordsBadge");
+        if (badge) badge.textContent = `${filteredRecords.length} di ${allRecords.length} test selezionati`;
+        renderParticipantsTable();
+        updateBulkSelectionUI();
+      }
+    }
+
+    function computeGroupAverages(records) {
+      const avg = {};
+      AREA_KEYS.forEach(a => avg[a.id] = 0);
+      if (records.length === 0) return avg;
+      records.forEach(r => AREA_KEYS.forEach(a => avg[a.id] += r.pct[a.id]));
+      AREA_KEYS.forEach(a => avg[a.id] = avg[a.id] / records.length);
+      return avg;
+    }
+
+    function renderAllAnalytics() {
+      document.getElementById("activeRecordsBadge").textContent = `${filteredRecords.length} di ${allRecords.length} test selezionati`;
+
+      const globalAvg = computeGroupAverages(allRecords);
+      const filteredAvg = computeGroupAverages(filteredRecords);
+      const sortedAvg = [...AREA_KEYS].sort((a, b) => filteredAvg[b.id] - filteredAvg[a.id]);
+
+      const siteCount = filteredRecords.filter(r => r.workshopTarget === "Site / Field").length;
+      const officeCount = filteredRecords.filter(r => r.workshopTarget === "Office / HQ").length;
+
+      document.getElementById("kpi1Value").textContent = filteredRecords.length;
+      document.getElementById("kpi1Sub").textContent = `🏗️ ${siteCount} Cantiere • 🏢 ${officeCount} Ufficio`;
+
+      if (filteredRecords.length > 0) {
+        document.getElementById("kpi2Value").textContent = sortedAvg[0].name;
+        document.getElementById("kpi2Sub").textContent = `Media: ${filteredAvg[sortedAvg[0].id].toFixed(1)}%`;
+        document.getElementById("kpi3Value").textContent = sortedAvg[6].name;
+        document.getElementById("kpi3Sub").textContent = `Media: ${filteredAvg[sortedAvg[6].id].toFixed(1)}%`;
+        document.getElementById("kpi4Value").textContent = sortedAvg[1].name;
+        document.getElementById("kpi4Sub").textContent = `Media: ${filteredAvg[sortedAvg[1].id].toFixed(1)}%`;
+      }
+
+      const radarCtx = document.getElementById("aggRadarChart").getContext("2d");
+      if (aggRadarInstance) aggRadarInstance.destroy();
+      aggRadarInstance = new Chart(radarCtx, {
+        type: "radar",
+        data: {
+          labels: AREA_KEYS.map(a => a.name),
+          datasets: [
+            {
+              label: "Media Selezione (%)",
+              data: AREA_KEYS.map(a => Number(filteredAvg[a.id].toFixed(1))),
+              backgroundColor: "rgba(245, 158, 11, 0.25)",
+              borderColor: "#d97706",
+              borderWidth: 2.5
+            },
+            {
+              label: "Media Globale (%)",
+              data: AREA_KEYS.map(a => Number(globalAvg[a.id].toFixed(1))),
+              backgroundColor: "rgba(37, 99, 235, 0.08)",
+              borderColor: "#2563eb",
+              borderWidth: 1.5
+            }
+          ]
+        },
+        options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, suggestedMax: 22 } } }
+      });
+
+      const domCounts = {};
+      const lowCounts = {};
+      AREA_KEYS.forEach(a => { domCounts[a.id] = 0; lowCounts[a.id] = 0; });
+      filteredRecords.forEach(r => {
+        domCounts[r.top1Id] = (domCounts[r.top1Id] || 0) + 1;
+        lowCounts[r.low7Id] = (lowCounts[r.low7Id] || 0) + 1;
+      });
+
+      const barCtx = document.getElementById("domWeakBarChart").getContext("2d");
+      if (domWeakBarInstance) domWeakBarInstance.destroy();
+      domWeakBarInstance = new Chart(barCtx, {
+        type: "bar",
+        data: {
+          labels: AREA_KEYS.map(a => a.name),
+          datasets: [
+            { label: "Area Dominante", data: AREA_KEYS.map(a => domCounts[a.id]), backgroundColor: "#10b981", borderRadius: 6 },
+            { label: "Bisogno Formativo", data: AREA_KEYS.map(a => lowCounts[a.id]), backgroundColor: "#f59e0b", borderRadius: 6 }
+          ]
+        },
+        options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+      });
+
+      renderGroupComparison();
+    }
+
+    function renderGroupComparison() {
+      const groupField = document.getElementById("selectGroupBy").value;
+      const propMap = {
+        workshop: "workshopName",
+        target: "workshopTarget",
+        livello: "workshopLevel",
+        cantiere: "site",
+        azienda: "company",
+        ruolo: "role"
+      };
+      const recKey = propMap[groupField] || "workshopName";
+
+      const groupsMap = {};
+      filteredRecords.forEach(r => {
+        let gName = r[recKey] || "Non assegnato";
+        if (groupField === "target") {
+          gName = gName === "Office / HQ" ? "🏢 Ufficio / Sede (HQ)" : "🏗️ Cantiere / Site";
+        }
+        if (!groupsMap[gName]) groupsMap[gName] = [];
+        groupsMap[gName].push(r);
+      });
+
+      const groupStats = Object.keys(groupsMap).sort().map(gName => {
+        const recs = groupsMap[gName];
+        const avg = computeGroupAverages(recs);
+        const sorted = [...AREA_KEYS].sort((a, b) => avg[a.id] - avg[b.id]);
+        return { groupName: gName, count: recs.length, avg, lowestArea: sorted[0].name, lowestVal: avg[sorted[0].id] };
+      });
+
+      const ctx = document.getElementById("groupComparisonChart").getContext("2d");
+      if (groupCompChartInstance) groupCompChartInstance.destroy();
+      groupCompChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: groupStats.map(g => g.groupName),
+          datasets: AREA_KEYS.map(area => ({
+            label: area.name,
+            data: groupStats.map(g => Number(g.avg[area.id].toFixed(1))),
+            backgroundColor: area.color
+          }))
+        },
+        options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+      });
+
+      document.getElementById("heatmapTableBody").innerHTML = groupStats.map(g => {
+        const cells = AREA_KEYS.map(a => {
+          const val = g.avg[a.id];
+          let cls = "bg-slate-50 text-slate-700";
+          if (val >= 16.0) cls = "bg-emerald-100 text-emerald-900 font-extrabold";
+          else if (val <= 12.5) cls = "bg-amber-100 text-amber-900 font-extrabold";
+          return `<td class="py-2.5 px-2 text-center"><span class="inline-block px-2 py-1 rounded ${cls}">${val.toFixed(1)}%</span></td>`;
+        }).join("");
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-3 font-bold text-slate-900">${g.groupName}</td>
+            <td class="py-3 px-2 text-center font-semibold text-slate-600">${g.count}</td>
+            ${cells}
+            <td class="py-3 px-3">
+              <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-[11px]">
+                ${g.lowestArea} (${g.lowestVal.toFixed(1)}%)
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderParticipantsTable() {
+      const tbody = document.getElementById("participantsTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = filteredRecords.map((r, idx) => {
+        const isChecked = selectedRecordIds.has(r.id);
+        const isOff = r.workshopTarget === "Office / HQ";
+
+        const wsOptionsHTML = `<option value="">-- Non assegnato --</option>` +
+          workshopsDB.map(w => {
+            const selected = (r.workshopId === w.id || r.workshopName === w.name) ? "selected" : "";
+            return `<option value="${w.id}" ${selected}>${w.name}</option>`;
+          }).join("");
+
+        return `
+          <tr onclick="openParticipantModal(${idx})"
+            class="cursor-pointer transition ${isChecked ? 'bg-amber-50/80' : 'hover:bg-amber-50/40'}">
+            <td class="py-2.5 px-3 text-center no-print" onclick="event.stopPropagation()">
+              <input type="checkbox" ${isChecked ? "checked" : ""}
+                onchange="toggleRowSelection('${r.id}', this.checked)"
+                class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
+            </td>
+            <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${r.date}</td>
+            <td class="py-2.5 px-3" onclick="event.stopPropagation()">
+              <select onchange="assignRecordToWorkshop('${r.id}', this.value)"
+                class="px-2 py-1 rounded-lg border border-slate-300 text-[11px] font-bold bg-white text-slate-800">
+                ${wsOptionsHTML}
+              </select>
+            </td>
+            <td class="py-2.5 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${isOff ? 'bg-indigo-100 text-indigo-900' : 'bg-amber-100 text-amber-900'}">
+                ${isOff ? '🏢 Ufficio' : '🏗️ Cantiere'}
+              </span>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[11px]">${r.workshopLevel}</span>
+            </td>
+            <td class="py-2.5 px-3 font-bold text-slate-900">${r.name}</td>
+            <td class="py-2.5 px-3 text-slate-700">${r.company}</td>
+            <td class="py-2.5 px-3 text-slate-700">${r.role}</td>
+            <td class="py-2.5 px-3 text-slate-700">${r.site}</td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">${r.top1Name} (${r.top1Val.toFixed(1)}%)</span>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">${r.low7Name} (${r.low7Val.toFixed(1)}%)</span>
+            </td>
+            <td class="py-2.5 px-3 text-right no-print">
+              <button onclick="deleteSubmissionById('${r.id}', event)"
+                class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200">
+                🗑️ Elimina
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function openParticipantModal(filteredIdx) {
+      const r = filteredRecords[filteredIdx];
+      if (!r) return;
+      currentModalRecordId = r.id;
+      document.getElementById("modalCompanyBadge").textContent = `${r.workshopName} • ${r.workshopTarget}`;
+      document.getElementById("modalPersonName").textContent = r.name;
+      document.getElementById("modalPersonMeta").textContent = `${r.company} • ${r.role} • ${r.site}`;
+      document.getElementById("modalChoicesLog").textContent = r.choicesLog;
+
+      const sorted = [...AREA_KEYS].sort((a, b) => r.pct[b.id] - r.pct[a.id]);
+      document.getElementById("modalAreaBreakdown").innerHTML = sorted.map((a, i) => `
+        <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+          <span class="font-bold text-slate-800">${a.name}</span>
+          <span class="font-extrabold text-slate-900">${r.pct[a.id].toFixed(1)}%</span>
+        </div>
+      `).join("");
+
+      const modal = document.getElementById("participantModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+
+      const ctx = document.getElementById("modalRadarChart").getContext("2d");
+      if (modalRadarInstance) modalRadarInstance.destroy();
+      modalRadarInstance = new Chart(ctx, {
+        type: "radar",
+        data: {
+          labels: AREA_KEYS.map(a => a.name),
+          datasets: [{
+            label: r.name,
+            data: AREA_KEYS.map(a => Number(r.pct[a.id].toFixed(1))),
+            backgroundColor: "rgba(245, 158, 11, 0.25)",
+            borderColor: "#d97706",
+            borderWidth: 2
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, suggestedMax: 25 } } }
+      });
+    }
+
+    function closeParticipantModal() {
+      currentModalRecordId = null;
+      const modal = document.getElementById("participantModal");
+      if (!modal) return;
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function exportFilteredCSV() {
+      if (filteredRecords.length === 0) return;
+      const rows = filteredRecords.map(r => ({
+        Data: r.date,
+        Workshop: r.workshopName,
+        Profilo: r.workshopTarget,
+        Livello_Workshop: r.workshopLevel,
+        Partecipante: r.name,
+        Azienda: r.company,
+        Ruolo: r.role,
+        Cantiere_Sede: r.site,
+        Area_Dominante: `${r.top1Name} (${r.top1Val.toFixed(1)}%)`,
+        Bisogno_Formativo: `${r.low7Name} (${r.low7Val.toFixed(1)}%)`,
+        Vision_Pct: r.pct.VISION.toFixed(1),
+        Focus_Pct: r.pct.FOCUS.toFixed(1),
+        Influence_Pct: r.pct.INFLUENCE.toFixed(1),
+        Credibility_Pct: r.pct.CREDIBILITY.toFixed(1),
+        Team_Pct: r.pct.TEAM.toFixed(1),
+        Communication_Pct: r.pct.COMMUNICATION.toFixed(1),
+        Feedback_Pct: r.pct.FEEDBACK.toFixed(1)
+      }));
+
+      const blob = new Blob([Papa.unparse(rows)], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "report-safety-leadership-supabase.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const dateInput = document.getElementById("inputWsDate");
+      if (dateInput) dateInput.valueAsDate = new Date();
+
+      const savedUrl = getStoredVal("sl_sb_url") || DEFAULT_SUPABASE_URL;
+      const savedKey = getStoredVal("sl_sb_key") || DEFAULT_SUPABASE_ANON_KEY;
+      if (savedUrl && document.getElementById("inputSbUrl")) document.getElementById("inputSbUrl").value = savedUrl;
+      if (savedKey && document.getElementById("inputSbKey")) document.getElementById("inputSbKey").value = savedKey;
+
+      const authMode = getStoredVal("sl_auth_mode");
+      if (authMode === "supabase") {
+        connectToSupabase(true);
+      } else if (authMode === "demo") {
+        loadDemoDataset();
+      } else if (authMode === "csv" && restoreStateFromCache()) {
+        activeConnectionMode = "csv";
+        initDashboardWithData(false);
+      }
+    });
+  </script>
+</body>
+</html>
