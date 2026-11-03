@@ -825,9 +825,11 @@
       try {
         supabaseClient = window.supabase.createClient(sbUrl, sbKey);
 
-        const [wsRes, cfgRes] = await Promise.all([
+        const [wsRes, compRes, roleRes, siteRes] = await Promise.all([
           supabaseClient.from("workshops").select("*").eq("id", wsIdParam).maybeSingle(),
-          supabaseClient.from("app_config").select("*").eq("id", 1).single(),
+          supabaseClient.from("companies_list").select("*").order("sort_order", { ascending: true }),
+          supabaseClient.from("roles_list").select("*").order("sort_order", { ascending: true }),
+          supabaseClient.from("sites_list").select("*").order("sort_order", { ascending: true }),
           fetchAssessmentContentFromSupabase(supabaseClient, false)
         ]);
 
@@ -853,10 +855,17 @@
 
         activeWorkshop = foundWs;
 
-        if (cfgRes.data) {
-          parsedCompaniesList = (cfgRes.data.companies || []).map(parseLineItem);
-          parsedRolesList = (cfgRes.data.roles || []).map(parseLineItem);
-          parsedSitesList = (cfgRes.data.sites || []).map(parseLineItem);
+        const mapTableRowToItem = (row) => {
+          const it = String(row.name_it || "").trim();
+          const en = String(row.name_en || row.name_it || "").trim();
+          const raw = (en && en !== it) ? `${it} | ${en}` : it;
+          return { id: row.id, raw, it, en };
+        };
+
+        if (!compRes.error && !roleRes.error && !siteRes.error) {
+          parsedCompaniesList = (compRes.data || []).map(mapTableRowToItem);
+          parsedRolesList = (roleRes.data || []).map(mapTableRowToItem);
+          parsedSitesList = (siteRes.data || []).map(mapTableRowToItem);
           listsSourceState = "loaded";
         } else {
           listsSourceState = "error";

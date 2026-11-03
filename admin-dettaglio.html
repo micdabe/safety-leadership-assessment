@@ -615,11 +615,10 @@
         activeConnectionMode = "supabase";
         document.documentElement.classList.add("is-authenticated");
 
-        editableLists.companies = Array.isArray(cfg.companies) ? cfg.companies : [];
-        editableLists.roles = Array.isArray(cfg.roles) ? cfg.roles : [];
-        editableLists.sites = Array.isArray(cfg.sites) ? cfg.sites : [];
-
-        await fetchWorkshopsAndSubmissionsFromSupabase();
+        await Promise.all([
+          fetchThreeListsFromSupabase(),
+          fetchWorkshopsAndSubmissionsFromSupabase()
+        ]);
         saveStateToCache();
 
         const liveCtrl = document.getElementById("liveControls");
@@ -641,6 +640,28 @@
           btn.disabled = false;
         }
       }
+    }
+
+    function formatRowFromListTable(row) {
+      const it = String(row.name_it || "").trim();
+      const en = String(row.name_en || "").trim();
+      return (en && en !== it) ? `${it} | ${en}` : it;
+    }
+
+    async function fetchThreeListsFromSupabase() {
+      const [compRes, roleRes, siteRes] = await Promise.all([
+        supabaseClient.from("companies_list").select("*").order("sort_order", { ascending: true }),
+        supabaseClient.from("roles_list").select("*").order("sort_order", { ascending: true }),
+        supabaseClient.from("sites_list").select("*").order("sort_order", { ascending: true })
+      ]);
+
+      if (compRes.error) throw new Error("Errore lettura companies_list: " + compRes.error.message);
+      if (roleRes.error) throw new Error("Errore lettura roles_list: " + roleRes.error.message);
+      if (siteRes.error) throw new Error("Errore lettura sites_list: " + siteRes.error.message);
+
+      editableLists.companies = (compRes.data || []).map(formatRowFromListTable);
+      editableLists.roles = (roleRes.data || []).map(formatRowFromListTable);
+      editableLists.sites = (siteRes.data || []).map(formatRowFromListTable);
     }
 
     async function fetchWorkshopsAndSubmissionsFromSupabase() {
@@ -674,16 +695,11 @@
         const prevCount = allRecords.length;
         const prevWsCount = workshopsDB.length;
 
-        const [cfgRes] = await Promise.all([
-          supabaseClient.from("app_config").select("*").eq("id", 1).single(),
-          fetchWorkshopsAndSubmissionsFromSupabase()
-        ]);
-
-        if (cfgRes && cfgRes.data && !hasUnsavedListChanges) {
-          editableLists.companies = Array.isArray(cfgRes.data.companies) ? cfgRes.data.companies : [];
-          editableLists.roles = Array.isArray(cfgRes.data.roles) ? cfgRes.data.roles : [];
-          editableLists.sites = Array.isArray(cfgRes.data.sites) ? cfgRes.data.sites : [];
+        const tasks = [fetchWorkshopsAndSubmissionsFromSupabase()];
+        if (!hasUnsavedListChanges) {
+          tasks.push(fetchThreeListsFromSupabase());
         }
+        await Promise.all(tasks);
 
         saveStateToCache();
 
@@ -1046,6 +1062,30 @@
       deleteSubmissionById(currentModalRecordId, null);
     }
 
+    function buildTablePayloadFromList(listArray) {
+      return (listArray || []).map((item, idx) => {
+        const parts = String(item).split("|").map(p => p.trim());
+        const name_it = parts[0] || "";
+        const name_en = parts[1] || parts[0] || "";
+        return {
+          name_it,
+          name_en,
+          sort_order: idx + 1
+        };
+      }).filter(r => r.name_it.length > 0);
+    }
+
+    async function syncSingleListTable(tableName, rowsPayload) {
+      // Sostituisce l'elenco ordinato nella rispettiva tabella (companies_list, roles_list, sites_list)
+      const delRes = await supabaseClient.from(tableName).delete().not("id", "is", null);
+      if (delRes.error) throw new Error(`Errore pulizia ${tableName}: ` + delRes.error.message);
+
+      if (rowsPayload.length > 0) {
+        const insRes = await supabaseClient.from(tableName).insert(rowsPayload);
+        if (insRes.error) throw new Error(`Errore salvataggio ${tableName}: ` + insRes.error.message);
+      }
+    }
+
     async function saveListsToSupabase() {
       const banner = document.getElementById("listsSaveBanner");
       const btn = document.getElementById("btnSaveSbLists");
@@ -1055,14 +1095,15 @@
 
       try {
         if (activeConnectionMode === "supabase" && supabaseClient) {
-          const { error } = await supabaseClient.from("app_config").update({
-            companies: editableLists.companies,
-            roles: editableLists.roles,
-            sites: editableLists.sites,
-            updated_at: new Date().toISOString()
-          }).eq("id", 1);
+          const compRows = buildTablePayloadFromList(editableLists.companies);
+          const roleRows = buildTablePayloadFromList(editableLists.roles);
+          const siteRows = buildTablePayloadFromList(editableLists.sites);
 
-          if (error) throw new Error(error.message);
+          await Promise.all([
+            syncSingleListTable("companies_list", compRows),
+            syncSingleListTable("roles_list", roleRows),
+            syncSingleListTable("sites_list", siteRows)
+          ]);
         }
 
         hasUnsavedListChanges = false;
@@ -1070,7 +1111,7 @@
         document.getElementById("unsavedChangesBadge").classList.add("hidden");
 
         banner.className = "rounded-xl p-4 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
-        banner.textContent = "✓ Liste salvate istantaneamente su Supabase! I menu di index.html sono già aggiornati.";
+        banner.textContent = "✓ Liste salvate nelle 3 tabelle (companies_list, roles_list, sites_list) su Supabase! I menu di index.html sono già aggiornati.";
         banner.classList.remove("hidden");
       } catch (err) {
         banner.className = "rounded-xl p-4 text-xs font-bold border bg-red-50 border-red-200 text-red-700";
