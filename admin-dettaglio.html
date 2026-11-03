@@ -5,29 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Safety Leadership — Dettaglio Singoli Test (Supabase)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            amber: {
-              50: '#f4f5fb',
-              100: '#e8eaf6',
-              200: '#cfd3ec',
-              300: '#afb6de',
-              400: '#828bc9',
-              500: '#585fa8',
-              600: '#494f8f',
-              700: '#3c4177',
-              800: '#313561',
-              900: '#272a4d',
-              950: '#181a30'
-            }
-          }
-        }
-      }
-    };
-  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -113,7 +90,7 @@
   <header class="bg-slate-900 text-white shadow-md no-print">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-white text-lg shadow">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-slate-950 text-lg shadow">
           SL
         </div>
         <div>
@@ -126,7 +103,7 @@
         <div id="liveControls" class="hidden items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span id="lastSyncText" class="text-[11px] text-slate-300 font-medium">Supabase Live</span>
-          <button onclick="refreshFromSupabase(true)" class="ml-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] transition">
+          <button onclick="refreshFromSupabase(true)" class="ml-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] transition">
             ↻ Aggiorna ora
           </button>
         </div>
@@ -134,7 +111,7 @@
         <button id="btnChangeSource" onclick="logoutAndShowLogin()" class="hidden px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
           Esci
         </button>
-        <button id="btnPrintReport" onclick="window.print()" class="hidden px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition">
+        <button id="btnPrintReport" onclick="window.print()" class="hidden px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition">
           Stampa / PDF
         </button>
       </div>
@@ -201,7 +178,7 @@
               onkeydown="if(event.key==='Enter') connectToSupabase()"
               class="flex-grow px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-amber-500" />
             <button onclick="connectToSupabase()" id="btnConnectSb"
-              class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm shadow-sm transition shrink-0">
+              class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm shadow-sm transition shrink-0">
               Connetti a Supabase →
             </button>
           </div>
@@ -386,7 +363,7 @@
           </div>
 
           <button onclick="printCurrentModalReport()"
-            class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-sm transition flex items-center gap-1.5">
+            class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition flex items-center gap-1.5">
             <span>🖨️</span> <span>Stampa / PDF Report</span>
           </button>
 
@@ -446,7 +423,7 @@
 
     const AREA_KEYS = [
       { id: "VISION", name: "Vision", csvPct: "vision_pct", color: "#2563eb" },
-      { id: "FOCUS", name: "Focus", csvPct: "focus_pct", color: "#585fa8" },
+      { id: "FOCUS", name: "Focus", csvPct: "focus_pct", color: "#d97706" },
       { id: "INFLUENCE", name: "Influence", csvPct: "influence_pct", color: "#7c3aed" },
       { id: "CREDIBILITY", name: "Credibility", csvPct: "credibility_pct", color: "#059669" },
       { id: "TEAM", name: "Team", csvPct: "team_pct", color: "#0891b2" },
@@ -982,7 +959,7 @@
               <div class="flex flex-wrap items-center gap-1.5">
                 <button onclick="copyWorkshopLink('${wsLink}')" ${!isOpen ? 'disabled' : ''}
                   class="px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition ${
-                    isOpen ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    isOpen ? 'bg-amber-500 hover:bg-amber-600 text-slate-950' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                   }">
                   📋 Copia Link
                 </button>
@@ -1002,7 +979,7 @@
               <div class="inline-flex items-center gap-1.5">
                 <button onclick="openWorkshopBatchPrint('${ws.id}', true)"
                   title="Apri e stampa/scarica il PDF unico con Copertina + Report individuale per tutti i partecipanti di questo Workshop"
-                  class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] shadow-sm transition flex items-center gap-1">
+                  class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] shadow-sm transition flex items-center gap-1">
                   <span>🖨️</span> <span>Stampa / PDF Tutti (${linkedCount}) ↗</span>
                 </button>
                 <button onclick="viewWorkshopReport('${ws.id}')"
@@ -1640,8 +1617,8 @@
             {
               label: "Media Selezione (%)",
               data: AREA_KEYS.map(a => Number(filteredAvg[a.id].toFixed(1))),
-              backgroundColor: "rgba(88, 95, 168, 0.25)",
-              borderColor: "#585fa8",
+              backgroundColor: "rgba(245, 158, 11, 0.25)",
+              borderColor: "#d97706",
               borderWidth: 2.5
             },
             {
@@ -1672,7 +1649,7 @@
           labels: AREA_KEYS.map(a => a.name),
           datasets: [
             { label: "Area Dominante", data: AREA_KEYS.map(a => domCounts[a.id]), backgroundColor: "#10b981", borderRadius: 6 },
-            { label: "Bisogno Formativo", data: AREA_KEYS.map(a => lowCounts[a.id]), backgroundColor: "#585fa8", borderRadius: 6 }
+            { label: "Bisogno Formativo", data: AREA_KEYS.map(a => lowCounts[a.id]), backgroundColor: "#f59e0b", borderRadius: 6 }
           ]
         },
         options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
