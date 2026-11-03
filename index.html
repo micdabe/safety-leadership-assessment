@@ -5,6 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Safety Leadership Situational Assessment</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            amber: {
+              50: '#f4f5fb',
+              100: '#e8eaf6',
+              200: '#cfd3ec',
+              300: '#afb6de',
+              400: '#828bc9',
+              500: '#585fa8',
+              600: '#494f8f',
+              700: '#3c4177',
+              800: '#313561',
+              900: '#272a4d',
+              950: '#181a30'
+            }
+          }
+        }
+      }
+    };
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -25,7 +48,7 @@
   <header class="bg-slate-900 text-white shadow-md no-print">
     <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-slate-950 text-lg shadow">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-white text-lg shadow">
           SL
         </div>
         <div>
@@ -75,7 +98,7 @@
         <div class="bg-slate-900 text-white rounded-2xl p-5 mb-7 border-l-8 border-amber-500 shadow-sm">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
             <div class="flex items-center gap-2">
-              <span id="wsActiveBadge" class="px-2.5 py-0.5 rounded bg-amber-500 text-slate-950 text-[11px] font-black uppercase tracking-wider">
+              <span id="wsActiveBadge" class="px-2.5 py-0.5 rounded bg-amber-500 text-white text-[11px] font-black uppercase tracking-wider">
                 WORKSHOP UFFICIALE
               </span>
               <span id="wsTargetBadge" class="px-2.5 py-0.5 rounded bg-slate-800 text-emerald-400 border border-slate-700 text-[11px] font-bold">
@@ -216,7 +239,7 @@
               </p>
             </div>
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <div class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-extrabold flex items-center justify-center mb-2.5">2</div>
+              <div class="w-7 h-7 rounded-lg bg-amber-500 text-white font-extrabold flex items-center justify-center mb-2.5">2</div>
               <div id="wStep2Title" class="font-bold text-slate-900 mb-1">Scegli da 1 a 3 Azioni</div>
               <p id="wStep2Desc" class="text-xs text-slate-600 leading-relaxed">
                 Seleziona fino a 3 comportamenti in ordine di importanza: 1ª scelta (azione prioritaria), 2ª scelta e 3ª scelta.
@@ -233,7 +256,7 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-4">
-          <button id="btnStart" onclick="startAssessment()" class="px-7 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition">
+          <button id="btnStart" onclick="startAssessment()" class="px-7 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-sm transition">
             Inizia il Test →
           </button>
         </div>
@@ -323,7 +346,7 @@
         Grazie per aver completato il Safety Leadership Assessment!
       </h2>
       <p id="tyDesc" class="text-slate-600 text-sm md:text-base leading-relaxed mb-6">
-        Le tue risposte per i 12 scenari sono state registrate correttamente e associate alla sessione Workshop. Il tuo profilo individuale verrà condiviso e discusso dal coordinatore durante la sessione.
+        Le tue risposte per i 12 scenari sono state registrate correttamente. Il tuo <strong>risultato personale verrà distribuito durante il workshop</strong> dal coordinatore della sessione.
       </p>
       <div id="tyMetaBox" class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 mb-6">
       </div>
@@ -376,6 +399,7 @@
         wBadge1: "12 Scenari Decisionali",
         wBadge2: "7 Aree di Competenza",
         wBadge3: "Report & Executive Coaching",
+        wBadge3NoReport: "Risultato distribuito al Workshop",
         wTitle: "Scopri il tuo profilo di Safety Leadership attraverso situazioni reali",
         wDescSite: "Questo percorso presenta <strong>12 situazioni realistiche di cantiere e di progetto</strong>. Per ciascun problema ti verranno proposte 7 possibili azioni risolutive. Scegli i comportamenti che adotteresti realmente sul campo, indicandoli in ordine di priorità.",
         wDescOffice: "Questo percorso presenta <strong>12 situazioni realistiche di direzione, ingegneria, procurement e gestione progetti da sede/ufficio</strong>. Per ciascun problema ti verranno proposte 7 possibili azioni risolutive. Scegli i comportamenti che adotteresti realmente nel tuo ruolo, in ordine di priorità.",
@@ -410,6 +434,8 @@
         wStep2Desc: "Seleziona fino a 3 comportamenti in ordine di importanza: 1ª scelta (azione prioritaria), 2ª scelta e 3ª scelta.",
         wStep3Title: "Ottieni il tuo Report",
         wStep3Desc: "Al termine visualizzerai la distribuzione delle tue abilità nelle 7 aree e i consigli di coaching personalizzati.",
+        wStep3TitleNoReport: "Risultato Personale al Workshop",
+        wStep3DescNoReport: "Al termine le tue risposte verranno registrate e il tuo risultato personale ti verrà distribuito durante il workshop.",
         btnStart: "Inizia il Test →",
         scenarioWord: "Scenario",
         ofWord: "di",
@@ -424,7 +450,7 @@
         btnFinishRoundNoReport: "Conferma e Invia il Questionario ✓",
         tyBadge: "Questionario Completato e Registrato ✓",
         tyTitle: "Grazie per aver completato il Safety Leadership Assessment!",
-        tyDesc: "Le tue risposte per i 12 scenari sono state salvate correttamente nel database del Workshop. Il tuo profilo e i risultati verranno presentati e condivisi dal coordinatore durante la sessione.",
+        tyDesc: "Le tue risposte per i 12 scenari sono state registrate correttamente. Il tuo <strong>risultato personale verrà distribuito durante il workshop</strong> dal coordinatore della sessione.",
         btnTyRestart: "Compila un nuovo questionario",
         resBadge: "Analisi Completata • 12 Scenari",
         syncSending: "Salvataggio nel database Supabase in corso...",
@@ -519,6 +545,7 @@
         wBadge1: "12 Decision Scenarios",
         wBadge2: "7 Leadership Areas",
         wBadge3: "Report & Executive Coaching",
+        wBadge3NoReport: "Results distributed at the Workshop",
         wTitle: "Discover your Safety Leadership profile through realistic situations",
         wDescSite: "This assessment presents <strong>12 realistic site and project scenarios</strong>. For each situation, you will be presented with 7 possible leadership actions. Select the behaviors you would genuinely apply in the field, ranking them in order of priority.",
         wDescOffice: "This assessment presents <strong>12 realistic corporate, engineering, procurement, and project management scenarios from an Office/HQ perspective</strong>. Select the behaviors you would genuinely apply in your role, ranking them in order of priority.",
@@ -553,6 +580,8 @@
         wStep2Desc: "Choose up to 3 behaviors in order of importance: 1st choice (primary action), 2nd choice, and 3rd choice.",
         wStep3Title: "Get Your Report",
         wStep3Desc: "At the end, you will see your skill distribution across the 7 areas and tailored executive coaching advice.",
+        wStep3TitleNoReport: "Personal Result at the Workshop",
+        wStep3DescNoReport: "Upon completion, your responses will be saved and your personal result will be distributed during the workshop.",
         btnStart: "Start Assessment →",
         scenarioWord: "Scenario",
         ofWord: "of",
@@ -567,7 +596,7 @@
         btnFinishRoundNoReport: "Confirm & Submit Assessment ✓",
         tyBadge: "Assessment Completed & Saved ✓",
         tyTitle: "Thank you for completing the Safety Leadership Assessment!",
-        tyDesc: "Your responses across all 12 scenarios have been successfully recorded for this Workshop session. Your individual profile and insights will be shared by your Workshop coordinator.",
+        tyDesc: "Your responses across all 12 scenarios have been successfully recorded. Your <strong>personal result will be distributed during the workshop</strong> by the session coordinator.",
         btnTyRestart: "Start a new assessment",
         resBadge: "Analysis Complete • 12 Scenarios",
         syncSending: "Saving to Supabase database...",
@@ -1092,7 +1121,8 @@
       document.getElementById("wsActiveBadge").textContent = t.wsActiveBadge;
       document.getElementById("wBadge1").textContent = t.wBadge1;
       document.getElementById("wBadge2").textContent = t.wBadge2;
-      document.getElementById("wBadge3").textContent = t.wBadge3;
+      const isNoReport = Boolean(activeWorkshop && activeWorkshop.showReport === false);
+      document.getElementById("wBadge3").textContent = isNoReport ? t.wBadge3NoReport : t.wBadge3;
       document.getElementById("wTitle").textContent = t.wTitle;
       document.getElementById("wDesc").innerHTML = isOfficeMode() ? t.wDescOffice : t.wDescSite;
 
@@ -1116,14 +1146,14 @@
       document.getElementById("wStep1Desc").textContent = t.wStep1Desc;
       document.getElementById("wStep2Title").textContent = t.wStep2Title;
       document.getElementById("wStep2Desc").textContent = t.wStep2Desc;
-      document.getElementById("wStep3Title").textContent = t.wStep3Title;
-      document.getElementById("wStep3Desc").textContent = t.wStep3Desc;
+      document.getElementById("wStep3Title").textContent = isNoReport ? t.wStep3TitleNoReport : t.wStep3Title;
+      document.getElementById("wStep3Desc").textContent = isNoReport ? t.wStep3DescNoReport : t.wStep3Desc;
       document.getElementById("btnStart").textContent = t.btnStart;
 
       document.getElementById("validationWarning").textContent = t.validationWarning;
       document.getElementById("tyBadge").textContent = t.tyBadge;
       document.getElementById("tyTitle").textContent = t.tyTitle;
-      document.getElementById("tyDesc").textContent = t.tyDesc;
+      document.getElementById("tyDesc").innerHTML = t.tyDesc;
       document.getElementById("btnTyRestart").textContent = t.btnTyRestart;
     }
 
@@ -1294,7 +1324,7 @@
         if (isSelected) {
           priorityBadgeHTML = `
             <div class="mb-1.5">
-              <span class="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-xs font-extrabold">
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-500 text-white text-xs font-extrabold">
                 ${t.choiceBadge(rankIdx + 1)}
               </span>
             </div>
@@ -1311,7 +1341,7 @@
 
         card.innerHTML = `
           <div class="mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-            isSelected ? "bg-amber-500 text-slate-950" : "bg-slate-100 text-slate-500 border border-slate-300"
+            isSelected ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-500 border border-slate-300"
           }">
             ${isSelected ? (rankIdx + 1) : ""}
           </div>

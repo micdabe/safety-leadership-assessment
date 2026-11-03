@@ -5,6 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Safety Leadership — Report Finale Individuale</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            amber: {
+              50: '#f4f5fb',
+              100: '#e8eaf6',
+              200: '#cfd3ec',
+              300: '#afb6de',
+              400: '#828bc9',
+              500: '#585fa8',
+              600: '#494f8f',
+              700: '#3c4177',
+              800: '#313561',
+              900: '#272a4d',
+              950: '#181a30'
+            }
+          }
+        }
+      }
+    };
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -101,7 +124,7 @@
   <header class="bg-slate-900 text-white shadow-md no-print">
     <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-slate-950 text-lg shadow">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-white text-lg shadow">
           SL
         </div>
         <div>
@@ -114,7 +137,7 @@
         <button onclick="toggleLanguage()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
           <span id="langSwitchPrefix">Lingua:</span> <span id="langLabel" class="text-amber-400 font-bold">Italiano 🇮🇹</span>
         </button>
-        <button id="btnPrintHdr" onclick="window.print()" class="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold transition flex items-center gap-1.5">
+        <button id="btnPrintHdr" onclick="window.print()" class="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold transition flex items-center gap-1.5">
           <span>🖨️</span> <span id="btnPrintHdrLabel">Stampa / PDF</span>
         </button>
         <a id="btnBackAction" href="index.html" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
@@ -159,13 +182,13 @@
               <h2 id="resMainTitle" class="text-xl md:text-2xl font-extrabold text-slate-900">
                 Profilo delle tue Abilità di Safety Leadership
               </h2>
-              <p id="resParticipantInfo" class="text-xs font-bold text-slate-600 mt-1 bg-slate-100 inline-block px-3 py-1 rounded-lg"></p>
+              <div id="resParticipantInfo" class="mt-2 bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-700"></div>
               <p id="resMainSub" class="text-xs text-slate-500 mt-1">
                 Distribuzione percentuale delle tue competenze nelle 7 aree in base alle priorità espresse negli scenari.
               </p>
             </div>
             <div class="flex gap-2 no-print">
-              <button id="btnPrint" onclick="window.print()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-xs font-extrabold text-slate-950 shadow-sm transition">
+              <button id="btnPrint" onclick="window.print()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-xs font-extrabold text-white shadow-sm transition">
                 🖨️ Stampa / PDF
               </button>
             </div>
@@ -984,7 +1007,7 @@
 
       document.getElementById("coachWeakActions").innerHTML = weakProfile.actions.map((act, idx) => `
         <li class="flex items-start gap-2">
-          <span class="w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-extrabold text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</span>
+          <span class="w-4 h-4 rounded-full bg-amber-500 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</span>
           <span class="leading-snug">${act}</span>
         </li>
       `).join("");
@@ -1073,15 +1096,9 @@
       document.getElementById("logMainTitle").textContent = t.logMainTitle;
       document.getElementById("logMainSub").textContent = t.logMainSub;
 
-      document.getElementById("resParticipantInfo").textContent =
-        t.participantSummary(
-          activeWorkshop.name,
-          activeWorkshop.level,
-          loadedSubmission.name,
-          loadedSubmission.company,
-          loadedSubmission.role,
-          loadedSubmission.site
-        ) + ` • ${loadedSubmission.date}`;
+      document.getElementById("resParticipantInfo").innerHTML =
+        `<span class="text-sm font-black text-slate-950">👤 ${loadedSubmission.name}</span>` +
+        `<span>• ${loadedSubmission.company} • ${loadedSubmission.role} • ${loadedSubmission.site} • ${activeWorkshop.name} (${activeWorkshop.level}) • ${loadedSubmission.date}</span>`;
 
       const sorted = [...reconstructedResults].sort((a, b) => b.distributionPct - a.distributionPct);
       const top1 = sorted[0];
@@ -1156,7 +1173,7 @@
         data: {
           labels: reconstructedResults.map(r => r.name),
           datasets: [
-            { label: t.chartRadarDataset1, data: reconstructedResults.map(r => Number(r.distributionPct.toFixed(1))), backgroundColor: "rgba(245, 158, 11, 0.22)", borderColor: "#d97706", borderWidth: 2 },
+            { label: t.chartRadarDataset1, data: reconstructedResults.map(r => Number(r.distributionPct.toFixed(1))), backgroundColor: "rgba(88, 95, 168, 0.22)", borderColor: "#585fa8", borderWidth: 2 },
             { label: t.chartRadarDataset2, data: reconstructedResults.map(() => 14.3), borderColor: "#94a3b8", borderDash: [5, 5], pointRadius: 0, borderWidth: 1.5 }
           ]
         },
@@ -1171,7 +1188,7 @@
           labels: reconstructedResults.map(r => r.name),
           datasets: [
             { label: t.chartBarDataset1, data: reconstructedResults.map(r => Number(r.scoreFirst.toFixed(2))), backgroundColor: "#10b981" },
-            { label: t.chartBarDataset2, data: reconstructedResults.map(r => Number(r.scoreCarry.toFixed(2))), backgroundColor: "#f59e0b" }
+            { label: t.chartBarDataset2, data: reconstructedResults.map(r => Number(r.scoreCarry.toFixed(2))), backgroundColor: "#585fa8" }
           ]
         },
         options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
