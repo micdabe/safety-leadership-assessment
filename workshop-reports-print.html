@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safety Leadership — Stampa Dossier Completo Report Workshop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+
+    /* =========================================================================
+       IMPAGINAZIONE DI STAMPA MULTI-REPORT (4 FACCIATE PER PARTECIPANTE):
+       - Facciata 1: Copertina Individuale (Dati Workshop + Dati Partecipante + Sintesi)
+       - Facciata 2: Profilo Abilità (3 box su 1 riga) + Mappa Radar + Scomposizione Punti
+       - Facciata 3: Executive Safety Coaching + Strategia Ponte + Allenamento Mirato
+       - Facciata 4: Dettaglio Analitico delle 7 Aree + Nota Metodologica a fondo pagina
+       ========================================================================= */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 8mm 10mm;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .print-cover-page {
+        min-height: 268mm !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      .print-page-1 {
+        page-break-before: always !important;
+        break-before: page !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      .print-page-2 {
+        page-break-before: always !important;
+        break-before: page !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      .print-page-3 {
+        page-break-before: always !important;
+        break-before: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      .participant-dossier-after-break {
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+
+      .print-kpi-row {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        margin-top: 10px !important;
+      }
+
+      .print-charts-row {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        margin-top: 10px !important;
+      }
+
+      .print-chart-height {
+        height: 275px !important;
+      }
+
+      .print-compact-card {
+        padding: 12px 14px !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Barra di Controllo Superiore (Nascosta in Stampa) -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50 no-print">
+    <div class="max-w-5xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-slate-950 text-lg shadow">
+          SL
+        </div>
+        <div>
+          <h1 id="batchHdrTitle" class="font-bold text-base md:text-lg leading-tight">
+            Dossier Stampa Report Workshop
+          </h1>
+          <p id="batchHdrSub" class="text-xs text-slate-400">
+            Ogni report include 1 Pagina di Copertina + 3 Pagine di Report Individuale Completo
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <span id="batchCountBadge" class="px-3 py-1.5 rounded-lg bg-slate-800 text-amber-400 text-xs font-extrabold border border-slate-700">
+          0 Report
+        </span>
+
+        <div class="inline-flex rounded-lg border border-slate-700 p-0.5 bg-slate-800">
+          <button id="btnLangORIG" onclick="setBatchLangMode('ORIG')" class="px-2.5 py-1 rounded-md text-xs font-extrabold bg-amber-500 text-slate-950 transition">
+            Lingua Test
+          </button>
+          <button id="btnLangIT" onclick="setBatchLangMode('IT')" class="px-2.5 py-1 rounded-md text-xs font-bold text-slate-300 hover:text-white transition">
+            🇮🇹 Tutti IT
+          </button>
+          <button id="btnLangEN" onclick="setBatchLangMode('EN')" class="px-2.5 py-1 rounded-md text-xs font-bold text-slate-300 hover:text-white transition">
+            🇬🇧 Tutti EN
+          </button>
+        </div>
+
+        <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow transition flex items-center gap-1.5">
+          <span>🖨️</span> <span>Stampa / Salva PDF Unico</span>
+        </button>
+
+        <a href="admin-workshop.html" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
+          ← Torna ai Workshop
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8">
+
+    <!-- Stato di Caricamento -->
+    <section id="screen-loading" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 text-center max-w-xl mx-auto my-8 no-print">
+      <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-3 text-xl font-extrabold animate-pulse">
+        📑
+      </div>
+      <h2 id="loadingTitle" class="text-lg font-extrabold text-slate-900">
+        Generazione del Dossier PDF di tutti i Report del Workshop...
+      </h2>
+      <p id="loadingSub" class="text-xs text-slate-500 mt-1">
+        Costruzione delle copertine individuali e dei grafici per ciascun partecipante.
+      </p>
+    </section>
+
+    <!-- Contenitore di tutti i Report (Copertina + 3 pagine per ciascun partecipante) -->
+    <div id="batchReportsContainer" class="space-y-12"></div>
+
+  </main>
+
+  <script>
+    const DEFAULT_SUPABASE_URL = "https://axiilxpcvevqlctjfpjj.supabase.co";      // es. "https://xyzabcdef.supabase.co"
+    const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4aWlseHBjdmV2cWxjdGpmcGpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzOTM1NzksImV4cCI6MjEwODk2OTU3OX0.m5oHRZA7lo4bl3ys9LnJpGKnpjYZneh-Unxf5CDbA7A"; // es. "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+
+    let supabaseClient = null;
+    let currentLang = "it";
+    let activeWorkshop = null; // { id, name, date, site, level, targetType: 'site'|'office', active }
+    let currentLockReason = "missing";
+    let closedWorkshopTitle = "";
+
+    function isOfficeMode() {
+      return activeWorkshop && activeWorkshop.targetType === "office";
+    }
+
+    function getBehaviorText(behObj) {
+      if (isOfficeMode() && behObj.office_it && behObj.office_en) {
+        return currentLang === "it" ? behObj.office_it : behObj.office_en;
+      }
+      return currentLang === "it" ? behObj.it : behObj.en;
+    }
+
+    const UI_TEXT = {
+      it: {
+        hdrTitle: "Safety Leadership Assessment",
+        hdrSub: "Valutazione situazionale delle 7 aree di leadership",
+        langSwitchPrefix: "Lingua:",
+        langLabel: "Italiano 🇮🇹",
+        btnResetHdr: "Ricomincia",
+        lockBadge: "Link Workshop Richiesto",
+        lockTitle: "Accesso consentito solo tramite Link o QR Code di un Workshop attivo",
+        lockDesc: "Questo questionario può essere compilato esclusivamente dai partecipanti a una sessione <strong>Workshop</strong> programmata. Utilizza il <strong>link specifico</strong> o inquadra il <strong>QR Code</strong> fornito dal coordinatore del tuo Workshop.",
+        lockHint: "Se sei il coordinatore, accedi alla Dashboard Admin → scheda 'Gestione Workshop' per generare o riattivare il link dell'evento.",
+        closedBadge: "Sessione Workshop Conclusa",
+        closedTitle: (wsName) => `Il Workshop "${wsName}" è chiuso`,
+        closedDesc: "La raccolta dei questionari per questa sessione d'aula è terminata e il link è stato disattivato dal coordinatore.",
+        wsActiveBadge: "WORKSHOP UFFICIALE",
+        wsTargetSite: "🏗️ Profilo: Cantiere / Site",
+        wsTargetOffice: "🏢 Profilo: Ufficio / Sede (HQ)",
+        wsLevelPrefix: "Livello:",
+        wBadge1: "12 Scenari Decisionali",
+        wBadge2: "7 Aree di Competenza",
+        wBadge3: "Report & Executive Coaching",
+        wTitle: "Scopri il tuo profilo di Safety Leadership attraverso situazioni reali",
+        wDescSite: "Questo percorso presenta <strong>12 situazioni realistiche di cantiere e di progetto</strong>. Per ciascun problema ti verranno proposte 7 possibili azioni risolutive. Scegli i comportamenti che adotteresti realmente sul campo, indicandoli in ordine di priorità.",
+        wDescOffice: "Questo percorso presenta <strong>12 situazioni realistiche di direzione, ingegneria, procurement e gestione progetti da sede/ufficio</strong>. Per ciascun problema ti verranno proposte 7 possibili azioni risolutive. Scegli i comportamenti che adotteresti realmente nel tuo ruolo, in ordine di priorità.",
+        userFormTitle: "Dati del Partecipante",
+        listsLoadingBadge: "Connessione a Supabase...",
+        listsLoadedBadge: "Liste sincronizzate da Supabase ✓",
+        listsErrorBadge: "Errore connessione database Supabase",
+        lblRequiredNote: "* Campi obbligatori",
+        lblUserCompany: "Azienda *",
+        phSelectCompany: "-- Seleziona l'azienda --",
+        lblUserRole: "Ruolo / Funzione *",
+        phSelectRole: "-- Seleziona il tuo ruolo --",
+        lblUserSite: "Cantiere / Sede (Associato al Workshop) *",
+        phSelectSite: "-- Seleziona il cantiere / sede --",
+        lblUserName: "Nome e Cognome (Opzionale)",
+        phUserName: "Lascia vuoto per test anonimo",
+        anonymousLabel: "Anonimo",
+        lblPrivacyText: "Acconsento al trattamento del mio nominativo ai sensi del GDPR (Reg. UE 2016/679) per la generazione e archiviazione del report di valutazione.",
+        privacyRequiredBadge: "Obbligatorio se inserisci il nome *",
+        privacyOptionalBadge: "Non richiesto per test anonimo",
+        btnPrivacyInfoOpen: "[Leggi informativa]",
+        btnPrivacyInfoClose: "[Chiudi informativa]",
+        privacyDetailsText: "Il conferimento del nominativo è facoltativo. In assenza del nome, i dati statistici aggregati (Workshop, Azienda, Ruolo, Cantiere/Sede e punteggi nelle 7 aree) vengono raccolti in forma totalmente anonima nel database Supabase per finalità di analisi organizzativa e formazione sulla sicurezza. Inserendo il nome, i dati saranno associati all'interessato esclusivamente per attività di feedback e coaching individuale, nel pieno rispetto del Regolamento UE 2016/679 (GDPR).",
+        errMissingDropdowns: "Seleziona tutti i campi obbligatori: Azienda, Ruolo e Cantiere / Sede.",
+        errMissingPrivacy: "Hai inserito il tuo Nome: per proseguire è obbligatorio spuntare la casella di accettazione dei termini di Privacy (oppure cancella il nome per procedere in forma anonima).",
+        privacyAcceptedLog: "Accettato (GDPR)",
+        privacyAnonymousLog: "Anonimo (Non richiesto)",
+        wHowTitle: "Come funziona il test",
+        wStep1Title: "Analizza lo Scenario",
+        wStep1Desc: "Leggi il contesto decisionale e la criticità di sicurezza descritta in ciascuno dei 12 round.",
+        wStep2Title: "Scegli da 1 a 3 Azioni",
+        wStep2Desc: "Seleziona fino a 3 comportamenti in ordine di importanza: 1ª scelta (azione prioritaria), 2ª scelta e 3ª scelta.",
+        wStep3Title: "Ottieni il tuo Report",
+        wStep3Desc: "Al termine visualizzerai la distribuzione delle tue abilità nelle 7 aree e i consigli di coaching personalizzati.",
+        btnStart: "Inizia il Test →",
+        scenarioWord: "Scenario",
+        ofWord: "di",
+        contextPrefix: "Contesto:",
+        selectionPromptTitle: "Quali comportamenti metti in campo per gestire questa situazione?",
+        selectionPromptSub: "Seleziona da 1 a 3 comportamenti in ordine di priorità (clicca per selezionare o deselezionare).",
+        chosenCounter: (n) => `Scelti: ${n} / 3`,
+        choiceBadge: (rank) => `${rank}ª Scelta`,
+        validationWarning: "Seleziona almeno un comportamento (massimo 3) prima di proseguire.",
+        btnNextRound: "Conferma e Prosegui →",
+        btnFinishRound: "Conferma e Genera il Report Finale ✓",
+        resBadge: "Analisi Completata • 12 Scenari",
+        syncSending: "Salvataggio nel database Supabase in corso...",
+        syncSuccess: "Risultati salvati nel database Supabase ✓",
+        syncLocalPreview: "Database non configurato",
+        syncError: "Errore durante il salvataggio su Supabase",
+        btnRetrySync: "Riprova salvataggio",
+        resMainTitle: "Profilo delle tue Abilità di Safety Leadership",
+        resMainSub: "Distribuzione percentuale delle tue competenze nelle 7 aree in base alle priorità espresse negli scenari.",
+        participantSummary: (wsName, wsLevel, name, company, role, site) =>
+          `Workshop: ${wsName} (${wsLevel}) • Azienda: ${company} • Ruolo: ${role} • Sede/Cantiere: ${site} • Partecipante: ${name}`,
+        btnPrint: "Stampa / PDF",
+        btnNewTest: "Ricomincia",
+        kpiTop1Label: "Area Dominante",
+        kpiTop2Label: "Area Co-Dominante",
+        kpiLowLabel: "Bisogno Formativo",
+        kpiStatsFormat: (pts, c1, c2) => `${pts} pt ponderati (${c1} dirette, ${c2} ripescate)`,
+        chartRadarTitle: "Mappa Radar della Distribuzione",
+        chartRadarSub: "Confronto tra la tua distribuzione (%) e un profilo bilanciato (14.3% per area)",
+        chartRadarDataset1: "La tua Distribuzione (%)",
+        chartRadarDataset2: "Equilibrio Ideale (14.3%)",
+        chartBarTitle: "Scomposizione Punti: Scelte Dirette vs Ripescate",
+        chartBarSub: "Mostra quanto del punteggio di ogni area deriva da scelte immediate o da comportamenti riproposti",
+        chartBarDataset1: "Scelte alla 1ª Comparsa",
+        chartBarDataset2: "Scelte su Ripescaggio",
+        coachBadge: "Executive Safety Coaching",
+        coachMainTitle: "Analisi Comportamentale e Piano d'Azione Personalizzato",
+        coachFocusPrefix: "Focus calibrato su:",
+        coachDomTag: "Leva Principale • Area Dominante",
+        coachWeakTag: "Area di Sviluppo • Meno Presidiata",
+        profileShareWord: "del profilo",
+        coachDomTitlePrefix: "1. Valorizza la tua forza in",
+        coachArchetypePrefix: "Archetipo:",
+        coachDomShadowTitle: "⚠️ Attenzione all'Effetto Ombra (Rischio da Eccesso)",
+        coachWeakTitlePrefix: "2. Potenzia il presidio su",
+        coachWeakRiskLabel: "Impatto se trascurata:",
+        coachWeakActionsTitle: "🎯 3 Azioni Pratiche di Coaching (Quick Wins)",
+        bridgeHeader: "🔗 Strategia Ponte Personalizzata (Sinergia di Leadership)",
+        bridgeSynergyPrefix: "Sinergia",
+        bridgeTitleFormat: (top, low) => `Come usare la tua leadership in ${top} per far crescere ${low}`,
+        bridgeTextFormat: (bFrom, second, low, bTo, top) =>
+          `${bFrom} (supportata anche dalla tua seconda area forte, <strong>${second}</strong>) per colmare il divario in <strong>${low}</strong>, ${bTo} Non devi snaturare il tuo stile: usa la credibilità e la sicurezza che hai già in <em>${top}</em> per introdurre gradualmente una sola abitudine settimanale legata a <em>${low}</em>.`,
+        skippedTitle: "📌 Allenamento Mirato: Comportamenti di quest'area che hai lasciato in secondo piano",
+        skippedSub: "Questi comportamenti specifici dell'area meno presidiata sono comparsi negli scenari ma non sono stati scelti. Scegline uno da mettere in pratica nella prossima settimana:",
+        skippedCardBadge: "Obiettivo Comportamentale",
+        skippedCountLabel: (n) => `Tralasciato ${n}x negli scenari`,
+        methBadge: "Nota Metodologica",
+        methTitle: "Come è stato calcolato il tuo punteggio (Ponderazione Adattiva e Ripescaggio)",
+        methDesc: "Per garantire una valutazione autentica e priva di condizionamenti durante il test, il motore di calcolo ha applicato dietro le quinte una <strong>doppia ponderazione</strong>: ogni comportamento non selezionato in uno scenario non è andato perso, ma è stato reinserito in coda e riproposto negli scenari successivi con un peso progressivamente minore.",
+        methBox1Title: "1. Peso dell'Ordine di Priorità (Scelta 1ª, 2ª, 3ª)",
+        methBox1List: `
+          <li>• <strong>1ª Scelta (Priorità Alta):</strong> 100% del valore del comportamento</li>
+          <li>• <strong>2ª Scelta (Priorità Media):</strong> 85% del valore del comportamento</li>
+          <li>• <strong>3ª Scelta (Priorità Complementare):</strong> 70% del valore del comportamento</li>
+        `,
+        methBox2Title: "2. Peso di Comparsa (Immediato vs Ripescato)",
+        methBox2List: `
+          <li>• <strong>Scelto alla 1ª Comparsa:</strong> coefficiente pieno <strong>1.00x (100%)</strong></li>
+          <li>• <strong>Scelto al 1° Ripescaggio (2ª comparsa):</strong> coefficiente ridotto <strong>0.65x (65%)</strong></li>
+          <li>• <strong>Scelto dal 2° Ripescaggio in poi (3ª+ comparsa):</strong> coefficiente <strong>0.35x (35%)</strong></li>
+        `,
+        tblMainTitle: "Dettaglio Analitico delle 7 Aree",
+        thArea: "Area di Competenza",
+        thFirst: "Scelte 1ª Comparsa (1.0x)",
+        thCarry: "Scelte Ripescate (0.65x / 0.35x)",
+        thScore: "Punteggio Ponderato",
+        thDist: "Distribuzione Finale (100%)",
+        tblChoicesWord: "scelte",
+        tblCarryWord: "ripescate",
+        logMainTitle: "Riepilogo Comportamenti Scelti nei 12 Scenari",
+        logMainSub: "Elenco cronologico delle soluzioni che hai adottato, con l'indicazione della priorità e dell'eventuale ripescaggio.",
+        logFirstApp: "1ª Comparsa (Peso 1.0x)",
+        logCarryApp: (n, w) => `Ripescato ${n}x (Peso ${w}x)`
+      },
+      en: {
+        hdrTitle: "Safety Leadership Assessment",
+        hdrSub: "Situational assessment across the 7 leadership areas",
+        langSwitchPrefix: "Language:",
+        langLabel: "English 🇬🇧",
+        btnResetHdr: "Restart",
+        lockBadge: "Workshop Link Required",
+        lockTitle: "Access allowed only via an active Workshop Link or QR Code",
+        lockDesc: "This assessment can only be completed by participants of a scheduled <strong>Workshop</strong> session. Please use the <strong>dedicated link</strong> or scan the <strong>QR Code</strong> provided by your Workshop coordinator.",
+        lockHint: "If you are the coordinator, open the Admin Dashboard → 'Manage Workshops' tab to generate or reactivate the event link.",
+        closedBadge: "Workshop Session Closed",
+        closedTitle: (wsName) => `The Workshop "${wsName}" is closed`,
+        closedDesc: "Assessment collection for this classroom session has ended and the link has been deactivated by the coordinator.",
+        wsActiveBadge: "OFFICIAL WORKSHOP",
+        wsTargetSite: "🏗️ Profile: Site / Field",
+        wsTargetOffice: "🏢 Profile: Office / HQ",
+        wsLevelPrefix: "Level:",
+        wBadge1: "12 Decision Scenarios",
+        wBadge2: "7 Leadership Areas",
+        wBadge3: "Report & Executive Coaching",
+        wTitle: "Discover your Safety Leadership profile through realistic situations",
+        wDescSite: "This assessment presents <strong>12 realistic site and project scenarios</strong>. For each situation, you will be presented with 7 possible leadership actions. Select the behaviors you would genuinely apply in the field, ranking them in order of priority.",
+        wDescOffice: "This assessment presents <strong>12 realistic corporate, engineering, procurement, and project management scenarios from an Office/HQ perspective</strong>. Select the behaviors you would genuinely apply in your role, ranking them in order of priority.",
+        userFormTitle: "Participant Details",
+        listsLoadingBadge: "Connecting to Supabase...",
+        listsLoadedBadge: "Lists synced from Supabase ✓",
+        listsErrorBadge: "Supabase DB connection error",
+        lblRequiredNote: "* Required fields",
+        lblUserCompany: "Company *",
+        phSelectCompany: "-- Select company --",
+        lblUserRole: "Role / Job Title *",
+        phSelectRole: "-- Select your role --",
+        lblUserSite: "Site / Location (Linked to Workshop) *",
+        phSelectSite: "-- Select site / location --",
+        lblUserName: "Full Name (Optional)",
+        phUserName: "Leave blank for anonymous assessment",
+        anonymousLabel: "Anonymous",
+        lblPrivacyText: "I consent to the processing of my personal name under the GDPR (EU Reg. 2016/679) for generating and archiving my assessment report.",
+        privacyRequiredBadge: "Required when name is entered *",
+        privacyOptionalBadge: "Not required for anonymous test",
+        btnPrivacyInfoOpen: "[Read privacy notice]",
+        btnPrivacyInfoClose: "[Hide privacy notice]",
+        privacyDetailsText: "Providing your name is optional. If left blank, aggregated statistical data (Workshop, Company, Role, Site/Location, and scores across the 7 areas) are collected anonymously in the Supabase database for organizational safety analysis and training. If you enter your name, your data will be linked to your profile solely for individual feedback and coaching, in full compliance with EU Regulation 2016/679 (GDPR).",
+        errMissingDropdowns: "Please select all required dropdown fields: Company, Role, and Site / Location.",
+        errMissingPrivacy: "You entered your Name: you must check the Privacy Terms acceptance box to proceed (or clear the Name field to take the test anonymously).",
+        privacyAcceptedLog: "Accepted (GDPR)",
+        privacyAnonymousLog: "Anonymous (Not required)",
+        wHowTitle: "How the assessment works",
+        wStep1Title: "Analyze the Scenario",
+        wStep1Desc: "Read the decision context and the safety challenge described in each of the 12 rounds.",
+        wStep2Title: "Select 1 to 3 Actions",
+        wStep2Desc: "Choose up to 3 behaviors in order of importance: 1st choice (primary action), 2nd choice, and 3rd choice.",
+        wStep3Title: "Get Your Report",
+        wStep3Desc: "At the end, you will see your skill distribution across the 7 areas and tailored executive coaching advice.",
+        btnStart: "Start Assessment →",
+        scenarioWord: "Scenario",
+        ofWord: "of",
+        contextPrefix: "Context:",
+        selectionPromptTitle: "Which behaviors do you deploy to handle this situation?",
+        selectionPromptSub: "Select from 1 to 3 behaviors in order of priority (click to select or deselect).",
+        chosenCounter: (n) => `Selected: ${n} / 3`,
+        choiceBadge: (rank) => rank === 1 ? "1st Choice" : rank === 2 ? "2nd Choice" : "3rd Choice",
+        validationWarning: "Please select at least one behavior (up to 3) before proceeding.",
+        btnNextRound: "Confirm & Continue →",
+        btnFinishRound: "Confirm & Generate Final Report ✓",
+        resBadge: "Analysis Complete • 12 Scenarios",
+        syncSending: "Saving to Supabase database...",
+        syncSuccess: "Results saved in Supabase database ✓",
+        syncLocalPreview: "Database not configured",
+        syncError: "Error saving to Supabase database",
+        btnRetrySync: "Retry saving",
+        resMainTitle: "Your Safety Leadership Skills Profile",
+        resMainSub: "Percentage distribution of your competencies across the 7 areas based on the priorities expressed in the scenarios.",
+        participantSummary: (wsName, wsLevel, name, company, role, site) =>
+          `Workshop: ${wsName} (${wsLevel}) • Company: ${company} • Role: ${role} • Location: ${site} • Participant: ${name}`,
+        btnPrint: "Print / PDF",
+        btnNewTest: "Restart",
+        kpiTop1Label: "Dominant Area",
+        kpiTop2Label: "Co-Dominant Area",
+        kpiLowLabel: "Training Need",
+        kpiStatsFormat: (pts, c1, c2) => `${pts} weighted pts (${c1} direct, ${c2} re-proposed)`,
+        chartRadarTitle: "Competency Distribution Radar",
+        chartRadarSub: "Comparison between your distribution (%) and a balanced profile (14.3% per area)",
+        chartRadarDataset1: "Your Distribution (%)",
+        chartRadarDataset2: "Balanced Target (14.3%)",
+        chartBarTitle: "Point Breakdown: Direct vs Re-proposed Choices",
+        chartBarSub: "Shows how much of each area's score comes from immediate selections vs re-proposed behaviors",
+        chartBarDataset1: "1st Appearance Choices",
+        chartBarDataset2: "Re-proposed Choices",
+        coachBadge: "Executive Safety Coaching",
+        coachMainTitle: "Behavioral Analysis & Tailored Action Plan",
+        coachFocusPrefix: "Calibrated on:",
+        coachDomTag: "Primary Lever • Dominant Area",
+        coachWeakTag: "Growth Area • Least Covered",
+        profileShareWord: "of profile",
+        coachDomTitlePrefix: "1. Leverage your strength in",
+        coachArchetypePrefix: "Archetype:",
+        coachDomShadowTitle: "⚠️ Watch Out for the Shadow Effect (Overuse Risk)",
+        coachWeakTitlePrefix: "2. Strengthen your coverage in",
+        coachWeakRiskLabel: "Impact if neglected:",
+        coachWeakActionsTitle: "🎯 3 Practical Coaching Actions (Quick Wins)",
+        bridgeHeader: "🔗 Tailored Bridge Strategy (Leadership Synergy)",
+        bridgeSynergyPrefix: "Synergy",
+        bridgeTitleFormat: (top, low) => `How to use your leadership in ${top} to grow ${low}`,
+        bridgeTextFormat: (bFrom, second, low, bTo, top) =>
+          `${bFrom} (also supported by your second strongest area, <strong>${second}</strong>) to close the gap in <strong>${low}</strong>, ${bTo} You don't need to change who you are: use the confidence and credibility you already command in <em>${top}</em> to gradually introduce one weekly habit tied to <em>${low}</em>.`,
+        skippedTitle: "📌 Targeted Training: Behaviors in this area you left in the background",
+        skippedSub: "These specific behaviors from your least covered area appeared in the scenarios but were not selected. Pick one to actively practice next week:",
+        skippedCardBadge: "Behavioral Target",
+        skippedCountLabel: (n) => `Passed over ${n}x in scenarios`,
+        methBadge: "Methodological Note",
+        methTitle: "How your score was calculated (Adaptive Weighting & Carry-Over)",
+        methDesc: "To ensure an authentic, unbiased experience during the test, the scoring engine applied a <strong>dual weighting model</strong> behind the scenes: any behavior not selected in a round was not discarded, but placed in a carry-over queue and re-proposed in later scenarios with a progressively lower weight.",
+        methBox1Title: "1. Priority Order Weight (1st, 2nd, 3rd Choice)",
+        methBox1List: `
+          <li>• <strong>1st Choice (High Priority):</strong> 100% of the behavior's value</li>
+          <li>• <strong>2nd Choice (Medium Priority):</strong> 85% of the behavior's value</li>
+          <li>• <strong>3rd Choice (Complementary Priority):</strong> 70% of the behavior's value</li>
+        `,
+        methBox2Title: "2. Appearance Weight (Immediate vs Re-proposed)",
+        methBox2List: `
+          <li>• <strong>Selected on 1st Appearance:</strong> full multiplier <strong>1.00x (100%)</strong></li>
+          <li>• <strong>Selected on 1st Carry-Over (2nd appearance):</strong> reduced multiplier <strong>0.65x (65%)</strong></li>
+          <li>• <strong>Selected on 2nd+ Carry-Over (3rd+ appearance):</strong> multiplier <strong>0.35x (35%)</strong></li>
+        `,
+        tblMainTitle: "Analytical Breakdown of the 7 Areas",
+        thArea: "Competency Area",
+        thFirst: "1st Appearance Choices (1.0x)",
+        thCarry: "Re-proposed Choices (0.65x / 0.35x)",
+        thScore: "Weighted Score",
+        thDist: "Final Distribution (100%)",
+        tblChoicesWord: "choices",
+        tblCarryWord: "re-proposed",
+        logMainTitle: "Summary of Behaviors Selected Across the 12 Scenarios",
+        logMainSub: "Chronological log of the solutions you adopted, showing priority rank and whether the behavior was immediate or re-proposed.",
+        logFirstApp: "1st Appearance (Weight 1.0x)",
+        logCarryApp: (n, w) => `Re-proposed ${n}x (Weight ${w}x)`
+      }
+    };
+
+    // =========================================================================
+    // 2. STRUTTURE CONTENUTI POPOLATE DINAMICAMENTE DA SUPABASE (NESSUN TESTO HARDCODED)
+    //    Tabelle: public.assessment_areas, public.assessment_behaviors, public.assessment_scenarios
+    // =========================================================================
+    let AREAS = [];
+    let SCENARIOS = [];
+    let COACHING_PROFILES = {};
+    let isAssessmentContentLoaded = false;
+
+    function buildContentFromDbTables(areasRows, behaviorsRows, scenariosRows) {
+      const sortedAreas = [...(areasRows || [])].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      const behByArea = {};
+      (behaviorsRows || []).forEach(b => {
+        if (!behByArea[b.area_id]) behByArea[b.area_id] = [];
+        behByArea[b.area_id].push(b);
+      });
+
+      AREAS = sortedAreas.map(a => {
+        const areaBehs = (behByArea[a.id] || [])
+          .sort((x, y) => (x.behavior_idx || 0) - (y.behavior_idx || 0))
+          .map(b => ({
+            it: b.site_it,
+            en: b.site_en,
+            office_it: b.office_it,
+            office_en: b.office_en
+          }));
+        return {
+          id: a.id,
+          name: a.name,
+          color: a.color,
+          desc: { it: a.desc_it, en: a.desc_en },
+          behaviors: areaBehs
+        };
+      });
+
+      COACHING_PROFILES = {};
+      sortedAreas.forEach(a => {
+        COACHING_PROFILES[a.id] = {
+          it: {
+            archetype: a.archetype_it,
+            strength: a.strength_it,
+            shadow: a.shadow_it,
+            weakRisk: a.weak_risk_it,
+            actions: Array.isArray(a.actions_it) ? a.actions_it : [],
+            bridgeFrom: a.bridge_from_it,
+            bridgeTo: a.bridge_to_it,
+            bridgeTemplate: a.bridge_template_it || ""
+          },
+          en: {
+            archetype: a.archetype_en,
+            strength: a.strength_en,
+            shadow: a.shadow_en,
+            weakRisk: a.weak_risk_en,
+            actions: Array.isArray(a.actions_en) ? a.actions_en : [],
+            bridgeFrom: a.bridge_from_en,
+            bridgeTo: a.bridge_to_en,
+            bridgeTemplate: a.bridge_template_en || ""
+          }
+        };
+      });
+
+      const roundsMap = {};
+      (scenariosRows || []).forEach(s => {
+        const rNum = Number(s.round_num);
+        if (!roundsMap[rNum]) {
+          roundsMap[rNum] = {
+            id: rNum,
+            primaryMap: s.primary_map || {},
+            site: { context: { it: "", en: "" }, title: { it: "", en: "" }, desc: { it: "", en: "" } },
+            office: { context: { it: "", en: "" }, title: { it: "", en: "" }, desc: { it: "", en: "" } }
+          };
+        }
+        if (s.primary_map && Object.keys(s.primary_map).length > 0) {
+          roundsMap[rNum].primaryMap = s.primary_map;
+        }
+        const tType = String(s.target_type || "site").toLowerCase() === "office" ? "office" : "site";
+        roundsMap[rNum][tType] = {
+          context: { it: s.context_it, en: s.context_en },
+          title: { it: s.title_it, en: s.title_en },
+          desc: { it: s.desc_it, en: s.desc_en }
+        };
+      });
+
+      SCENARIOS = Object.values(roundsMap).sort((a, b) => a.id - b.id);
+      isAssessmentContentLoaded = (AREAS.length > 0 && SCENARIOS.length > 0);
+      return isAssessmentContentLoaded;
+    }
+
+    async function fetchAssessmentContentFromSupabase(sbClient, useCache = true) {
+      if (useCache) {
+        try {
+          const cached = sessionStorage.getItem("sl_db_assessment_content");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (buildContentFromDbTables(parsed.areas, parsed.behaviors, parsed.scenarios)) {
+              return true;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (!sbClient) return false;
+
+      const [areasRes, behRes, scenRes] = await Promise.all([
+        sbClient.from("assessment_areas").select("*").order("sort_order", { ascending: true }),
+        sbClient.from("assessment_behaviors").select("*").order("behavior_idx", { ascending: true }),
+        sbClient.from("assessment_scenarios").select("*").order("round_num", { ascending: true })
+      ]);
+
+      if (areasRes.error) throw new Error("Tabella assessment_areas: " + areasRes.error.message);
+      if (behRes.error) throw new Error("Tabella assessment_behaviors: " + behRes.error.message);
+      if (scenRes.error) throw new Error("Tabella assessment_scenarios: " + scenRes.error.message);
+
+      const ok = buildContentFromDbTables(areasRes.data, behRes.data, scenRes.data);
+      if (ok) {
+        try {
+          sessionStorage.setItem("sl_db_assessment_content", JSON.stringify({
+            areas: areasRes.data,
+            behaviors: behRes.data,
+            scenarios: scenRes.data
+          }));
+        } catch (e) {}
+      }
+      return ok;
+    }
+
+    function formatBridgeStrategyText(domProfile, weakProfile, topName, secondName, lowName, tObj) {
+      const tpl = domProfile.bridgeTemplate;
+      if (tpl && tpl.includes("{bFrom}")) {
+        return tpl
+          .replace(/\{bFrom\}/g, domProfile.bridgeFrom)
+          .replace(/\{second\}/g, secondName)
+          .replace(/\{low\}/g, lowName)
+          .replace(/\{bTo\}/g, weakProfile.bridgeTo)
+          .replace(/\{top\}/g, topName);
+      }
+      return tObj.bridgeTextFormat(domProfile.bridgeFrom, secondName, lowName, weakProfile.bridgeTo, topName);
+    }
+
+    
+    // =========================================================================
+    // 5. MOTORE DI GENERAZIONE MULTI-REPORT CON COPERTINA PER WORKSHOP
+    // =========================================================================
+    let batchWorkshopMeta = null;
+    let batchRawSubmissions = [];
+    let batchLangMode = "ORIG"; // 'ORIG' | 'IT' | 'EN'
+    let activeChartInstances = [];
+
+    const METH_COMPACT_TRANSLATIONS = {
+      it: {
+        title: "Nota Metodologica — Calcolo del Punteggio (Ponderazione Adattiva e Ripescaggio)",
+        text: "Per garantire una valutazione autentica e priva di condizionamenti, il motore di calcolo applica una doppia ponderazione su 12 scenari: ogni comportamento non selezionato viene reinserito in coda e riproposto negli scenari successivi con un peso decrescente. <strong>1) Peso Ordine di Priorità:</strong> 1ª Scelta = 100% (1.00) • 2ª Scelta = 85% (0.85) • 3ª Scelta = 70% (0.70). <strong>2) Peso di Comparsa:</strong> Scelto alla 1ª comparsa = coeff. 1.00x (100%) • Scelto al 1° ripescaggio = coeff. 0.65x (65%) • Scelto dal 2° ripescaggio in poi = coeff. 0.35x (35%)."
+      },
+      en: {
+        title: "Methodological Note — Score Calculation (Adaptive Weighting & Carry-Over)",
+        text: "To ensure an authentic, unbiased evaluation, the scoring engine applies a dual weighting model across 12 scenarios: any behavior not selected is placed in a queue and re-proposed in subsequent scenarios with a progressively lower weight. <strong>1) Priority Order Weight:</strong> 1st Choice = 100% (1.00) • 2nd Choice = 85% (0.85) • 3rd Choice = 70% (0.70). <strong>2) Appearance Weight:</strong> Selected on 1st appearance = 1.00x (100%) • Selected on 1st carry-over = 0.65x (65%) • Selected on 2nd+ carry-over = 0.35x (35%)."
+      }
+    };
+
+    const COVER_LABELS = {
+      it: {
+        dossierBadge: "SAFETY LEADERSHIP SITUATIONAL ASSESSMENT • DOSSIER INDIVIDUALE",
+        coverMainTitle: "Report Individuale di Safety Leadership",
+        coverSub: "Valutazione situazionale delle 7 aree di competenza e piano di Executive Coaching",
+        participantBoxTitle: "DATI DEL PARTECIPANTE",
+        lblParticipantName: "Partecipante",
+        lblCompany: "Azienda",
+        lblRole: "Ruolo / Funzione",
+        lblSite: "Cantiere / Sede",
+        lblCompletedAt: "Data e Ora Compilazione",
+        lblTestId: "ID Univoco Test",
+        workshopBoxTitle: "DATI DELLA SESSIONE WORKSHOP",
+        lblWsName: "Titolo Workshop",
+        lblWsDate: "Data Sessione",
+        lblWsLevel: "Livello Target",
+        lblWsProfile: "Profilo Scenari",
+        lblWsId: "Codice Sessione",
+        execSnapshotTitle: "SINTESI ESECUTIVA DEL PROFILO",
+        footerNote: "Documento riservato ad uso formativo e di sviluppo della leadership in ambito Health, Safety & Environment."
+      },
+      en: {
+        dossierBadge: "SAFETY LEADERSHIP SITUATIONAL ASSESSMENT • INDIVIDUAL DOSSIER",
+        coverMainTitle: "Individual Safety Leadership Report",
+        coverSub: "Situational assessment across the 7 competency areas & Executive Coaching Action Plan",
+        participantBoxTitle: "PARTICIPANT DETAILS",
+        lblParticipantName: "Participant",
+        lblCompany: "Company",
+        lblRole: "Role / Function",
+        lblSite: "Site / Location",
+        lblCompletedAt: "Completion Date & Time",
+        lblTestId: "Unique Assessment ID",
+        workshopBoxTitle: "WORKSHOP SESSION DETAILS",
+        lblWsName: "Workshop Title",
+        lblWsDate: "Session Date",
+        lblWsLevel: "Target Level",
+        lblWsProfile: "Scenario Profile",
+        lblWsId: "Session Code",
+        execSnapshotTitle: "EXECUTIVE PROFILE SNAPSHOT",
+        footerNote: "Confidential document for leadership training and coaching purposes in Health, Safety & Environment."
+      }
+    };
+
+    function parseNumVal(val) {
+      if (val === undefined || val === null) return 0;
+      const num = parseFloat(String(val).replace("%", "").replace(",", ".").trim());
+      return isNaN(num) ? 0 : num;
+    }
+
+    function reconstructSingleParticipant(row, wsFallback) {
+      const norm = {};
+      Object.keys(row || {}).forEach(k => norm[k.toLowerCase().trim()] = row[k]);
+
+      const rawTarget = norm["workshop_target"] || norm["workshopTarget"] || wsFallback?.wsTarget || "site";
+      const isOff = String(rawTarget).toLowerCase().includes("office") || String(rawTarget).toLowerCase().includes("hq");
+
+      const pctSource = row.pct || {
+        VISION: parseNumVal(norm["vision_pct"]),
+        FOCUS: parseNumVal(norm["focus_pct"]),
+        INFLUENCE: parseNumVal(norm["influence_pct"]),
+        CREDIBILITY: parseNumVal(norm["credibility_pct"]),
+        TEAM: parseNumVal(norm["team_pct"]),
+        COMMUNICATION: parseNumVal(norm["communication_pct"]),
+        FEEDBACK: parseNumVal(norm["feedback_pct"])
+      };
+
+      const pctMap = { ...pctSource };
+      const sumPct = Object.values(pctMap).reduce((a, b) => a + b, 0);
+      if (sumPct > 0 && sumPct <= 15) {
+        Object.keys(pctMap).forEach(k => { pctMap[k] = Number((pctMap[k] * 10).toFixed(1)); });
+      }
+
+      const choicesLog = String(norm["riepilogo_scelte"] || row.choicesLog || "");
+      const stats = {};
+      AREAS.forEach(a => {
+        stats[a.id] = { scoreFirst: 0, scoreCarry: 0, countFirst: 0, countCarry: 0, usedBehaviors: new Set() };
+      });
+
+      if (choicesLog && choicesLog !== "-") {
+        const parts = choicesLog.split("|").map(s => s.trim()).filter(Boolean);
+        parts.forEach(token => {
+          const m = token.match(/S(\d+):([A-Z_]+)\(#(\d+),w=([0-9.]+),\+?([0-9.]+)(?:,b=(\d+))?\)/i);
+          if (m) {
+            const roundIdx = Math.max(0, Math.min(11, parseInt(m[1], 10) - 1));
+            const areaId = m[2].toUpperCase();
+            const w = parseFloat(m[4]);
+            const pts = parseFloat(m[5]);
+            const areaObj = AREAS.find(a => a.id === areaId);
+            if (!areaObj) return;
+
+            let bIdx = m[6] !== undefined ? parseInt(m[6], 10) : (SCENARIOS[roundIdx]?.primaryMap?.[areaId] ?? 0);
+            if (bIdx >= areaObj.behaviors.length) bIdx = 0;
+
+            stats[areaId].usedBehaviors.add(bIdx);
+            const timesSkipped = w >= 0.99 ? 0 : (w >= 0.60 ? 1 : 2);
+            if (timesSkipped === 0) {
+              stats[areaId].scoreFirst += pts;
+              stats[areaId].countFirst += 1;
+            } else {
+              stats[areaId].scoreCarry += pts;
+              stats[areaId].countCarry += 1;
+            }
+          }
+        });
+      }
+
+      const totalParsedPts = Object.values(stats).reduce((acc, s) => acc + s.scoreFirst + s.scoreCarry, 0);
+
+      const results = AREAS.map(area => {
+        const st = stats[area.id];
+        let sFirst = st.scoreFirst;
+        let sCarry = st.scoreCarry;
+        let cFirst = st.countFirst;
+        let cCarry = st.countCarry;
+        let totScore = sFirst + sCarry;
+
+        if (totalParsedPts === 0) {
+          const rawPtCol = parseNumVal(norm[area.id.toLowerCase() + "_pt"]);
+          const basePts = rawPtCol > 20 ? (rawPtCol / 100) : (rawPtCol > 0 ? rawPtCol : ((pctMap[area.id] || 14.3) * 0.25));
+          sFirst = Number((basePts * 0.78).toFixed(2));
+          sCarry = Number((basePts * 0.22).toFixed(2));
+          totScore = Number((sFirst + sCarry).toFixed(2));
+          cFirst = Math.max(1, Math.round(sFirst));
+          cCarry = sCarry >= 0.35 ? 1 : 0;
+        }
+
+        const distPct = pctMap[area.id] > 0
+          ? pctMap[area.id]
+          : (totalParsedPts > 0 ? (totScore / totalParsedPts) * 100 : (100 / 7));
+
+        return {
+          id: area.id,
+          name: area.name,
+          color: area.color,
+          scoreFirst: sFirst,
+          scoreCarry: sCarry,
+          totalScore: totScore,
+          countFirst: cFirst,
+          countCarry: cCarry,
+          distributionPct: distPct,
+          usedBehaviors: st.usedBehaviors
+        };
+      });
+
+      return {
+        id: norm["id"] || row.id || "-",
+        name: norm["partecipante"] || row.name || "Anonimo",
+        company: norm["azienda"] || row.company || "-",
+        role: norm["ruolo"] || row.role || "-",
+        site: norm["cantiere"] || row.site || wsFallback?.wsSite || "-",
+        date: norm["data_ora"] || row.date || (norm["created_at"] ? new Date(norm["created_at"]).toLocaleString("it-IT") : "-"),
+        wsId: norm["workshop_id"] || row.workshopId || wsFallback?.wsId || "-",
+        wsName: norm["workshop_nome"] || row.workshopName || wsFallback?.wsName || "Workshop",
+        wsDate: norm["workshop_data"] || row.workshopDate || wsFallback?.wsDate || "-",
+        wsLevel: norm["workshop_livello"] || row.workshopLevel || wsFallback?.wsLevel || "-",
+        isOffice: isOff,
+        lang: String(norm["lingua"] || row.lang || "IT").toUpperCase().includes("EN") ? "en" : "it",
+        results
+      };
+    }
+
+    function setBatchLangMode(mode) {
+      batchLangMode = mode;
+      ["ORIG", "IT", "EN"].forEach(m => {
+        const btn = document.getElementById("btnLang" + m);
+        if (!btn) return;
+        if (m === mode) {
+          btn.className = "px-2.5 py-1 rounded-md text-xs font-extrabold bg-amber-500 text-slate-950 transition";
+        } else {
+          btn.className = "px-2.5 py-1 rounded-md text-xs font-bold text-slate-300 hover:text-white transition";
+        }
+      });
+      renderAllBatchReports();
+    }
+
+    function getBehaviorTextForReport(behObj, isOff, lang) {
+      if (isOff && behObj.office_it && behObj.office_en) {
+        return lang === "it" ? behObj.office_it : behObj.office_en;
+      }
+      return lang === "it" ? behObj.it : behObj.en;
+    }
+
+    function renderAllBatchReports() {
+      // Destroy previous chart instances
+      activeChartInstances.forEach(ch => { try { ch.destroy(); } catch (e) {} });
+      activeChartInstances = [];
+
+      const container = document.getElementById("batchReportsContainer");
+      container.innerHTML = "";
+
+      if (batchRawSubmissions.length === 0) {
+        document.getElementById("screen-loading").classList.remove("hidden");
+        document.getElementById("loadingTitle").textContent = "Nessun questionario presente per questo Workshop";
+        document.getElementById("loadingSub").textContent = "Non ci sono ancora test completati associati a questa sessione Workshop.";
+        return;
+      }
+
+      document.getElementById("screen-loading").classList.add("hidden");
+      document.getElementById("batchCountBadge").textContent = `${batchRawSubmissions.length} Report (${batchRawSubmissions.length * 4} Pagine A4)`;
+
+      const chartConfigsToInit = [];
+
+      batchRawSubmissions.forEach((rawRow, idx) => {
+        const p = reconstructSingleParticipant(rawRow, batchWorkshopMeta);
+        const lang = batchLangMode === "IT" ? "it" : (batchLangMode === "EN" ? "en" : p.lang);
+        const t = UI_TEXT[lang];
+        const mc = METH_COMPACT_TRANSLATIONS[lang];
+        const cv = COVER_LABELS[lang];
+
+        const sorted = [...p.results].sort((a, b) => b.distributionPct - a.distributionPct);
+        const top1 = sorted[0];
+        const top2 = sorted[1];
+        const low = sorted[sorted.length - 1];
+
+        const domProfile = COACHING_PROFILES[top1.id][lang];
+        const weakProfile = COACHING_PROFILES[low.id][lang];
+        const bridgeHTML = formatBridgeStrategyText(domProfile, weakProfile, top1.name, top2.name, low.name, t);
+
+        const lowAreaObj = AREAS.find(a => a.id === low.id);
+        const usedSet = low.usedBehaviors || new Set();
+        const unchosenBehaviors = lowAreaObj.behaviors
+          .map((b, bIdx) => ({ b, bIdx }))
+          .filter(item => !usedSet.has(item.bIdx))
+          .slice(0, 4);
+
+        const targetBehaviors = (unchosenBehaviors.length > 0 ? unchosenBehaviors : lowAreaObj.behaviors.slice(0, 4).map((b, bIdx) => ({ b, bIdx })))
+          .map((item, i) => ({
+            text: getBehaviorTextForReport(item.b, p.isOffice, lang),
+            skippedCount: (i % 2 === 0) ? 2 : 1
+          }));
+
+        const profileBadgeText = p.isOffice
+          ? (lang === "it" ? "🏢 Ufficio / Sede (HQ)" : "🏢 Office / HQ")
+          : (lang === "it" ? "🏗️ Cantiere / Site" : "🏗️ Site / Field");
+
+        const isLastParticipant = (idx === batchRawSubmissions.length - 1);
+
+        const wrapper = document.createElement("div");
+        wrapper.className = isLastParticipant ? "space-y-6" : "space-y-6 participant-dossier-after-break";
+
+        wrapper.innerHTML = `
+          <!-- ===============================================================
+               FACCIATA 1 (COPERTINA INDIVIDUALE DEL PARTECIPANTE #${idx + 1})
+               =============================================================== -->
+          <div class="print-cover-page bg-white rounded-3xl shadow-sm border-2 border-slate-200 p-8 md:p-12 flex flex-col justify-between">
+            
+            <!-- Top Banner Copertina -->
+            <div>
+              <div class="flex items-center justify-between gap-4 pb-6 border-b-2 border-slate-200">
+                <div class="flex items-center gap-3.5">
+                  <div class="w-14 h-14 rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center font-black text-2xl shadow-md">
+                    SL
+                  </div>
+                  <div>
+                    <span class="text-[11px] font-extrabold uppercase tracking-widest text-amber-600 block">
+                      ${cv.dossierBadge}
+                    </span>
+                    <h2 class="text-2xl md:text-3xl font-black text-slate-900 mt-0.5">
+                      ${cv.coverMainTitle}
+                    </h2>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-extrabold">
+                    #${idx + 1} / ${batchRawSubmissions.length}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Hero Box Nominativo Partecipante -->
+              <div class="my-8 bg-slate-900 text-white rounded-3xl p-8 border-l-8 border-amber-500 shadow-md">
+                <div class="text-xs font-extrabold uppercase tracking-widest text-amber-400 mb-2">
+                  ${cv.lblParticipantName}
+                </div>
+                <div class="text-3xl md:text-4xl font-black tracking-tight text-white mb-3">
+                  ${p.name}
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-xs md:text-sm text-slate-300 font-semibold">
+                  <span class="px-3 py-1 rounded-lg bg-slate-800 border border-slate-700">🏢 ${p.company}</span>
+                  <span class="px-3 py-1 rounded-lg bg-slate-800 border border-slate-700">👤 ${p.role}</span>
+                  <span class="px-3 py-1 rounded-lg bg-slate-800 border border-slate-700">📍 ${String(p.site).split("|")[0].trim()}</span>
+                </div>
+              </div>
+
+              <!-- Griglia Metadati Completi: Workshop + Partecipante -->
+              <div class="grid md:grid-cols-2 gap-6 my-6 print-charts-row">
+                <!-- Scheda Dati Partecipante -->
+                <div class="rounded-2xl border-2 border-slate-200 bg-slate-50/70 p-6">
+                  <div class="text-xs font-extrabold uppercase tracking-wider text-slate-500 pb-2.5 mb-3 border-b border-slate-200">
+                    👤 ${cv.participantBoxTitle}
+                  </div>
+                  <dl class="space-y-2.5 text-xs">
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-500 font-semibold">${cv.lblParticipantName}:</dt>
+                      <dd class="font-extrabold text-slate-900 text-right">${p.name}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-500 font-semibold">${cv.lblCompany}:</dt>
+                      <dd class="font-bold text-slate-800 text-right">${p.company}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-500 font-semibold">${cv.lblRole}:</dt>
+                      <dd class="font-bold text-slate-800 text-right">${p.role}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-500 font-semibold">${cv.lblSite}:</dt>
+                      <dd class="font-bold text-slate-800 text-right">${String(p.site).split("|")[0].trim()}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-500 font-semibold">${cv.lblCompletedAt}:</dt>
+                      <dd class="font-bold text-slate-800 text-right">${p.date}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-500 font-semibold">${cv.lblTestId}:</dt>
+                      <dd class="font-mono font-bold text-slate-600 text-right">${p.id}</dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <!-- Scheda Dati Sessione Workshop -->
+                <div class="rounded-2xl border-2 border-amber-200 bg-amber-50/40 p-6">
+                  <div class="text-xs font-extrabold uppercase tracking-wider text-amber-900 pb-2.5 mb-3 border-b border-amber-200">
+                    🎯 ${cv.workshopBoxTitle}
+                  </div>
+                  <dl class="space-y-2.5 text-xs">
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-600 font-semibold">${cv.lblWsName}:</dt>
+                      <dd class="font-extrabold text-slate-900 text-right">${p.wsName}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-600 font-semibold">${cv.lblWsDate}:</dt>
+                      <dd class="font-bold text-slate-800 text-right">${p.wsDate}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-600 font-semibold">${cv.lblWsLevel}:</dt>
+                      <dd class="font-bold text-slate-800 text-right">${p.wsLevel}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-600 font-semibold">${cv.lblWsProfile}:</dt>
+                      <dd class="font-bold text-slate-800 text-right">${profileBadgeText}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-600 font-semibold">${cv.lblSite}:</dt>
+                      <dd class="font-bold text-slate-800 text-right">${String(batchWorkshopMeta?.wsSite || p.site).split("|")[0].trim()}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-slate-600 font-semibold">${cv.lblWsId}:</dt>
+                      <dd class="font-mono font-bold text-slate-600 text-right">${p.wsId}</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+
+              <!-- Sintesi Esecutiva in Copertina -->
+              <div class="mt-6">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-3">
+                  ${cv.execSnapshotTitle}
+                </div>
+                <div class="grid grid-cols-3 gap-4 print-kpi-row">
+                  <div class="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 mb-1">${t.kpiTop1Label}</div>
+                    <div class="text-xl font-black text-slate-900">${top1.name}</div>
+                    <div class="text-sm font-extrabold text-emerald-700 mt-0.5">${top1.distributionPct.toFixed(1)}%</div>
+                  </div>
+                  <div class="p-4 rounded-2xl bg-blue-50 border-2 border-blue-200">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 mb-1">${t.kpiTop2Label}</div>
+                    <div class="text-xl font-black text-slate-900">${top2.name}</div>
+                    <div class="text-sm font-extrabold text-blue-700 mt-0.5">${top2.distributionPct.toFixed(1)}%</div>
+                  </div>
+                  <div class="p-4 rounded-2xl bg-amber-50 border-2 border-amber-200">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 mb-1">${t.kpiLowLabel}</div>
+                    <div class="text-xl font-black text-slate-900">${low.name}</div>
+                    <div class="text-sm font-extrabold text-amber-800 mt-0.5">${low.distributionPct.toFixed(1)}%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Copertina -->
+            <div class="pt-6 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
+              <span>${cv.footerNote}</span>
+              <span class="font-mono font-bold text-slate-500">${p.wsName} • ${p.name}</span>
+            </div>
+          </div>
+
+          <!-- ===============================================================
+               FACCIATA 2 (PAGINA 1 DEL REPORT: PROFILO + RADAR + SCOMPOSIZIONE PUNTI)
+               =============================================================== -->
+          <div class="print-page-1 space-y-5">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6 print-compact-card">
+              <div class="flex flex-wrap items-start justify-between gap-4 mb-3">
+                <div>
+                  <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                    <span class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                      ${t.resBadge}
+                    </span>
+                    <span class="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-mono font-semibold">
+                      ID: ${p.id}
+                    </span>
+                  </div>
+                  <h2 class="text-xl md:text-2xl font-extrabold text-slate-900">
+                    ${t.resMainTitle}
+                  </h2>
+                  <p class="text-xs font-bold text-slate-600 mt-1 bg-slate-100 inline-block px-3 py-1 rounded-lg">
+                    ${t.participantSummary(p.wsName, p.wsLevel, p.name, p.company, p.role, String(p.site).split("|")[0].trim())} • ${p.date}
+                  </p>
+                  <p class="text-xs text-slate-500 mt-1">${t.resMainSub}</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-3 mt-4 print-kpi-row">
+                <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 mb-0.5">${t.kpiTop1Label}</div>
+                  <div class="text-base md:text-lg font-extrabold text-slate-900 leading-tight">${top1.name} (${top1.distributionPct.toFixed(1)}%)</div>
+                  <div class="text-[11px] text-slate-600 mt-0.5 leading-tight">${t.kpiStatsFormat(top1.totalScore.toFixed(2), top1.countFirst, top1.countCarry)}</div>
+                </div>
+                <div class="p-3 rounded-xl bg-blue-50 border border-blue-200">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 mb-0.5">${t.kpiTop2Label}</div>
+                  <div class="text-base md:text-lg font-extrabold text-slate-900 leading-tight">${top2.name} (${top2.distributionPct.toFixed(1)}%)</div>
+                  <div class="text-[11px] text-slate-600 mt-0.5 leading-tight">${t.kpiStatsFormat(top2.totalScore.toFixed(2), top2.countFirst, top2.countCarry)}</div>
+                </div>
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 mb-0.5">${t.kpiLowLabel}</div>
+                  <div class="text-base md:text-lg font-extrabold text-slate-900 leading-tight">${low.name} (${low.distributionPct.toFixed(1)}%)</div>
+                  <div class="text-[11px] text-slate-600 mt-0.5 leading-tight">${t.kpiStatsFormat(low.totalScore.toFixed(2), low.countFirst, low.countCarry)}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-5 print-charts-row">
+              <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 print-compact-card">
+                <h3 class="font-bold text-slate-900 text-sm md:text-base mb-0.5">${t.chartRadarTitle}</h3>
+                <p class="text-[11px] text-slate-500 mb-3">${t.chartRadarSub}</p>
+                <div class="relative h-72 print-chart-height flex items-center justify-center">
+                  <canvas id="radarChart_${idx}"></canvas>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 print-compact-card">
+                <h3 class="font-bold text-slate-900 text-sm md:text-base mb-0.5">${t.chartBarTitle}</h3>
+                <p class="text-[11px] text-slate-500 mb-3">${t.chartBarSub}</p>
+                <div class="relative h-72 print-chart-height flex items-center justify-center">
+                  <canvas id="stackedBarChart_${idx}"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===============================================================
+               FACCIATA 3 (PAGINA 2 DEL REPORT: EXECUTIVE COACHING + STRATEGIA PONTE + ALLENAMENTO MIRATO)
+               =============================================================== -->
+          <div class="print-page-2 space-y-3.5">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print-compact-card">
+              <div class="bg-slate-900 text-white px-5 py-3 flex flex-wrap items-center justify-between gap-3 border-b-4 border-amber-500">
+                <div>
+                  <span class="inline-block px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider">
+                    ${t.coachBadge} • ${p.name}
+                  </span>
+                  <h3 class="text-base md:text-lg font-extrabold leading-tight">
+                    ${t.coachMainTitle}
+                  </h3>
+                </div>
+                <div class="text-xs text-slate-300 bg-slate-800 px-3 py-1 rounded-xl border border-slate-700">
+                  <span>${t.coachFocusPrefix}</span> <strong class="text-amber-400">${top1.name} → ${low.name}</strong>
+                </div>
+              </div>
+
+              <div class="p-4 space-y-3.5">
+                <div class="grid md:grid-cols-2 gap-3.5 print-charts-row">
+                  <div class="rounded-xl border-2 border-emerald-200 bg-emerald-50/30 p-3.5 flex flex-col justify-between space-y-2">
+                    <div>
+                      <div class="flex items-center justify-between gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wide">
+                          ${t.coachDomTag}
+                        </span>
+                        <span class="text-xs font-extrabold text-emerald-700">${top1.distributionPct.toFixed(1)}% ${t.profileShareWord}</span>
+                      </div>
+                      <h4 class="text-sm font-extrabold text-slate-900">${t.coachDomTitlePrefix} "${top1.name}"</h4>
+                      <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 mb-1">${t.coachArchetypePrefix} ${domProfile.archetype}</p>
+                      <p class="text-[11px] text-slate-700 leading-snug mb-1.5">${domProfile.strength}</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-2.5 border border-emerald-200/80">
+                      <div class="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 mb-0.5">
+                        ${t.coachDomShadowTitle}
+                      </div>
+                      <p class="text-[10.5px] text-slate-600 leading-snug">${domProfile.shadow}</p>
+                    </div>
+                  </div>
+
+                  <div class="rounded-xl border-2 border-amber-200 bg-amber-50/30 p-3.5 flex flex-col justify-between space-y-2">
+                    <div>
+                      <div class="flex items-center justify-between gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase tracking-wide">
+                          ${t.coachWeakTag}
+                        </span>
+                        <span class="text-xs font-extrabold text-amber-800">${low.distributionPct.toFixed(1)}% ${t.profileShareWord}</span>
+                      </div>
+                      <h4 class="text-sm font-extrabold text-slate-900">${t.coachWeakTitlePrefix} "${low.name}"</h4>
+                      <p class="text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-0.5">
+                        ${t.coachWeakRiskLabel}
+                      </p>
+                      <p class="text-[11px] text-slate-700 leading-snug mb-1.5">${weakProfile.weakRisk}</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-2.5 border border-amber-200/80">
+                      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-800 mb-1">
+                        ${t.coachWeakActionsTitle}
+                      </div>
+                      <ul class="space-y-1 text-[10.5px] text-slate-700">
+                        ${weakProfile.actions.map((act, iAct) => `
+                          <li class="flex items-start gap-2">
+                            <span class="w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-extrabold text-[10px] flex items-center justify-center shrink-0 mt-0.5">${iAct + 1}</span>
+                            <span class="leading-snug">${act}</span>
+                          </li>
+                        `).join("")}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Strategia Ponte Personalizzata -->
+                <div class="rounded-xl bg-slate-900 text-white p-4 border border-slate-800">
+                  <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400">
+                      ${t.bridgeHeader}
+                    </span>
+                    <span class="text-[11px] text-slate-400 font-semibold">${t.bridgeSynergyPrefix}: ${top1.name} + ${top2.name} → ${low.name}</span>
+                  </div>
+                  <h4 class="text-sm md:text-base font-bold text-white mb-1">${t.bridgeTitleFormat(top1.name, low.name)}</h4>
+                  <p class="text-xs text-slate-300 leading-snug">${bridgeHTML}</p>
+                </div>
+
+                <!-- Allenamento Mirato -->
+                <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
+                  <h4 class="font-bold text-slate-900 text-xs md:text-sm mb-0.5">${t.skippedTitle}</h4>
+                  <p class="text-[11px] text-slate-500 mb-2.5">${t.skippedSub}</p>
+                  <div class="grid sm:grid-cols-2 gap-2.5 print-charts-row">
+                    ${targetBehaviors.map(tb => `
+                      <div class="p-3 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                          <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase">
+                            ${t.skippedCardBadge} • ${low.name}
+                          </span>
+                          <span class="text-[10px] text-slate-400 font-semibold">${t.skippedCountLabel(tb.skippedCount)}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-700 font-medium leading-snug">${tb.text}</p>
+                      </div>
+                    `).join("")}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===============================================================
+               FACCIATA 4 (PAGINA 3 DEL REPORT: DETTAGLIO ANALITICO 7 AREE + NOTA METODOLOGICA)
+               =============================================================== -->
+          <div class="print-page-3 space-y-5">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 print-compact-card">
+              <div class="flex items-center justify-between gap-2 mb-4">
+                <h3 class="font-bold text-slate-900 text-lg">${t.tblMainTitle}</h3>
+                <span class="text-xs font-bold text-slate-500">${p.name} (${p.company})</span>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="border-b border-slate-200 text-xs uppercase text-slate-500">
+                      <th class="py-3 pr-4">${t.thArea}</th>
+                      <th class="py-3 px-3">${t.thFirst}</th>
+                      <th class="py-3 px-3">${t.thCarry}</th>
+                      <th class="py-3 px-3">${t.thScore}</th>
+                      <th class="py-3 pl-4">${t.thDist}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 text-sm">
+                    ${sorted.map(r => {
+                      const areaObj = AREAS.find(a => a.id === r.id);
+                      return `
+                        <tr>
+                          <td class="py-3 pr-4">
+                            <div class="flex items-center gap-2.5">
+                              <span class="w-3 h-3 rounded-full shrink-0" style="background:${r.color}"></span>
+                              <div>
+                                <div class="font-bold text-slate-900">${r.name}</div>
+                                <div class="text-xs text-slate-500">${areaObj.desc[lang]}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td class="py-3 px-3 font-medium text-emerald-700">${r.countFirst} ${t.tblChoicesWord} (${r.scoreFirst.toFixed(2)} pt)</td>
+                          <td class="py-3 px-3 font-medium text-amber-700">${r.countCarry} ${t.tblCarryWord} (${r.scoreCarry.toFixed(2)} pt)</td>
+                          <td class="py-3 px-3 font-bold text-slate-800">${r.totalScore.toFixed(2)} pt</td>
+                          <td class="py-3 pl-4 font-extrabold text-slate-900">${r.distributionPct.toFixed(1)}%</td>
+                        </tr>
+                      `;
+                    }).join("")}
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="mt-6 pt-4 border-t border-slate-200 text-[10px] leading-relaxed text-slate-500">
+                <div class="font-extrabold uppercase tracking-wider text-slate-700 mb-1">
+                  ${mc.title}
+                </div>
+                <p>${mc.text}</p>
+              </div>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(wrapper);
+
+        chartConfigsToInit.push({
+          idx,
+          results: p.results,
+          t
+        });
+      });
+
+      // Render all charts with animation: false for instant PDF readiness
+      chartConfigsToInit.forEach(cfg => {
+        const rCtx = document.getElementById(`radarChart_${cfg.idx}`)?.getContext("2d");
+        if (rCtx) {
+          activeChartInstances.push(new Chart(rCtx, {
+            type: "radar",
+            data: {
+              labels: cfg.results.map(r => r.name),
+              datasets: [
+                { label: cfg.t.chartRadarDataset1, data: cfg.results.map(r => Number(r.distributionPct.toFixed(1))), backgroundColor: "rgba(245, 158, 11, 0.22)", borderColor: "#d97706", borderWidth: 2 },
+                { label: cfg.t.chartRadarDataset2, data: cfg.results.map(() => 14.3), borderColor: "#94a3b8", borderDash: [5, 5], pointRadius: 0, borderWidth: 1.5 }
+              ]
+            },
+            options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, suggestedMax: 25 } } }
+          }));
+        }
+
+        const bCtx = document.getElementById(`stackedBarChart_${cfg.idx}`)?.getContext("2d");
+        if (bCtx) {
+          activeChartInstances.push(new Chart(bCtx, {
+            type: "bar",
+            data: {
+              labels: cfg.results.map(r => r.name),
+              datasets: [
+                { label: cfg.t.chartBarDataset1, data: cfg.results.map(r => Number(r.scoreFirst.toFixed(2))), backgroundColor: "#10b981" },
+                { label: cfg.t.chartBarDataset2, data: cfg.results.map(r => Number(r.scoreCarry.toFixed(2))), backgroundColor: "#f59e0b" }
+              ]
+            },
+            options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
+          }));
+        }
+      });
+    }
+
+    async function initBatchPrintPage() {
+      let postData = {};
+      try {
+        if (window.name && window.name.startsWith("SL_BATCH_PRINT:")) {
+          postData = JSON.parse(window.name.slice(15)) || {};
+        }
+      } catch (e) {}
+
+      if (!postData.wsId && !postData.wsName) {
+        try {
+          const raw = sessionStorage.getItem("sl_batch_print_ws") || localStorage.getItem("sl_batch_print_ws");
+          if (raw) postData = JSON.parse(raw) || {};
+        } catch (e) {}
+      }
+
+      if (window.location.search) {
+        try { window.history.replaceState({}, document.title, window.location.pathname); } catch (e) {}
+      }
+
+      batchWorkshopMeta = postData;
+      if (postData.wsName) {
+        document.getElementById("batchHdrTitle").textContent = `Dossier Report Workshop: ${postData.wsName}`;
+      }
+
+      const sbUrl = (DEFAULT_SUPABASE_URL || localStorage.getItem("sl_sb_url") || "").trim();
+      const sbKey = (DEFAULT_SUPABASE_ANON_KEY || localStorage.getItem("sl_sb_key") || "").trim();
+      if (sbUrl && sbKey) {
+        supabaseClient = window.supabase.createClient(sbUrl, sbKey);
+      }
+
+      try {
+        await fetchAssessmentContentFromSupabase(supabaseClient, true);
+      } catch (err) {
+        document.getElementById("loadingTitle").textContent = "Errore caricamento contenuti dal Database";
+        document.getElementById("loadingSub").textContent = err.message;
+        return;
+      }
+
+      // Query Supabase for all full submissions of this workshop so riepilogo_scelte and all columns are 100% complete
+      let dbRows = [];
+      if (supabaseClient && postData.wsId) {
+        try {
+          const { data, error } = await supabaseClient
+            .from("submissions")
+            .select("*")
+            .eq("workshop_id", postData.wsId)
+            .order("created_at", { ascending: true });
+          if (!error && Array.isArray(data) && data.length > 0) {
+            dbRows = data;
+          }
+        } catch (e) {}
+      }
+
+      if (dbRows.length === 0 && Array.isArray(postData.records) && postData.records.length > 0) {
+        dbRows = postData.records;
+      }
+
+      batchRawSubmissions = dbRows;
+      renderAllBatchReports();
+
+      if (postData.autoPrint && batchRawSubmissions.length > 0) {
+        setTimeout(() => {
+          window.print();
+        }, 500);
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", initBatchPrintPage);
+  </script>
+</body>
+</html>

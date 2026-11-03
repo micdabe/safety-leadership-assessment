@@ -566,7 +566,8 @@
         site: w.site,
         level: w.level,
         targetType: w.target_type || "site",
-        active: w.active !== false
+        active: w.active !== false,
+        showReport: w.show_report !== false
       }));
 
       allRecords = normalizeRows(subRes.data || []);
@@ -633,6 +634,8 @@
       const siteVal = document.getElementById("selectWsSite").value;
       const levelVal = document.getElementById("selectWsLevel").value;
       const targetVal = document.getElementById("selectWsTarget").value;
+      const showRepEl = document.getElementById("selectWsShowReport");
+      const showReportVal = showRepEl ? (showRepEl.value === "true") : true;
       const banner = document.getElementById("wsFeedbackBanner");
 
       if (!nameVal || !dateVal || !siteVal) {
@@ -649,19 +652,34 @@
         site: siteVal,
         level: levelVal,
         targetType: targetVal,
-        active: true
+        active: true,
+        showReport: showReportVal
       };
 
       if (activeConnectionMode === "supabase" && supabaseClient) {
-        const { error } = await supabaseClient.from("workshops").insert([{
+        let { error } = await supabaseClient.from("workshops").insert([{
           id: newWs.id,
           name: newWs.name,
           date: newWs.date,
           site: newWs.site,
           level: newWs.level,
           target_type: newWs.targetType,
-          active: true
+          active: true,
+          show_report: newWs.showReport
         }]);
+        // Fallback automatico se la colonna show_report non è ancora stata aggiunta sul DB
+        if (error && String(error.message).includes("show_report")) {
+          const retry = await supabaseClient.from("workshops").insert([{
+            id: newWs.id,
+            name: newWs.name,
+            date: newWs.date,
+            site: newWs.site,
+            level: newWs.level,
+            target_type: newWs.targetType,
+            active: true
+          }]);
+          error = retry.error;
+        }
         if (error) {
           alert("Errore salvataggio Workshop su Supabase: " + error.message);
           return;
@@ -673,8 +691,9 @@
       document.getElementById("inputWsName").value = "";
 
       const typeLabel = targetVal === "office" ? "🏢 Ufficio / Sede (HQ)" : "🏗️ Cantiere / Site";
+      const repLabel = showReportVal ? "📊 Mostra Report a fine test" : "🙏 Solo Ringraziamento a fine test";
       banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
-      banner.textContent = `✓ Workshop "${newWs.name}" (${typeLabel}) salvato! Copia il link qui sotto per i partecipanti.`;
+      banner.textContent = `✓ Workshop "${newWs.name}" (${typeLabel} • ${repLabel}) salvato! Copia il link qui sotto per i partecipanti.`;
       banner.classList.remove("hidden");
 
       renderWorkshopsTable();
@@ -690,6 +709,54 @@
         await supabaseClient.from("workshops").update({ active: ws.active }).eq("id", wsId);
       }
       renderWorkshopsTable();
+    }
+
+    async function toggleWorkshopShowReport(wsId) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+      ws.showReport = !(ws.showReport !== false);
+      saveStateToCache();
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        const { error } = await supabaseClient.from("workshops").update({ show_report: ws.showReport }).eq("id", wsId);
+        if (error && String(error.message).includes("show_report")) {
+          alert("Nota: esegui lo script SQL 'aggiorna_workshops_show_report.sql' su Supabase per rendere permanente la colonna show_report.");
+        }
+      }
+      renderWorkshopsTable();
+    }
+
+    function openWorkshopBatchPrint(wsId, autoPrint = false) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+      saveStateToCache();
+
+      const wsRecords = allRecords.filter(r => r.workshopId === ws.id || r.workshopName === ws.name);
+      const batchPayload = {
+        wsId: ws.id,
+        wsName: ws.name,
+        wsDate: ws.date,
+        wsSite: ws.site,
+        wsLevel: ws.level,
+        wsTarget: ws.targetType || "site",
+        autoPrint: Boolean(autoPrint),
+        records: wsRecords
+      };
+
+      try {
+        const serialized = JSON.stringify(batchPayload);
+        sessionStorage.setItem("sl_batch_print_ws", serialized);
+        localStorage.setItem("sl_batch_print_ws", serialized);
+        const win = window.open("workshop-reports-print.html", "_blank");
+        if (win) {
+          try { win.name = "SL_BATCH_PRINT:" + serialized; } catch (e) {}
+        } else {
+          window.name = "SL_BATCH_PRINT:" + serialized;
+          window.location.href = "workshop-reports-print.html";
+        }
+      } catch (e) {
+        console.error("Errore apertura batch print:", e);
+      }
     }
 
     async function deleteWorkshopRecord(wsId) {
@@ -717,7 +784,7 @@
       if (!tbody) return;
 
       if (workshopsDB.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 italic">Nessun Workshop registrato. Creane uno qui sopra per generare il link per i partecipanti.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="py-8 text-center text-slate-400 italic">Nessun Workshop registrato. Creane uno qui sopra per generare il link per i partecipanti.</td></tr>`;
         return;
       }
 
@@ -725,6 +792,7 @@
 
       tbody.innerHTML = workshopsDB.map(ws => {
         const isOpen = ws.active !== false;
+        const showRep = ws.showReport !== false;
         const isOffice = ws.targetType === "office";
         const wsLink = `${baseUrl}?ws=${encodeURIComponent(ws.id)}`;
         const siteLabel = String(ws.site || "").split("|")[0].trim();
@@ -760,6 +828,17 @@
               </button>
             </td>
             <td class="py-3 px-3 text-center">
+              <button onclick="toggleWorkshopShowReport('${ws.id}')"
+                title="Clicca per scegliere se i partecipanti vedono il Report Finale o solo la pagina di ringraziamento"
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-extrabold text-[11px] border transition ${
+                  showRep
+                    ? 'bg-blue-100 text-blue-900 border-blue-300 hover:bg-blue-200'
+                    : 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
+                }">
+                <span>${showRep ? '📊 MOSTRA REPORT' : '🙏 SOLO GRAZIE'}</span>
+              </button>
+            </td>
+            <td class="py-3 px-3 text-center">
               <span class="px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-extrabold text-xs">${linkedCount}</span>
             </td>
             <td class="py-3 px-3">
@@ -784,13 +863,19 @@
             </td>
             <td class="py-3 px-3 text-right whitespace-nowrap">
               <div class="inline-flex items-center gap-1.5">
+                <button onclick="openWorkshopBatchPrint('${ws.id}', true)"
+                  title="Apri e stampa/scarica il PDF unico con Copertina + Report individuale per tutti i partecipanti di questo Workshop"
+                  class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] shadow-sm transition flex items-center gap-1">
+                  <span>🖨️</span> <span>Stampa / PDF Tutti (${linkedCount}) ↗</span>
+                </button>
                 <button onclick="viewWorkshopReport('${ws.id}')"
+                  title="Analisi aggregata di questo Workshop"
                   class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[11px] border border-blue-200 transition">
-                  📊 Vedi Report
+                  📊 Analisi
                 </button>
                 <button onclick="deleteWorkshopRecord('${ws.id}')"
-                  class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200 transition">
-                  🗑️ Elimina
+                  class="px-2 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200 transition">
+                  🗑️
                 </button>
               </div>
             </td>
