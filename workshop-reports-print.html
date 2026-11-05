@@ -658,48 +658,24 @@
 
     const COVER_LABELS = {
       it: {
-        dossierBadge: "SAFETY LEADERSHIP SITUATIONAL ASSESSMENT • DOSSIER INDIVIDUALE",
-        coverMainTitle: "Report Individuale di Safety Leadership",
-        coverSub: "Valutazione situazionale delle 7 aree di competenza e piano di Executive Coaching",
-        participantBoxTitle: "DATI DEL PARTECIPANTE",
-        lblParticipantName: "Partecipante",
+        dossierBadge: "SAFETY LEADERSHIP ASSESSMENT",
+        coverMainTitle: "Profilo Individuale di Safety Leadership",
+        coverSub: "Valutazione situazionale delle 7 aree di leadership & Piano di Executive Coaching",
+        lblPreparedFor: "Report elaborato per",
         lblCompany: "Azienda",
-        lblRole: "Ruolo / Funzione",
         lblSite: "Cantiere / Sede",
-        lblCompletedAt: "Data e Ora Compilazione",
-        lblTestId: "ID Univoco Test",
-        workshopBoxTitle: "DATI DELLA SESSIONE WORKSHOP",
-        lblWsName: "Titolo Workshop",
-        lblWsDate: "Data Sessione",
-        lblWsLevel: "Livello Target",
-        lblWsProfile: "Profilo Scenari",
-        lblWsId: "Codice Sessione",
-        execSnapshotTitle: "SINTESI ESECUTIVA DEL PROFILO",
-        confidentialBoxTitle: "DOCUMENTO PERSONALE E RISERVATO",
-        confidentialBoxText: "Questa prima pagina funge da copertina identificativa per la consegna del report al partecipante. I risultati analitici, la mappa delle 7 aree di Safety Leadership e il piano di Executive Coaching iniziano dalla pagina seguente (Pagina 2).",
-        footerNote: "Documento riservato ad uso formativo e di sviluppo della leadership in ambito Health, Safety & Environment."
+        lblWorkshop: "Sessione Workshop",
+        lblDate: "Data"
       },
       en: {
-        dossierBadge: "SAFETY LEADERSHIP SITUATIONAL ASSESSMENT • INDIVIDUAL DOSSIER",
-        coverMainTitle: "Individual Safety Leadership Report",
-        coverSub: "Situational assessment across the 7 competency areas & Executive Coaching Action Plan",
-        participantBoxTitle: "PARTICIPANT DETAILS",
-        lblParticipantName: "Participant",
+        dossierBadge: "SAFETY LEADERSHIP ASSESSMENT",
+        coverMainTitle: "Individual Safety Leadership Profile",
+        coverSub: "Situational assessment across the 7 leadership areas & Executive Coaching Plan",
+        lblPreparedFor: "Report prepared for",
         lblCompany: "Company",
-        lblRole: "Role / Function",
         lblSite: "Site / Location",
-        lblCompletedAt: "Completion Date & Time",
-        lblTestId: "Unique Assessment ID",
-        workshopBoxTitle: "WORKSHOP SESSION DETAILS",
-        lblWsName: "Workshop Title",
-        lblWsDate: "Session Date",
-        lblWsLevel: "Target Level",
-        lblWsProfile: "Scenario Profile",
-        lblWsId: "Session Code",
-        execSnapshotTitle: "EXECUTIVE PROFILE SNAPSHOT",
-        confidentialBoxTitle: "PERSONAL & CONFIDENTIAL DOCUMENT",
-        confidentialBoxText: "This front cover page serves solely to identify the recipient for classroom distribution. Detailed analytical results, the 7 Safety Leadership areas profile, and the Executive Coaching action plan begin on the next page (Page 2).",
-        footerNote: "Confidential document for leadership training and coaching purposes in Health, Safety & Environment."
+        lblWorkshop: "Workshop Session",
+        lblDate: "Date"
       }
     };
 
@@ -910,137 +886,75 @@
 
         wrapper.innerHTML = `
           <!-- ===============================================================
-               FACCIATA 1 (COPERTINA INDIVIDUALE DEL PARTECIPANTE #${idx + 1})
+               FACCIATA 1 (COPERTINA INDIVIDUALE CENTRATA DEL PARTECIPANTE #${idx + 1})
                =============================================================== -->
-          <div class="print-cover-page bg-white rounded-3xl shadow-sm border-2 border-slate-200 p-8 md:p-12 flex flex-col justify-between">
-            
-            <!-- Top Banner Copertina -->
-            <div>
-              <div class="flex items-center justify-between gap-4 pb-6 border-b-2 border-slate-200">
-                <div class="flex items-center gap-3.5">
-                  <div class="w-14 h-14 rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center font-black text-2xl shadow-md">
-                    SL
-                  </div>
-                  <div>
-                    <span class="text-[11px] font-extrabold uppercase tracking-widest text-amber-600 block">
-                      ${cv.dossierBadge}
-                    </span>
-                    <h2 class="text-2xl md:text-3xl font-black text-slate-900 mt-0.5">
-                      ${cv.coverMainTitle}
-                    </h2>
-                  </div>
-                </div>
-                <div class="text-right">
-                  <span class="px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-extrabold">
-                    #${idx + 1} / ${batchRawSubmissions.length}
-                  </span>
-                </div>
+          <div class="print-cover-page bg-white rounded-3xl shadow-sm border-2 border-slate-200 p-10 md:p-14 flex flex-col justify-between">
+            <!-- Barra decorativa superiore -->
+            <div class="w-24 h-1.5 rounded-full bg-amber-500 mx-auto"></div>
+
+            <!-- Corpo centrale centrato verticalmente e orizzontalmente -->
+            <div class="my-auto py-8 text-center max-w-2xl mx-auto w-full">
+              <div class="w-20 h-20 rounded-3xl bg-slate-900 text-amber-400 flex items-center justify-center font-black text-3xl shadow-lg mx-auto mb-6 border-4 border-amber-500/30">
+                SL
               </div>
 
-              <!-- Hero Box Nominativo Partecipante (Sfondo grigio molto chiaro e testo nero) -->
-              <div class="my-8 bg-slate-100 text-slate-900 rounded-3xl p-8 border border-slate-200 border-l-8 border-l-amber-500 shadow-sm">
-                <div class="text-xs font-extrabold uppercase tracking-widest text-amber-500 mb-2">
-                  ${cv.lblParticipantName}
+              <span class="inline-block px-4 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-extrabold uppercase tracking-widest mb-3">
+                ${cv.dossierBadge}
+              </span>
+
+              <h1 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-2">
+                ${cv.coverMainTitle}
+              </h1>
+              <p class="text-sm text-slate-500 font-medium max-w-lg mx-auto mb-12">
+                ${cv.coverSub}
+              </p>
+
+              <!-- Card Centrale Partecipante (Ogni dato scritto una sola volta, zero ridondanze) -->
+              <div class="bg-slate-50 rounded-3xl p-8 md:p-10 border-2 border-slate-200 shadow-sm text-center relative overflow-hidden">
+                <div class="text-[11px] font-extrabold uppercase tracking-widest text-amber-600 mb-2">
+                  ${cv.lblPreparedFor}
                 </div>
-                <div class="text-3xl md:text-4xl font-black tracking-tight text-slate-950 mb-3">
+                <div class="text-3xl md:text-5xl font-black text-slate-950 tracking-tight mb-3">
                   ${p.name}
                 </div>
-                <div class="flex flex-wrap items-center gap-3 text-xs md:text-sm text-slate-700 font-semibold">
-                  <span class="px-3 py-1 rounded-lg bg-white border border-slate-200">🏢 ${p.company}</span>
-                  <span class="px-3 py-1 rounded-lg bg-white border border-slate-200">👤 ${p.role}</span>
-                  <span class="px-3 py-1 rounded-lg bg-white border border-slate-200">📍 ${String(p.site).split("|")[0].trim()}</span>
-                </div>
-              </div>
-
-              <!-- Griglia Metadati Completi: Workshop + Partecipante -->
-              <div class="grid md:grid-cols-2 gap-6 my-6 print-charts-row">
-                <!-- Scheda Dati Partecipante -->
-                <div class="rounded-2xl border-2 border-slate-200 bg-slate-50/70 p-6">
-                  <div class="text-xs font-extrabold uppercase tracking-wider text-slate-500 pb-2.5 mb-3 border-b border-slate-200">
-                    👤 ${cv.participantBoxTitle}
-                  </div>
-                  <dl class="space-y-2.5 text-xs">
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-500 font-semibold">${cv.lblParticipantName}:</dt>
-                      <dd class="font-extrabold text-slate-900 text-right">${p.name}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-500 font-semibold">${cv.lblCompany}:</dt>
-                      <dd class="font-bold text-slate-800 text-right">${p.company}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-500 font-semibold">${cv.lblRole}:</dt>
-                      <dd class="font-bold text-slate-800 text-right">${p.role}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-500 font-semibold">${cv.lblSite}:</dt>
-                      <dd class="font-bold text-slate-800 text-right">${String(p.site).split("|")[0].trim()}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-500 font-semibold">${cv.lblCompletedAt}:</dt>
-                      <dd class="font-bold text-slate-800 text-right">${p.date}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-500 font-semibold">${cv.lblTestId}:</dt>
-                      <dd class="font-mono font-bold text-slate-600 text-right">${p.id}</dd>
-                    </div>
-                  </dl>
+                <div class="inline-block px-4 py-1.5 rounded-full bg-slate-900 text-white text-sm font-bold mb-8">
+                  ${p.role}
                 </div>
 
-                <!-- Scheda Dati Sessione Workshop -->
-                <div class="rounded-2xl border-2 border-amber-200 bg-amber-50/40 p-6">
-                  <div class="text-xs font-extrabold uppercase tracking-wider text-amber-900 pb-2.5 mb-3 border-b border-amber-200">
-                    🎯 ${cv.workshopBoxTitle}
+                <!-- Griglia 2x2 pulita e non ripetuta -->
+                <div class="grid grid-cols-2 gap-4 pt-6 border-t border-slate-200 text-left">
+                  <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">${cv.lblCompany}</div>
+                    <div class="text-sm font-extrabold text-slate-900">${p.company}</div>
                   </div>
-                  <dl class="space-y-2.5 text-xs">
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-600 font-semibold">${cv.lblWsName}:</dt>
-                      <dd class="font-extrabold text-slate-900 text-right">${p.wsName}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-600 font-semibold">${cv.lblWsDate}:</dt>
-                      <dd class="font-bold text-slate-800 text-right">${p.wsDate}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-600 font-semibold">${cv.lblWsLevel}:</dt>
-                      <dd class="font-bold text-slate-800 text-right">${p.wsLevel}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-600 font-semibold">${cv.lblWsProfile}:</dt>
-                      <dd class="font-bold text-slate-800 text-right">${profileBadgeText}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-600 font-semibold">${cv.lblSite}:</dt>
-                      <dd class="font-bold text-slate-800 text-right">${String(batchWorkshopMeta?.wsSite || p.site).split("|")[0].trim()}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                      <dt class="text-slate-600 font-semibold">${cv.lblWsId}:</dt>
-                      <dd class="font-mono font-bold text-slate-600 text-right">${p.wsId}</dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-
-              <!-- Nota di Riservatezza in Copertina (Nessun punteggio o risultato in prima pagina) -->
-              <div class="mt-8 p-6 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-4">
-                <div class="w-10 h-10 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-lg shrink-0">
-                  🔒
-                </div>
-                <div>
-                  <div class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">
-                    ${cv.confidentialBoxTitle}
+                  <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">${cv.lblSite}</div>
+                    <div class="text-sm font-extrabold text-slate-900">${String(p.site).split("|")[0].trim()}</div>
                   </div>
-                  <p class="text-xs text-slate-600 leading-relaxed">
-                    ${cv.confidentialBoxText}
-                  </p>
+                  <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">${cv.lblWorkshop}</div>
+                    <div class="text-sm font-extrabold text-slate-900">${p.wsName}</div>
+                    <div class="text-[11px] font-semibold text-amber-700 mt-0.5">${p.wsLevel} • ${profileBadgeText}</div>
+                  </div>
+                  <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">${cv.lblDate}</div>
+                    <div class="text-sm font-extrabold text-slate-900">${p.date}</div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Footer Copertina -->
-            <div class="pt-6 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
-              <span>${cv.footerNote}</span>
-              <span class="font-mono font-bold text-slate-500">${p.wsName} • ${p.name}</span>
+            <!-- Footer minimale con le 7 Aree -->
+            <div class="text-center pt-4 border-t border-slate-200">
+              <div class="flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                <span>Vision</span><span>•</span>
+                <span>Focus</span><span>•</span>
+                <span>Influence</span><span>•</span>
+                <span>Credibility</span><span>•</span>
+                <span>Team</span><span>•</span>
+                <span>Communication</span><span>•</span>
+                <span>Feedback</span>
+              </div>
             </div>
           </div>
 
@@ -1055,9 +969,7 @@
                     <span class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
                       ${t.resBadge}
                     </span>
-                    <span class="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-mono font-semibold">
-                      ID: ${p.id}
-                    </span>
+
                   </div>
                   <h2 class="text-xl md:text-2xl font-extrabold text-slate-900">
                     ${t.resMainTitle}
