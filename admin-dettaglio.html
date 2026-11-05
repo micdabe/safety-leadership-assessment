@@ -587,7 +587,7 @@
           liveCtrl.classList.add("flex");
         }
         initDashboardWithData(false);
-        refreshFromSupabase(false);
+        refreshFromSupabase(true);
         return;
       }
 
@@ -1843,6 +1843,11 @@
                 class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
             </td>
             <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${r.date}</td>
+            <td class="py-2.5 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono font-bold text-[11px]" title="${r.durationSec ? r.durationSec + ' secondi' : 'Tempo di compilazione'}">
+                ⏱️ ${r.durationText || "-"}
+              </span>
+            </td>
             <td class="py-2.5 px-3" onclick="event.stopPropagation()">
               <select onchange="assignRecordToWorkshop('${r.id}', this.value)"
                 class="px-2 py-1 rounded-lg border border-slate-300 text-[11px] font-bold bg-white text-slate-800">
