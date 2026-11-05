@@ -95,7 +95,7 @@
       </div>
     </div>
 
-        <!-- Barra di Navigazione a 5 Pagine Separate -->
+        <!-- Barra di Navigazione a 6 Pagine Separate -->
     <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
       <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-1.5 pt-2">
         <a href="admin-risultati.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
@@ -112,6 +112,9 @@
         </a>
         <a href="admin-contenuti.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>✏️</span> <span>Gestione Contenuti (Scenari & Coaching)</span>
+        </a>
+        <a href="admin-testi.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+          <span>📝</span> <span>Testi & Istruzioni Pagina Test</span>
         </a>
       </div>
     </div>
@@ -624,7 +627,7 @@
 
     function getParticipantTestBaseUrl() {
       const loc = window.location;
-      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-dettaglio|admin-workshop|admin-liste).*$/i, "");
+      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-dettaglio|admin-workshop|admin-liste|admin-contenuti|admin-testi).*$/i, "");
       return `${loc.origin}${basePath.endsWith("/") ? basePath : basePath + "/"}index.html`;
     }
 

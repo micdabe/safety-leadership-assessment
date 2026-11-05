@@ -380,6 +380,7 @@
 
     const UI_TEXT = {
       it: {
+        pageTitle: "Safety Leadership Situational Assessment",
         hdrTitle: "Safety Leadership Assessment",
         hdrSub: "Valutazione situazionale delle 7 aree di leadership",
         langSwitchPrefix: "Lingua:",
@@ -443,11 +444,16 @@
         selectionPromptTitle: "Quali comportamenti metti in campo per gestire questa situazione?",
         selectionPromptSub: "Seleziona da 1 a 3 comportamenti in ordine di priorità (clicca per selezionare o deselezionare).",
         chosenCounter: (n) => `Scelti: ${n} / 3`,
+        choiceBadge1: "1ª Scelta",
+        choiceBadge2: "2ª Scelta",
+        choiceBadge3: "3ª Scelta",
         choiceBadge: (rank) => `${rank}ª Scelta`,
         validationWarning: "Seleziona almeno un comportamento (massimo 3) prima di proseguire.",
         btnNextRound: "Conferma e Prosegui →",
         btnFinishRound: "Conferma e Genera il Report Finale ✓",
         btnFinishRoundNoReport: "Conferma e Invia il Questionario ✓",
+        savingTitle: "Registrazione delle tue risposte in corso...",
+        savingSub: "Attendere un istante mentre salviamo il tuo questionario nel database del Workshop.",
         tyBadge: "Questionario Completato e Registrato ✓",
         tyTitle: "Grazie per aver completato il Safety Leadership Assessment!",
         tyDesc: "Le tue risposte per i 12 scenari sono state registrate correttamente. Il tuo <strong>risultato personale verrà distribuito durante il workshop</strong> dal coordinatore della sessione.",
@@ -526,6 +532,7 @@
         logCarryApp: (n, w) => `Ripescato ${n}x (Peso ${w}x)`
       },
       en: {
+        pageTitle: "Safety Leadership Situational Assessment",
         hdrTitle: "Safety Leadership Assessment",
         hdrSub: "Situational assessment across the 7 leadership areas",
         langSwitchPrefix: "Language:",
@@ -589,11 +596,16 @@
         selectionPromptTitle: "Which behaviors do you deploy to handle this situation?",
         selectionPromptSub: "Select from 1 to 3 behaviors in order of priority (click to select or deselect).",
         chosenCounter: (n) => `Selected: ${n} / 3`,
+        choiceBadge1: "1st Choice",
+        choiceBadge2: "2nd Choice",
+        choiceBadge3: "3rd Choice",
         choiceBadge: (rank) => rank === 1 ? "1st Choice" : rank === 2 ? "2nd Choice" : "3rd Choice",
         validationWarning: "Please select at least one behavior (up to 3) before proceeding.",
         btnNextRound: "Confirm & Continue →",
         btnFinishRound: "Confirm & Generate Final Report ✓",
         btnFinishRoundNoReport: "Confirm & Submit Assessment ✓",
+        savingTitle: "Saving your assessment responses...",
+        savingSub: "Please wait a moment while we record your responses in the Workshop database.",
         tyBadge: "Assessment Completed & Saved ✓",
         tyTitle: "Thank you for completing the Safety Leadership Assessment!",
         tyDesc: "Your responses across all 12 scenarios have been successfully recorded. Your <strong>personal result will be distributed during the workshop</strong> by the session coordinator.",
@@ -672,6 +684,77 @@
         logCarryApp: (n, w) => `Re-proposed ${n}x (Weight ${w}x)`
       }
     };
+
+    // =========================================================================
+    // 1B. CARICAMENTO DINAMICO DEI TESTI DELL'INTERFACCIA DA SUPABASE
+    //     Tabella: public.assessment_ui_texts (Modificabile da admin-testi.html)
+    // =========================================================================
+    function applyUiTextsFromDbRows(rows) {
+      if (!Array.isArray(rows) || rows.length === 0) return false;
+      const mapIt = {};
+      const mapEn = {};
+      rows.forEach(r => {
+        if (!r || !r.key) return;
+        if (r.text_it !== undefined && r.text_it !== null) mapIt[r.key] = String(r.text_it);
+        if (r.text_en !== undefined && r.text_en !== null) mapEn[r.key] = String(r.text_en);
+      });
+
+      const applyLangMap = (langCode, mapObj) => {
+        Object.keys(mapObj).forEach(k => {
+          const val = mapObj[k];
+          if (k === "closedTitle") {
+            UI_TEXT[langCode].closedTitle = (wsName) => val.replace(/\{wsName\}/g, wsName || "");
+          } else if (k === "chosenCounter") {
+            UI_TEXT[langCode].chosenCounter = (n) => val.replace(/\{n\}/g, n);
+          } else {
+            UI_TEXT[langCode][k] = val;
+          }
+        });
+        if (mapObj.choiceBadge1 || mapObj.choiceBadge2 || mapObj.choiceBadge3) {
+          UI_TEXT[langCode].choiceBadge = (rank) => {
+            if (rank === 1) return UI_TEXT[langCode].choiceBadge1 || "1ª Scelta";
+            if (rank === 2) return UI_TEXT[langCode].choiceBadge2 || "2ª Scelta";
+            return UI_TEXT[langCode].choiceBadge3 || "3ª Scelta";
+          };
+        }
+      };
+
+      applyLangMap("it", mapIt);
+      applyLangMap("en", mapEn);
+      return true;
+    }
+
+    async function fetchUiTextsFromSupabase(sbClient, useCache = false) {
+      if (useCache) {
+        try {
+          const cached = sessionStorage.getItem("sl_db_ui_texts") || localStorage.getItem("sl_db_ui_texts");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (applyUiTextsFromDbRows(parsed)) return true;
+          }
+        } catch (e) {}
+      }
+
+      if (!sbClient) return false;
+      try {
+        const { data, error } = await sbClient
+          .from("assessment_ui_texts")
+          .select("*")
+          .order("sort_order", { ascending: true });
+        if (!error && Array.isArray(data) && data.length > 0) {
+          applyUiTextsFromDbRows(data);
+          try {
+            const serialized = JSON.stringify(data);
+            sessionStorage.setItem("sl_db_ui_texts", serialized);
+            localStorage.setItem("sl_db_ui_texts", serialized);
+          } catch (e) {}
+          return true;
+        }
+      } catch (e) {
+        console.warn("Tabella assessment_ui_texts non ancora popolata, uso fallback locale:", e);
+      }
+      return false;
+    }
 
     // =========================================================================
     // 2. STRUTTURE CONTENUTI POPOLATE DINAMICAMENTE DA SUPABASE (NESSUN TESTO HARDCODED)
@@ -863,18 +946,30 @@
     }
 
     async function initWorkshopAndListsFromSupabase() {
+      // Applica subito eventuale cache testi UI, poi interroga Supabase in tempo reale
+      fetchUiTextsFromSupabase(null, true);
+      applyStaticTranslations();
+
       const params = new URLSearchParams(window.location.search);
       const wsIdParam = (params.get("ws") || "").trim();
-
-      if (!wsIdParam) {
-        showLockedScreen("missing");
-        return;
-      }
 
       const sbUrl = (DEFAULT_SUPABASE_URL || localStorage.getItem("sl_sb_url") || "").trim();
       const sbKey = (DEFAULT_SUPABASE_ANON_KEY || localStorage.getItem("sl_sb_key") || "").trim();
 
-      if (!sbUrl || !sbKey) {
+      if (sbUrl && sbKey) {
+        supabaseClient = window.supabase.createClient(sbUrl, sbKey);
+      }
+
+      if (!wsIdParam) {
+        if (supabaseClient) {
+          await fetchUiTextsFromSupabase(supabaseClient, false);
+          applyStaticTranslations();
+        }
+        showLockedScreen("missing");
+        return;
+      }
+
+      if (!supabaseClient) {
         showLockedScreen("missing");
         return;
       }
@@ -883,14 +978,13 @@
       updateListsSourceBadge();
 
       try {
-        supabaseClient = window.supabase.createClient(sbUrl, sbKey);
-
         const [wsRes, compRes, roleRes, siteRes] = await Promise.all([
           supabaseClient.from("workshops").select("*").eq("id", wsIdParam).maybeSingle(),
           supabaseClient.from("companies_list").select("*").order("sort_order", { ascending: true }),
           supabaseClient.from("roles_list").select("*").order("sort_order", { ascending: true }),
           supabaseClient.from("sites_list").select("*").order("sort_order", { ascending: true }),
-          fetchAssessmentContentFromSupabase(supabaseClient, false)
+          fetchAssessmentContentFromSupabase(supabaseClient, false),
+          fetchUiTextsFromSupabase(supabaseClient, false)
         ]);
 
         if (wsRes.error || !wsRes.data) {
@@ -1150,7 +1244,14 @@
       document.getElementById("wStep3Desc").textContent = isNoReport ? t.wStep3DescNoReport : t.wStep3Desc;
       document.getElementById("btnStart").textContent = t.btnStart;
 
+      if (t.pageTitle) document.title = t.pageTitle;
       document.getElementById("validationWarning").textContent = t.validationWarning;
+      if (document.getElementById("savingTitle") && t.savingTitle) {
+        document.getElementById("savingTitle").textContent = t.savingTitle;
+      }
+      if (document.getElementById("savingSub") && t.savingSub) {
+        document.getElementById("savingSub").textContent = t.savingSub;
+      }
       document.getElementById("tyBadge").textContent = t.tyBadge;
       document.getElementById("tyTitle").textContent = t.tyTitle;
       document.getElementById("tyDesc").innerHTML = t.tyDesc;
