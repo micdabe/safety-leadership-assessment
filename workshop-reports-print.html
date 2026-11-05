@@ -679,6 +679,105 @@
       }
     };
 
+
+    // =========================================================================
+    // CARICAMENTO DINAMICO DEI TESTI DI CONTORNO DEL REPORT DA SUPABASE
+    // Tabella: public.assessment_ui_texts (Modificabile da admin-testi.html)
+    // =========================================================================
+    function applyUiTextsFromDbRows(rows) {
+      if (!Array.isArray(rows) || rows.length === 0) return false;
+      const mapIt = {};
+      const mapEn = {};
+      rows.forEach(r => {
+        if (!r || !r.key) return;
+        if (r.text_it !== undefined && r.text_it !== null) mapIt[r.key] = String(r.text_it);
+        if (r.text_en !== undefined && r.text_en !== null) mapEn[r.key] = String(r.text_en);
+      });
+
+      const coverKeyMap = {
+        covDossierBadge: "dossierBadge",
+        covMainTitle: "coverMainTitle",
+        covSub: "coverSub",
+        covPreparedFor: "lblPreparedFor",
+        covLblCompany: "lblCompany",
+        covLblSite: "lblSite",
+        covLblWorkshop: "lblWorkshop",
+        covLblDate: "lblDate"
+      };
+
+      const applyLangMap = (langCode, mapObj) => {
+        Object.keys(mapObj).forEach(k => {
+          const val = mapObj[k];
+          if (coverKeyMap[k] && typeof COVER_LABELS !== "undefined" && COVER_LABELS[langCode]) {
+            COVER_LABELS[langCode][coverKeyMap[k]] = val;
+          } else if (k === "methCompactTitle" && typeof METH_COMPACT_TRANSLATIONS !== "undefined" && METH_COMPACT_TRANSLATIONS[langCode]) {
+            METH_COMPACT_TRANSLATIONS[langCode].title = val;
+          } else if (k === "methCompactText" && typeof METH_COMPACT_TRANSLATIONS !== "undefined" && METH_COMPACT_TRANSLATIONS[langCode]) {
+            METH_COMPACT_TRANSLATIONS[langCode].text = val;
+          } else if (k === "closedTitle") {
+            UI_TEXT[langCode].closedTitle = (wsName) => val.replace(/\{wsName\}/g, wsName || "");
+          } else if (k === "chosenCounter") {
+            UI_TEXT[langCode].chosenCounter = (n) => val.replace(/\{n\}/g, n);
+          } else if (k === "kpiStatsFormat") {
+            UI_TEXT[langCode].kpiStatsFormat = (pts, c1, c2) =>
+              val.replace(/\{pts\}/g, pts).replace(/\{c1\}/g, c1).replace(/\{c2\}/g, c2);
+          } else if (k === "bridgeTitleFormat") {
+            UI_TEXT[langCode].bridgeTitleFormat = (top, low) =>
+              val.replace(/\{top\}/g, top || "").replace(/\{low\}/g, low || "");
+          } else if (k === "skippedCountLabel") {
+            UI_TEXT[langCode].skippedCountLabel = (n) => val.replace(/\{n\}/g, n);
+          } else if (k === "logCarryApp") {
+            UI_TEXT[langCode].logCarryApp = (n, w) => val.replace(/\{n\}/g, n).replace(/\{w\}/g, w);
+          } else {
+            UI_TEXT[langCode][k] = val;
+          }
+        });
+        if (mapObj.choiceBadge1 || mapObj.choiceBadge2 || mapObj.choiceBadge3) {
+          UI_TEXT[langCode].choiceBadge = (rank) => {
+            if (rank === 1) return UI_TEXT[langCode].choiceBadge1 || (langCode === "it" ? "1ª Scelta" : "1st Choice");
+            if (rank === 2) return UI_TEXT[langCode].choiceBadge2 || (langCode === "it" ? "2ª Scelta" : "2nd Choice");
+            return UI_TEXT[langCode].choiceBadge3 || (langCode === "it" ? "3ª Scelta" : "3rd Choice");
+          };
+        }
+      };
+
+      applyLangMap("it", mapIt);
+      applyLangMap("en", mapEn);
+      return true;
+    }
+
+    async function fetchUiTextsFromSupabase(sbClient, useCache = true) {
+      if (useCache) {
+        try {
+          const cached = sessionStorage.getItem("sl_db_ui_texts") || localStorage.getItem("sl_db_ui_texts");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            applyUiTextsFromDbRows(parsed);
+          }
+        } catch (e) {}
+      }
+
+      if (!sbClient) return false;
+      try {
+        const { data, error } = await sbClient
+          .from("assessment_ui_texts")
+          .select("*")
+          .order("sort_order", { ascending: true });
+        if (!error && Array.isArray(data) && data.length > 0) {
+          applyUiTextsFromDbRows(data);
+          try {
+            const serialized = JSON.stringify(data);
+            sessionStorage.setItem("sl_db_ui_texts", serialized);
+            localStorage.setItem("sl_db_ui_texts", serialized);
+          } catch (e) {}
+          return true;
+        }
+      } catch (e) {
+        console.warn("Lettura assessment_ui_texts fallback locale:", e);
+      }
+      return false;
+    }
+
     function parseNumVal(val) {
       if (val === undefined || val === null) return 0;
       const num = parseFloat(String(val).replace("%", "").replace(",", ".").trim());
@@ -1254,7 +1353,10 @@
       }
 
       try {
-        await fetchAssessmentContentFromSupabase(supabaseClient, true);
+        await Promise.all([
+          fetchAssessmentContentFromSupabase(supabaseClient, true),
+          fetchUiTextsFromSupabase(supabaseClient, true)
+        ]);
       } catch (err) {
         document.getElementById("loadingTitle").textContent = "Errore caricamento contenuti dal Database";
         document.getElementById("loadingSub").textContent = err.message;
