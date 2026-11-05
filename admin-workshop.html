@@ -1253,9 +1253,19 @@
         const isOffice = String(rawTarget).toLowerCase().includes("office") || String(rawTarget).toLowerCase().includes("hq");
         const wsTarget = isOffice ? "Office / HQ" : "Site / Field";
 
+        const rawDurSec = parseInt(norm["durata_secondi"], 10);
+        const durationSec = !isNaN(rawDurSec) && rawDurSec > 0 ? rawDurSec : 0;
+        const durationText = norm["durata_test"] || (
+          durationSec > 0
+            ? (Math.floor(durationSec / 60) > 0 ? `${Math.floor(durationSec / 60)}m ${durationSec % 60}s` : `${durationSec}s`)
+            : "-"
+        );
+
         valid.push({
           id: recordId,
           date: norm["data_ora"] || (norm["created_at"] ? new Date(norm["created_at"]).toLocaleString("it-IT") : "-"),
+          durationSec: durationSec,
+          durationText: durationText,
           workshopId: wsId,
           workshopName: wsName,
           workshopDate: wsDate,
@@ -1334,9 +1344,13 @@
         };
         const tot = Object.values(raw).reduce((a, b) => a + b, 0);
 
+        const demoSec = 310 + ((i * 37) % 280);
+        const demoDurTxt = `${Math.floor(demoSec / 60)}m ${demoSec % 60}s`;
         demoRows.push({
           id: `demo_${i + 1}`,
           data_ora: `${10 + (i % 18)}/10/2026`,
+          durata_secondi: demoSec,
+          durata_test: demoDurTxt,
           workshop_id: ws.id,
           workshop_nome: ws.name,
           workshop_data: ws.date,
@@ -1661,6 +1675,11 @@
                 class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
             </td>
             <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${r.date}</td>
+            <td class="py-2.5 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono font-bold text-[11px]" title="${r.durationSec ? r.durationSec + ' secondi' : 'Tempo di compilazione'}">
+                ⏱️ ${r.durationText || "-"}
+              </span>
+            </td>
             <td class="py-2.5 px-3" onclick="event.stopPropagation()">
               <select onchange="assignRecordToWorkshop('${r.id}', this.value)"
                 class="px-2 py-1 rounded-lg border border-slate-300 text-[11px] font-bold bg-white text-slate-800">
@@ -1747,6 +1766,8 @@
       if (filteredRecords.length === 0) return;
       const rows = filteredRecords.map(r => ({
         Data: r.date,
+        Durata_Test: r.durationText || "-",
+        Durata_Secondi: r.durationSec || 0,
         Workshop: r.workshopName,
         Profilo: r.workshopTarget,
         Livello_Workshop: r.workshopLevel,

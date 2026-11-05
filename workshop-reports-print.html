@@ -800,6 +800,13 @@
         };
       });
 
+      const rawSec = parseInt(norm["durata_secondi"] ?? row.durationSec, 10);
+      const durText = norm["durata_test"] || row.durationText || (
+        !isNaN(rawSec) && rawSec > 0
+          ? (Math.floor(rawSec / 60) > 0 ? `${Math.floor(rawSec / 60)}m ${rawSec % 60}s` : `${rawSec}s`)
+          : "-"
+      );
+
       return {
         id: norm["id"] || row.id || "-",
         name: norm["partecipante"] || row.name || "Anonimo",
@@ -807,6 +814,7 @@
         role: norm["ruolo"] || row.role || "-",
         site: norm["cantiere"] || row.site || wsFallback?.wsSite || "-",
         date: norm["data_ora"] || row.date || (norm["created_at"] ? new Date(norm["created_at"]).toLocaleString("it-IT") : "-"),
+        durationText: durText,
         wsId: norm["workshop_id"] || row.workshopId || wsFallback?.wsId || "-",
         wsName: norm["workshop_nome"] || row.workshopName || wsFallback?.wsName || "Workshop",
         wsDate: norm["workshop_data"] || row.workshopDate || wsFallback?.wsDate || "-",
@@ -969,6 +977,10 @@
                       <dd class="font-bold text-slate-800 text-right">${p.date}</dd>
                     </div>
                     <div class="flex justify-between gap-2">
+                      <dt class="text-slate-500 font-semibold">${lang === 'it' ? 'Tempo di Compilazione' : 'Completion Time'}:</dt>
+                      <dd class="font-bold text-slate-800 text-right">⏱️ ${p.durationText || '-'}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
                       <dt class="text-slate-500 font-semibold">${cv.lblTestId}:</dt>
                       <dd class="font-mono font-bold text-slate-600 text-right">${p.id}</dd>
                     </div>
@@ -1061,7 +1073,7 @@
                   </h2>
                   <div class="mt-2 bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 inline-flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span class="text-sm font-black text-slate-950">👤 ${p.name}</span>
-                    <span class="text-xs font-semibold text-slate-700">• ${p.company} • ${p.role} • ${String(p.site).split("|")[0].trim()} • ${p.wsName} (${p.wsLevel}) • ${p.date}</span>
+                    <span class="text-xs font-semibold text-slate-700">• ${p.company} • ${p.role} • ${String(p.site).split("|")[0].trim()} • ${p.wsName} (${p.wsLevel}) • ${p.date}${p.durationText && p.durationText !== '-' ? ' • ⏱️ ' + p.durationText : ''}</span>
                   </div>
                   <p class="text-xs text-slate-500 mt-1">${t.resMainSub}</p>
                 </div>

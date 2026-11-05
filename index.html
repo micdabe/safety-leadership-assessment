@@ -922,6 +922,14 @@
     let currentSelectedIds = [];
     let decisionHistory = [];
     let lastComputedResults = null;
+    let assessmentStartTime = null;
+
+    function formatDurationMMSS(totalSec) {
+      const sec = Math.max(1, Math.round(Number(totalSec) || 0));
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }
 
     function parseLineItem(line) {
       const parts = String(line).split("|").map(p => p.trim());
@@ -1305,6 +1313,7 @@
       };
 
       currentRoundIndex = 0;
+      assessmentStartTime = Date.now();
       decisionHistory = [];
       lastComputedResults = null;
       areaPools = {};
@@ -1573,8 +1582,15 @@
         ? (participantInfo.privacyAccepted ? t.privacyAcceptedLog : "-")
         : t.privacyAnonymousLog;
 
+      const elapsedSeconds = assessmentStartTime
+        ? Math.max(1, Math.round((Date.now() - assessmentStartTime) / 1000))
+        : 0;
+      const elapsedFormatted = elapsedSeconds > 0 ? formatDurationMMSS(elapsedSeconds) : "-";
+
       const rowPayload = {
         data_ora: new Date().toLocaleString("it-IT"),
+        durata_secondi: elapsedSeconds,
+        durata_test: elapsedFormatted,
         workshop_id: activeWorkshop.id,
         workshop_nome: activeWorkshop.name,
         workshop_data: activeWorkshop.date,
@@ -1610,11 +1626,23 @@
 
       if (supabaseClient) {
         try {
-          const { data, error } = await supabaseClient
+          let { data, error } = await supabaseClient
             .from("submissions")
             .insert([rowPayload])
             .select("id")
             .single();
+          if (error && (String(error.message).includes("durata_") || String(error.message).includes("column"))) {
+            const fallbackPayload = { ...rowPayload };
+            delete fallbackPayload.durata_secondi;
+            delete fallbackPayload.durata_test;
+            const retry = await supabaseClient
+              .from("submissions")
+              .insert([fallbackPayload])
+              .select("id")
+              .single();
+            data = retry.data;
+            error = retry.error;
+          }
           if (!error && data && data.id !== undefined) {
             insertedId = String(data.id);
           }
