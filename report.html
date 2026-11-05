@@ -150,6 +150,9 @@
         <button onclick="toggleLanguage()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
           <span id="langSwitchPrefix">Lingua:</span> <span id="langLabel" class="text-amber-400 font-bold">Italiano 🇮🇹</span>
         </button>
+        <button id="btnToggleCoverEdit" onclick="toggleCoverEditorPanel()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-extrabold border border-amber-500/40 transition flex items-center gap-1.5" title="Modifica Titolo e Sottotitolo della Copertina di Stampa">
+          <span>✏️</span> <span id="btnToggleCoverEditLabel">Titolo Copertina Stampa</span>
+        </button>
         <button id="btnPrintHdr" onclick="window.print()" class="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold transition flex items-center gap-1.5">
           <span>🖨️</span> <span id="btnPrintHdrLabel">Stampa / PDF</span>
         </button>
@@ -175,8 +178,57 @@
     <section id="screen-results" class="hidden space-y-6">
 
       <!-- ===================================================================
+           PANNELLO RAPIDO EDITING COPERTINA DI STAMPA (SOLO A SCHERMO, ESCLUSO DA STAMPA):
+           Permette di modificare e salvare nel DB il Titolo, Sottotitolo e Badge della Copertina
+           =================================================================== -->
+      <div id="adminCoverEditorPanel" class="hidden no-print bg-white rounded-2xl shadow-sm border-2 border-amber-300 p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-extrabold text-sm">🖨️</span>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">Personalizza Titolo e Sottotitolo della Copertina di Stampa (DB Supabase)</h3>
+              <p class="text-[11px] text-slate-500">Modifica i testi della copertina (in Italiano e Inglese) prima di stampare. Le modifiche vengono salvate nella tabella <code>assessment_ui_texts</code>.</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 cursor-pointer">
+              <input id="chkShowCoverPreview" type="checkbox" onchange="toggleScreenCoverPreview(this.checked)" class="accent-amber-600 w-3.5 h-3.5" />
+              <span>👁️ Mostra anteprima copertina a schermo</span>
+            </label>
+            <button type="button" onclick="saveCoverTextsToSupabase(false)" id="btnSaveCoverDb"
+              class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-extrabold transition">
+              💾 Salva nel DB
+            </button>
+            <button type="button" onclick="saveCoverTextsToSupabase(true)"
+              class="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold shadow-sm transition">
+              🖨️ Salva & Stampa Ora
+            </button>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">Badge Superiore Copertina (<span id="lblCovLang1">IT</span>)</label>
+            <input id="inputCovBadge" type="text" oninput="onLiveCoverInputEdit()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:bg-white focus:outline-none focus:border-amber-500" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-amber-700 mb-1">Titolo Principale Copertina (<span id="lblCovLang2">IT</span>)</label>
+            <input id="inputCovTitle" type="text" oninput="onLiveCoverInputEdit()"
+              class="w-full px-3 py-2 rounded-xl border-2 border-amber-300 text-xs font-extrabold bg-white focus:outline-none focus:border-amber-500" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-amber-700 mb-1">Sottotitolo Copertina (<span id="lblCovLang3">IT</span>)</label>
+            <input id="inputCovSub" type="text" oninput="onLiveCoverInputEdit()"
+              class="w-full px-3 py-2 rounded-xl border-2 border-amber-300 text-xs font-semibold bg-white focus:outline-none focus:border-amber-500" />
+          </div>
+        </div>
+        <div id="coverSaveFeedback" class="hidden text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2"></div>
+      </div>
+
+      <!-- ===================================================================
            PAGINA 1 DI STAMPA (COPERTINA RISERVATA CON SOLO I DATI DEL PARTECIPANTE):
-           - Nessun punteggio o risultato in prima pagina per distribuzione riservata
+           - Nascosta a schermo per il partecipante, visibile in stampa (o in anteprima Admin)
            =================================================================== -->
       <div id="reportCoverContainer" class="hidden print-cover-page bg-white rounded-3xl border-2 border-slate-200 p-10 md:p-14"></div>
 
@@ -1192,6 +1244,168 @@
       `).join("");
     }
 
+
+    let isScreenCoverPreviewOpen = false;
+
+    function syncCoverInputsFromModel() {
+      const cv = COVER_LABELS[currentLang];
+      const langUp = currentLang.toUpperCase();
+      ["lblCovLang1", "lblCovLang2", "lblCovLang3"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = langUp;
+      });
+      const bIn = document.getElementById("inputCovBadge");
+      const tIn = document.getElementById("inputCovTitle");
+      const sIn = document.getElementById("inputCovSub");
+      if (bIn && document.activeElement !== bIn) bIn.value = cv.dossierBadge || "";
+      if (tIn && document.activeElement !== tIn) tIn.value = cv.coverMainTitle || "";
+      if (sIn && document.activeElement !== sIn) sIn.value = cv.coverSub || "";
+    }
+
+    function toggleCoverEditorPanel() {
+      const panel = document.getElementById("adminCoverEditorPanel");
+      if (!panel) return;
+      const isHidden = panel.classList.contains("hidden");
+      if (isHidden) {
+        panel.classList.remove("hidden");
+        syncCoverInputsFromModel();
+        const chk = document.getElementById("chkShowCoverPreview");
+        if (chk && !chk.checked) {
+          chk.checked = true;
+          toggleScreenCoverPreview(true);
+        }
+      } else {
+        panel.classList.add("hidden");
+      }
+    }
+
+    function toggleScreenCoverPreview(show) {
+      isScreenCoverPreviewOpen = Boolean(show);
+      const coverEl = document.getElementById("reportCoverContainer");
+      if (!coverEl) return;
+      if (isScreenCoverPreviewOpen) {
+        coverEl.classList.remove("hidden");
+        coverEl.classList.add("flex", "flex-col", "justify-between");
+      } else {
+        coverEl.classList.add("hidden");
+      }
+    }
+
+    function onLiveCoverInputEdit() {
+      const cv = COVER_LABELS[currentLang];
+      const bVal = document.getElementById("inputCovBadge")?.value ?? cv.dossierBadge;
+      const tVal = document.getElementById("inputCovTitle")?.value ?? cv.coverMainTitle;
+      const sVal = document.getElementById("inputCovSub")?.value ?? cv.coverSub;
+      cv.dossierBadge = bVal;
+      cv.coverMainTitle = tVal;
+      cv.coverSub = sVal;
+
+      const bEl = document.getElementById("coverLiveBadgeEl");
+      const tEl = document.getElementById("coverLiveTitleEl");
+      const sEl = document.getElementById("coverLiveSubEl");
+      if (bEl) bEl.textContent = bVal;
+      if (tEl) tEl.textContent = tVal;
+      if (sEl) sEl.textContent = sVal;
+    }
+
+    function onInlineCoverContentEdit() {
+      const cv = COVER_LABELS[currentLang];
+      const bEl = document.getElementById("coverLiveBadgeEl");
+      const tEl = document.getElementById("coverLiveTitleEl");
+      const sEl = document.getElementById("coverLiveSubEl");
+      if (bEl) cv.dossierBadge = bEl.textContent.trim();
+      if (tEl) cv.coverMainTitle = tEl.textContent.trim();
+      if (sEl) cv.coverSub = sEl.textContent.trim();
+      syncCoverInputsFromModel();
+    }
+
+    async function saveCoverTextsToSupabase(andPrint = false) {
+      onLiveCoverInputEdit();
+      const btn = document.getElementById("btnSaveCoverDb");
+      const fb = document.getElementById("coverSaveFeedback");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Salvataggio...";
+      }
+
+      const rowsToUpsert = [
+        {
+          key: "covDossierBadge",
+          section: "report_cover",
+          sort_order: 110,
+          label_it: "Badge Superiore Copertina Stampa",
+          text_it: COVER_LABELS.it.dossierBadge,
+          text_en: COVER_LABELS.en.dossierBadge,
+          updated_at: new Date().toISOString()
+        },
+        {
+          key: "covMainTitle",
+          section: "report_cover",
+          sort_order: 111,
+          label_it: "Titolo Principale Copertina Stampa",
+          text_it: COVER_LABELS.it.coverMainTitle,
+          text_en: COVER_LABELS.en.coverMainTitle,
+          updated_at: new Date().toISOString()
+        },
+        {
+          key: "covSub",
+          section: "report_cover",
+          sort_order: 112,
+          label_it: "Sottotitolo Copertina Stampa",
+          text_it: COVER_LABELS.it.coverSub,
+          text_en: COVER_LABELS.en.coverSub,
+          updated_at: new Date().toISOString()
+        }
+      ];
+
+      try {
+        // Update local cache
+        try {
+          const cached = sessionStorage.getItem("sl_db_ui_texts") || localStorage.getItem("sl_db_ui_texts");
+          let arr = cached ? JSON.parse(cached) : [];
+          if (Array.isArray(arr)) {
+            rowsToUpsert.forEach(up => {
+              const idx = arr.findIndex(x => x.key === up.key);
+              if (idx >= 0) arr[idx] = up;
+              else arr.push(up);
+            });
+            const ser = JSON.stringify(arr);
+            sessionStorage.setItem("sl_db_ui_texts", ser);
+            localStorage.setItem("sl_db_ui_texts", ser);
+          }
+        } catch (e) {}
+
+        if (supabaseClient) {
+          const { error } = await supabaseClient
+            .from("assessment_ui_texts")
+            .upsert(rowsToUpsert, { onConflict: "key" });
+          if (error) throw new Error(error.message);
+        }
+
+        if (fb) {
+          fb.textContent = "✓ Titolo e sottotitolo della copertina salvati nel database Supabase!";
+          fb.className = "text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2";
+          fb.classList.remove("hidden");
+          setTimeout(() => fb.classList.add("hidden"), 3500);
+        }
+
+        if (andPrint) {
+          setTimeout(() => window.print(), 150);
+        }
+      } catch (err) {
+        if (fb) {
+          fb.textContent = "Errore salvataggio DB: " + err.message;
+          fb.className = "text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2";
+          fb.classList.remove("hidden");
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "💾 Salva nel DB";
+        }
+      }
+    }
+
     function renderFullReportPage() {
       if (!loadedSubmission || !reconstructedResults) return;
       const t = UI_TEXT[currentLang];
@@ -1265,14 +1479,23 @@
               SL
             </div>
 
-            <span class="inline-block px-4 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-extrabold uppercase tracking-widest mb-3">
+            <span id="coverLiveBadgeEl" contenteditable="true" spellcheck="false"
+              oninput="onInlineCoverContentEdit()"
+              title="Clicca per modificare il badge della copertina"
+              class="inline-block px-4 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-extrabold uppercase tracking-widest mb-3 hover:ring-2 hover:ring-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
               ${cv.dossierBadge}
             </span>
 
-            <h1 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-2">
+            <h1 id="coverLiveTitleEl" contenteditable="true" spellcheck="false"
+              oninput="onInlineCoverContentEdit()"
+              title="Clicca per modificare il titolo della copertina"
+              class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-2 rounded-xl px-2 py-0.5 hover:ring-2 hover:ring-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
               ${cv.coverMainTitle}
             </h1>
-            <p class="text-sm text-slate-500 font-medium max-w-lg mx-auto mb-12">
+            <p id="coverLiveSubEl" contenteditable="true" spellcheck="false"
+              oninput="onInlineCoverContentEdit()"
+              title="Clicca per modificare il sottotitolo della copertina"
+              class="text-sm text-slate-500 font-medium max-w-lg mx-auto mb-12 rounded-xl px-2 py-0.5 hover:ring-2 hover:ring-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
               ${cv.coverSub}
             </p>
 
@@ -1324,6 +1547,12 @@
             </div>
           </div>
         `;
+      }
+
+      syncCoverInputsFromModel();
+      if (isAdminViewer) {
+        const panel = document.getElementById("adminCoverEditorPanel");
+        if (panel) panel.classList.remove("hidden");
       }
 
       document.getElementById("resParticipantInfo").innerHTML =
