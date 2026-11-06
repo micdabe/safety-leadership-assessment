@@ -689,14 +689,21 @@
     // 1B. CARICAMENTO DINAMICO DEI TESTI DELL'INTERFACCIA DA SUPABASE
     //     Tabella: public.assessment_ui_texts (Modificabile da admin-testi.html)
     // =========================================================================
+    function normalizeMultilineHtml(val) {
+      if (val === undefined || val === null) return "";
+      const s = String(val);
+      if (s.includes("<li") || s.includes("<ul") || s.includes("<div")) return s;
+      return s.replace(/\r?\n/g, "<br>");
+    }
+
     function applyUiTextsFromDbRows(rows) {
       if (!Array.isArray(rows) || rows.length === 0) return false;
       const mapIt = {};
       const mapEn = {};
       rows.forEach(r => {
         if (!r || !r.key) return;
-        if (r.text_it !== undefined && r.text_it !== null) mapIt[r.key] = String(r.text_it);
-        if (r.text_en !== undefined && r.text_en !== null) mapEn[r.key] = String(r.text_en);
+        if (r.text_it !== undefined && r.text_it !== null) mapIt[r.key] = normalizeMultilineHtml(r.text_it);
+        if (r.text_en !== undefined && r.text_en !== null) mapEn[r.key] = normalizeMultilineHtml(r.text_en);
       });
 
       const applyLangMap = (langCode, mapObj) => {
@@ -943,13 +950,13 @@
 
       if (listsSourceState === "loading") {
         badge.className = "text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200";
-        badge.textContent = t.listsLoadingBadge;
+        badge.innerHTML = t.listsLoadingBadge;
       } else if (listsSourceState === "loaded") {
         badge.className = "text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200";
-        badge.textContent = t.listsLoadedBadge;
+        badge.innerHTML = t.listsLoadedBadge;
       } else {
         badge.className = "text-[11px] font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded border border-red-200";
-        badge.textContent = t.listsErrorBadge;
+        badge.innerHTML = t.listsErrorBadge;
       }
     }
 
@@ -1060,12 +1067,12 @@
       document.getElementById("btnResetHdr").classList.add("hidden");
 
       if (reason === "closed") {
-        document.getElementById("lockBadge").textContent = t.closedBadge;
-        document.getElementById("lockTitle").textContent = t.closedTitle(wsName);
+        document.getElementById("lockBadge").innerHTML = t.closedBadge;
+        document.getElementById("lockTitle").innerHTML = t.closedTitle(wsName);
         document.getElementById("lockDesc").innerHTML = t.closedDesc;
       } else {
-        document.getElementById("lockBadge").textContent = t.lockBadge;
-        document.getElementById("lockTitle").textContent = t.lockTitle;
+        document.getElementById("lockBadge").innerHTML = t.lockBadge;
+        document.getElementById("lockTitle").innerHTML = t.lockTitle;
         document.getElementById("lockDesc").innerHTML = t.lockDesc;
       }
 
@@ -1080,15 +1087,15 @@
       document.getElementById("wsBannerName").textContent = activeWorkshop.name;
       document.getElementById("wsBannerDate").textContent = activeWorkshop.date || "-";
       document.getElementById("wsBannerSite").textContent = siteItem[currentLang] || activeWorkshop.site;
-      document.getElementById("wsBannerLevel").textContent = `${t.wsLevelPrefix} ${activeWorkshop.level}`;
+      document.getElementById("wsBannerLevel").innerHTML = `${t.wsLevelPrefix} ${activeWorkshop.level}`;
 
       const targetBadge = document.getElementById("wsTargetBadge");
       if (isOfficeMode()) {
         targetBadge.className = "px-2.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 text-[11px] font-bold";
-        targetBadge.textContent = t.wsTargetOffice;
+        targetBadge.innerHTML = t.wsTargetOffice;
       } else {
         targetBadge.className = "px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[11px] font-bold";
-        targetBadge.textContent = t.wsTargetSite;
+        targetBadge.innerHTML = t.wsTargetSite;
       }
     }
 
@@ -1154,10 +1161,10 @@
       const isHidden = box.classList.contains("hidden");
       if (isHidden) {
         box.classList.remove("hidden");
-        btn.textContent = t.btnPrivacyInfoClose;
+        btn.innerHTML = t.btnPrivacyInfoClose;
       } else {
         box.classList.add("hidden");
-        btn.textContent = t.btnPrivacyInfoOpen;
+        btn.innerHTML = t.btnPrivacyInfoOpen;
       }
     }
 
@@ -1205,65 +1212,65 @@
       const t = UI_TEXT[currentLang];
       document.documentElement.lang = currentLang;
 
-      document.getElementById("hdrTitle").textContent = t.hdrTitle;
-      document.getElementById("hdrSub").textContent = t.hdrSub;
-      document.getElementById("langSwitchPrefix").textContent = t.langSwitchPrefix;
-      document.getElementById("langLabel").textContent = t.langLabel;
-      document.getElementById("btnResetHdr").textContent = t.btnResetHdr;
+      document.getElementById("hdrTitle").innerHTML = t.hdrTitle;
+      document.getElementById("hdrSub").innerHTML = t.hdrSub;
+      document.getElementById("langSwitchPrefix").innerHTML = t.langSwitchPrefix;
+      document.getElementById("langLabel").innerHTML = t.langLabel;
+      document.getElementById("btnResetHdr").innerHTML = t.btnResetHdr;
 
-      document.getElementById("lockHint").textContent = t.lockHint;
+      document.getElementById("lockHint").innerHTML = t.lockHint;
       if (!document.getElementById("screen-locked").classList.contains("hidden")) {
         showLockedScreen(currentLockReason, closedWorkshopTitle);
       } else {
-        document.getElementById("lockBadge").textContent = t.lockBadge;
-        document.getElementById("lockTitle").textContent = t.lockTitle;
+        document.getElementById("lockBadge").innerHTML = t.lockBadge;
+        document.getElementById("lockTitle").innerHTML = t.lockTitle;
         document.getElementById("lockDesc").innerHTML = t.lockDesc;
       }
 
-      document.getElementById("wsActiveBadge").textContent = t.wsActiveBadge;
-      document.getElementById("wBadge1").textContent = t.wBadge1;
-      document.getElementById("wBadge2").textContent = t.wBadge2;
+      document.getElementById("wsActiveBadge").innerHTML = t.wsActiveBadge;
+      document.getElementById("wBadge1").innerHTML = t.wBadge1;
+      document.getElementById("wBadge2").innerHTML = t.wBadge2;
       const isNoReport = Boolean(activeWorkshop && activeWorkshop.showReport === false);
-      document.getElementById("wBadge3").textContent = isNoReport ? t.wBadge3NoReport : t.wBadge3;
-      document.getElementById("wTitle").textContent = t.wTitle;
+      document.getElementById("wBadge3").innerHTML = isNoReport ? t.wBadge3NoReport : t.wBadge3;
+      document.getElementById("wTitle").innerHTML = t.wTitle;
       document.getElementById("wDesc").innerHTML = isOfficeMode() ? t.wDescOffice : t.wDescSite;
 
-      document.getElementById("userFormTitle").textContent = t.userFormTitle;
-      document.getElementById("lblRequiredNote").textContent = t.lblRequiredNote;
-      document.getElementById("lblUserCompany").textContent = t.lblUserCompany;
-      document.getElementById("lblUserRole").textContent = t.lblUserRole;
-      document.getElementById("lblUserSite").textContent = t.lblUserSite;
-      document.getElementById("lblUserName").textContent = t.lblUserName;
+      document.getElementById("userFormTitle").innerHTML = t.userFormTitle;
+      document.getElementById("lblRequiredNote").innerHTML = t.lblRequiredNote;
+      document.getElementById("lblUserCompany").innerHTML = t.lblUserCompany;
+      document.getElementById("lblUserRole").innerHTML = t.lblUserRole;
+      document.getElementById("lblUserSite").innerHTML = t.lblUserSite;
+      document.getElementById("lblUserName").innerHTML = t.lblUserName;
       document.getElementById("inputUserName").placeholder = t.phUserName;
 
-      document.getElementById("lblPrivacyText").textContent = t.lblPrivacyText;
-      document.getElementById("privacyRequiredBadge").textContent = t.privacyRequiredBadge;
-      document.getElementById("privacyOptionalBadge").textContent = t.privacyOptionalBadge;
+      document.getElementById("lblPrivacyText").innerHTML = t.lblPrivacyText;
+      document.getElementById("privacyRequiredBadge").innerHTML = t.privacyRequiredBadge;
+      document.getElementById("privacyOptionalBadge").innerHTML = t.privacyOptionalBadge;
       const isPrivOpen = !document.getElementById("privacyDetailsBox").classList.contains("hidden");
-      document.getElementById("btnPrivacyInfo").textContent = isPrivOpen ? t.btnPrivacyInfoClose : t.btnPrivacyInfoOpen;
-      document.getElementById("privacyDetailsBox").textContent = t.privacyDetailsText;
+      document.getElementById("btnPrivacyInfo").innerHTML = isPrivOpen ? t.btnPrivacyInfoClose : t.btnPrivacyInfoOpen;
+      document.getElementById("privacyDetailsBox").innerHTML = t.privacyDetailsText;
 
-      document.getElementById("wHowTitle").textContent = t.wHowTitle;
-      document.getElementById("wStep1Title").textContent = t.wStep1Title;
-      document.getElementById("wStep1Desc").textContent = t.wStep1Desc;
-      document.getElementById("wStep2Title").textContent = t.wStep2Title;
-      document.getElementById("wStep2Desc").textContent = t.wStep2Desc;
-      document.getElementById("wStep3Title").textContent = isNoReport ? t.wStep3TitleNoReport : t.wStep3Title;
-      document.getElementById("wStep3Desc").textContent = isNoReport ? t.wStep3DescNoReport : t.wStep3Desc;
-      document.getElementById("btnStart").textContent = t.btnStart;
+      document.getElementById("wHowTitle").innerHTML = t.wHowTitle;
+      document.getElementById("wStep1Title").innerHTML = t.wStep1Title;
+      document.getElementById("wStep1Desc").innerHTML = t.wStep1Desc;
+      document.getElementById("wStep2Title").innerHTML = t.wStep2Title;
+      document.getElementById("wStep2Desc").innerHTML = t.wStep2Desc;
+      document.getElementById("wStep3Title").innerHTML = isNoReport ? t.wStep3TitleNoReport : t.wStep3Title;
+      document.getElementById("wStep3Desc").innerHTML = isNoReport ? t.wStep3DescNoReport : t.wStep3Desc;
+      document.getElementById("btnStart").innerHTML = t.btnStart;
 
       if (t.pageTitle) document.title = t.pageTitle;
-      document.getElementById("validationWarning").textContent = t.validationWarning;
+      document.getElementById("validationWarning").innerHTML = t.validationWarning;
       if (document.getElementById("savingTitle") && t.savingTitle) {
-        document.getElementById("savingTitle").textContent = t.savingTitle;
+        document.getElementById("savingTitle").innerHTML = t.savingTitle;
       }
       if (document.getElementById("savingSub") && t.savingSub) {
-        document.getElementById("savingSub").textContent = t.savingSub;
+        document.getElementById("savingSub").innerHTML = t.savingSub;
       }
-      document.getElementById("tyBadge").textContent = t.tyBadge;
-      document.getElementById("tyTitle").textContent = t.tyTitle;
+      document.getElementById("tyBadge").innerHTML = t.tyBadge;
+      document.getElementById("tyTitle").innerHTML = t.tyTitle;
       document.getElementById("tyDesc").innerHTML = t.tyDesc;
-      document.getElementById("btnTyRestart").textContent = t.btnTyRestart;
+      document.getElementById("btnTyRestart").innerHTML = t.btnTyRestart;
     }
 
     function startAssessment() {
@@ -1281,7 +1288,7 @@
       const errEl = document.getElementById("userFormError");
 
       if (companyVal === "" || roleVal === "" || siteVal === "") {
-        errEl.textContent = t.errMissingDropdowns;
+        errEl.innerHTML = t.errMissingDropdowns;
         errEl.classList.remove("hidden");
         if (companyVal === "") document.getElementById("selectUserCompany").focus();
         else if (roleVal === "") document.getElementById("selectUserRole").focus();
@@ -1289,7 +1296,7 @@
       }
 
       if (nameVal.length > 0 && !privacyChecked) {
-        errEl.textContent = t.errMissingPrivacy;
+        errEl.innerHTML = t.errMissingPrivacy;
         errEl.classList.remove("hidden");
         document.getElementById("checkboxPrivacy").focus();
         return;
@@ -1401,25 +1408,25 @@
       const variant = isOfficeMode() ? scObj.office : scObj.site;
       const pct = Math.round(((currentRoundIndex + 1) / totalRounds) * 100);
 
-      document.getElementById("progressText").textContent = `${t.scenarioWord} ${currentRoundIndex + 1} ${t.ofWord} ${totalRounds}`;
+      document.getElementById("progressText").innerHTML = `${t.scenarioWord} ${currentRoundIndex + 1} ${t.ofWord} ${totalRounds}`;
       document.getElementById("progressPctText").textContent = `${pct}%`;
       document.getElementById("progressBar").style.width = `${pct}%`;
 
-      document.getElementById("scenarioTag").textContent = `${t.scenarioWord} #${currentRoundIndex + 1}`;
-      document.getElementById("scenarioContext").textContent = `${t.contextPrefix} ${variant.context[currentLang]}`;
-      document.getElementById("scenarioTitle").textContent = variant.title[currentLang];
-      document.getElementById("scenarioDescription").textContent = variant.desc[currentLang];
+      document.getElementById("scenarioTag").innerHTML = `${t.scenarioWord} #${currentRoundIndex + 1}`;
+      document.getElementById("scenarioContext").innerHTML = `${t.contextPrefix} ${variant.context[currentLang]}`;
+      document.getElementById("scenarioTitle").innerHTML = variant.title[currentLang];
+      document.getElementById("scenarioDescription").innerHTML = variant.desc[currentLang];
 
-      document.getElementById("selectionPromptTitle").textContent = t.selectionPromptTitle;
-      document.getElementById("selectionPromptSub").textContent = t.selectionPromptSub;
+      document.getElementById("selectionPromptTitle").innerHTML = t.selectionPromptTitle;
+      document.getElementById("selectionPromptSub").innerHTML = t.selectionPromptSub;
       const finishLabel = (activeWorkshop && activeWorkshop.showReport === false) ? t.btnFinishRoundNoReport : t.btnFinishRound;
-      document.getElementById("btnConfirmRound").textContent =
+      document.getElementById("btnConfirmRound").innerHTML =
         currentRoundIndex === totalRounds - 1 ? finishLabel : t.btnNextRound;
     }
 
     function renderScenarioOptions() {
       const t = UI_TEXT[currentLang];
-      document.getElementById("selectionCounterBadge").textContent = t.chosenCounter(currentSelectedIds.length);
+      document.getElementById("selectionCounterBadge").innerHTML = t.chosenCounter(currentSelectedIds.length);
 
       const container = document.getElementById("optionsContainer");
       container.innerHTML = "";

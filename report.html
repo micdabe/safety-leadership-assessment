@@ -942,14 +942,22 @@
     // CARICAMENTO DINAMICO DEI TESTI DI CONTORNO DEL REPORT DA SUPABASE
     // Tabella: public.assessment_ui_texts (Modificabile da admin-testi.html)
     // =========================================================================
+    
+    function normalizeMultilineHtml(val) {
+      if (val === undefined || val === null) return "";
+      const s = String(val);
+      if (s.includes("<li") || s.includes("<ul") || s.includes("<div")) return s;
+      return s.replace(/\r?\n/g, "<br>");
+    }
+
     function applyUiTextsFromDbRows(rows) {
       if (!Array.isArray(rows) || rows.length === 0) return false;
       const mapIt = {};
       const mapEn = {};
       rows.forEach(r => {
         if (!r || !r.key) return;
-        if (r.text_it !== undefined && r.text_it !== null) mapIt[r.key] = String(r.text_it);
-        if (r.text_en !== undefined && r.text_en !== null) mapEn[r.key] = String(r.text_en);
+        if (r.text_it !== undefined && r.text_it !== null) mapIt[r.key] = normalizeMultilineHtml(r.text_it);
+        if (r.text_en !== undefined && r.text_en !== null) mapEn[r.key] = normalizeMultilineHtml(r.text_en);
       });
 
       const coverKeyMap = {
@@ -1194,16 +1202,16 @@
       const domProfile = COACHING_PROFILES[topArea.id][currentLang];
       const weakProfile = COACHING_PROFILES[lowArea.id][currentLang];
 
-      document.getElementById("coachingHeaderBadge").textContent = `${topArea.name} → ${lowArea.name}`;
-      document.getElementById("coachDomPct").textContent = `${topArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
-      document.getElementById("coachDomTitle").textContent = `${t.coachDomTitlePrefix} "${topArea.name}"`;
-      document.getElementById("coachDomArchetype").textContent = `${t.coachArchetypePrefix} ${domProfile.archetype}`;
-      document.getElementById("coachDomStrength").textContent = domProfile.strength;
-      document.getElementById("coachDomShadow").textContent = domProfile.shadow;
+      document.getElementById("coachingHeaderBadge").innerHTML = `${topArea.name} → ${lowArea.name}`;
+      document.getElementById("coachDomPct").innerHTML = `${topArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
+      document.getElementById("coachDomTitle").innerHTML = `${t.coachDomTitlePrefix} "${topArea.name}"`;
+      document.getElementById("coachDomArchetype").innerHTML = `${t.coachArchetypePrefix} ${domProfile.archetype}`;
+      document.getElementById("coachDomStrength").innerHTML = domProfile.strength;
+      document.getElementById("coachDomShadow").innerHTML = domProfile.shadow;
 
-      document.getElementById("coachWeakPct").textContent = `${lowArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
-      document.getElementById("coachWeakTitle").textContent = `${t.coachWeakTitlePrefix} "${lowArea.name}"`;
-      document.getElementById("coachWeakRisk").textContent = weakProfile.weakRisk;
+      document.getElementById("coachWeakPct").innerHTML = `${lowArea.distributionPct.toFixed(1)}% ${t.profileShareWord}`;
+      document.getElementById("coachWeakTitle").innerHTML = `${t.coachWeakTitlePrefix} "${lowArea.name}"`;
+      document.getElementById("coachWeakRisk").innerHTML = weakProfile.weakRisk;
 
       document.getElementById("coachWeakActions").innerHTML = weakProfile.actions.map((act, idx) => `
         <li class="flex items-start gap-2">
@@ -1212,8 +1220,8 @@
         </li>
       `).join("");
 
-      document.getElementById("bridgeTag").textContent = `${t.bridgeSynergyPrefix}: ${topArea.name} + ${secondArea.name} → ${lowArea.name}`;
-      document.getElementById("bridgeTitle").textContent = t.bridgeTitleFormat(topArea.name, lowArea.name);
+      document.getElementById("bridgeTag").innerHTML = `${t.bridgeSynergyPrefix}: ${topArea.name} + ${secondArea.name} → ${lowArea.name}`;
+      document.getElementById("bridgeTitle").innerHTML = t.bridgeTitleFormat(topArea.name, lowArea.name);
       document.getElementById("bridgeText").innerHTML =
         formatBridgeStrategyText(domProfile, weakProfile, topArea.name, secondArea.name, lowArea.name, t);
 
@@ -1291,6 +1299,11 @@
       }
     }
 
+    function formatRichTextWithBr(str) {
+      if (str === undefined || str === null) return "";
+      return String(str).replace(/\r?\n/g, "<br>");
+    }
+
     function onLiveCoverInputEdit() {
       const cv = COVER_LABELS[currentLang];
       const bVal = document.getElementById("inputCovBadge")?.value ?? cv.dossierBadge;
@@ -1303,9 +1316,9 @@
       const bEl = document.getElementById("coverLiveBadgeEl");
       const tEl = document.getElementById("coverLiveTitleEl");
       const sEl = document.getElementById("coverLiveSubEl");
-      if (bEl) bEl.textContent = bVal;
-      if (tEl) tEl.textContent = tVal;
-      if (sEl) sEl.textContent = sVal;
+      if (bEl) bEl.innerHTML = formatRichTextWithBr(bVal);
+      if (tEl) tEl.innerHTML = formatRichTextWithBr(tVal);
+      if (sEl) sEl.innerHTML = formatRichTextWithBr(sVal);
     }
 
     function onInlineCoverContentEdit() {
@@ -1313,9 +1326,9 @@
       const bEl = document.getElementById("coverLiveBadgeEl");
       const tEl = document.getElementById("coverLiveTitleEl");
       const sEl = document.getElementById("coverLiveSubEl");
-      if (bEl) cv.dossierBadge = bEl.textContent.trim();
-      if (tEl) cv.coverMainTitle = tEl.textContent.trim();
-      if (sEl) cv.coverSub = sEl.textContent.trim();
+      if (bEl) cv.dossierBadge = bEl.innerHTML.trim();
+      if (tEl) cv.coverMainTitle = tEl.innerHTML.trim();
+      if (sEl) cv.coverSub = sEl.innerHTML.trim();
       syncCoverInputsFromModel();
     }
 
@@ -1412,50 +1425,50 @@
       const mc = METH_COMPACT_TRANSLATIONS[currentLang];
       document.documentElement.lang = currentLang;
 
-      document.getElementById("hdrTitle").textContent = t.hdrTitle;
-      document.getElementById("hdrSub").textContent = t.hdrSub;
-      document.getElementById("langSwitchPrefix").textContent = t.langSwitchPrefix;
-      document.getElementById("langLabel").textContent = t.langLabel;
-      document.getElementById("btnPrintHdrLabel").textContent = t.btnPrint;
+      document.getElementById("hdrTitle").innerHTML = t.hdrTitle;
+      document.getElementById("hdrSub").innerHTML = t.hdrSub;
+      document.getElementById("langSwitchPrefix").innerHTML = t.langSwitchPrefix;
+      document.getElementById("langLabel").innerHTML = t.langLabel;
+      document.getElementById("btnPrintHdrLabel").innerHTML = t.btnPrint;
 
-      document.getElementById("resBadge").textContent = t.resBadge;
-      document.getElementById("resMainTitle").textContent = t.resMainTitle;
-      document.getElementById("resMainSub").textContent = t.resMainSub;
-      document.getElementById("btnPrint").textContent = "🖨️ " + t.btnPrint;
+      document.getElementById("resBadge").innerHTML = t.resBadge;
+      document.getElementById("resMainTitle").innerHTML = t.resMainTitle;
+      document.getElementById("resMainSub").innerHTML = t.resMainSub;
+      document.getElementById("btnPrint").innerHTML = "🖨️ " + t.btnPrint;
 
-      document.getElementById("kpiTop1Label").textContent = t.kpiTop1Label;
-      document.getElementById("kpiTop2Label").textContent = t.kpiTop2Label;
-      document.getElementById("kpiLowLabel").textContent = t.kpiLowLabel;
+      document.getElementById("kpiTop1Label").innerHTML = t.kpiTop1Label;
+      document.getElementById("kpiTop2Label").innerHTML = t.kpiTop2Label;
+      document.getElementById("kpiLowLabel").innerHTML = t.kpiLowLabel;
 
-      document.getElementById("chartRadarTitle").textContent = t.chartRadarTitle;
-      document.getElementById("chartRadarSub").textContent = t.chartRadarSub;
-      document.getElementById("chartBarTitle").textContent = t.chartBarTitle;
-      document.getElementById("chartBarSub").textContent = t.chartBarSub;
+      document.getElementById("chartRadarTitle").innerHTML = t.chartRadarTitle;
+      document.getElementById("chartRadarSub").innerHTML = t.chartRadarSub;
+      document.getElementById("chartBarTitle").innerHTML = t.chartBarTitle;
+      document.getElementById("chartBarSub").innerHTML = t.chartBarSub;
 
-      document.getElementById("coachBadge").textContent = t.coachBadge;
-      document.getElementById("coachMainTitle").textContent = t.coachMainTitle;
-      document.getElementById("coachFocusPrefix").textContent = t.coachFocusPrefix;
-      document.getElementById("coachDomTag").textContent = t.coachDomTag;
-      document.getElementById("coachWeakTag").textContent = t.coachWeakTag;
-      document.getElementById("coachDomShadowTitle").textContent = t.coachDomShadowTitle;
-      document.getElementById("coachWeakRiskLabel").textContent = t.coachWeakRiskLabel;
-      document.getElementById("coachWeakActionsTitle").textContent = t.coachWeakActionsTitle;
-      document.getElementById("bridgeHeader").textContent = t.bridgeHeader;
-      document.getElementById("skippedTitle").textContent = t.skippedTitle;
-      document.getElementById("skippedSub").textContent = t.skippedSub;
+      document.getElementById("coachBadge").innerHTML = t.coachBadge;
+      document.getElementById("coachMainTitle").innerHTML = t.coachMainTitle;
+      document.getElementById("coachFocusPrefix").innerHTML = t.coachFocusPrefix;
+      document.getElementById("coachDomTag").innerHTML = t.coachDomTag;
+      document.getElementById("coachWeakTag").innerHTML = t.coachWeakTag;
+      document.getElementById("coachDomShadowTitle").innerHTML = t.coachDomShadowTitle;
+      document.getElementById("coachWeakRiskLabel").innerHTML = t.coachWeakRiskLabel;
+      document.getElementById("coachWeakActionsTitle").innerHTML = t.coachWeakActionsTitle;
+      document.getElementById("bridgeHeader").innerHTML = t.bridgeHeader;
+      document.getElementById("skippedTitle").innerHTML = t.skippedTitle;
+      document.getElementById("skippedSub").innerHTML = t.skippedSub;
 
-      document.getElementById("tblMainTitle").textContent = t.tblMainTitle;
-      document.getElementById("thArea").textContent = t.thArea;
-      document.getElementById("thFirst").textContent = t.thFirst;
-      document.getElementById("thCarry").textContent = t.thCarry;
-      document.getElementById("thScore").textContent = t.thScore;
-      document.getElementById("thDist").textContent = t.thDist;
+      document.getElementById("tblMainTitle").innerHTML = t.tblMainTitle;
+      document.getElementById("thArea").innerHTML = t.thArea;
+      document.getElementById("thFirst").innerHTML = t.thFirst;
+      document.getElementById("thCarry").innerHTML = t.thCarry;
+      document.getElementById("thScore").innerHTML = t.thScore;
+      document.getElementById("thDist").innerHTML = t.thDist;
 
-      document.getElementById("methCompactTitle").textContent = mc.title;
+      document.getElementById("methCompactTitle").innerHTML = mc.title;
       document.getElementById("methCompactText").innerHTML = mc.text;
 
-      document.getElementById("logMainTitle").textContent = t.logMainTitle;
-      document.getElementById("logMainSub").textContent = t.logMainSub;
+      document.getElementById("logMainTitle").innerHTML = t.logMainTitle;
+      document.getElementById("logMainSub").innerHTML = t.logMainSub;
 
       const cv = COVER_LABELS[currentLang];
       const cleanSiteName = String(loadedSubmission.site || "-").split("|")[0].trim();
@@ -1565,12 +1578,12 @@
       const top2 = sorted[1];
       const low = sorted[sorted.length - 1];
 
-      document.getElementById("kpiTop1Name").textContent = `${top1.name} (${top1.distributionPct.toFixed(1)}%)`;
-      document.getElementById("kpiTop1Stats").textContent = t.kpiStatsFormat(top1.totalScore.toFixed(2), top1.countFirst, top1.countCarry);
-      document.getElementById("kpiTop2Name").textContent = `${top2.name} (${top2.distributionPct.toFixed(1)}%)`;
-      document.getElementById("kpiTop2Stats").textContent = t.kpiStatsFormat(top2.totalScore.toFixed(2), top2.countFirst, top2.countCarry);
-      document.getElementById("kpiLowName").textContent = `${low.name} (${low.distributionPct.toFixed(1)}%)`;
-      document.getElementById("kpiLowStats").textContent = t.kpiStatsFormat(low.totalScore.toFixed(2), low.countFirst, low.countCarry);
+      document.getElementById("kpiTop1Name").innerHTML = `${top1.name} (${top1.distributionPct.toFixed(1)}%)`;
+      document.getElementById("kpiTop1Stats").innerHTML = t.kpiStatsFormat(top1.totalScore.toFixed(2), top1.countFirst, top1.countCarry);
+      document.getElementById("kpiTop2Name").innerHTML = `${top2.name} (${top2.distributionPct.toFixed(1)}%)`;
+      document.getElementById("kpiTop2Stats").innerHTML = t.kpiStatsFormat(top2.totalScore.toFixed(2), top2.countFirst, top2.countCarry);
+      document.getElementById("kpiLowName").innerHTML = `${low.name} (${low.distributionPct.toFixed(1)}%)`;
+      document.getElementById("kpiLowStats").innerHTML = t.kpiStatsFormat(low.totalScore.toFixed(2), low.countFirst, low.countCarry);
 
       renderCoachingSection(top1, top2, low);
 
