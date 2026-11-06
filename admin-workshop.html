@@ -195,9 +195,94 @@
       </div>
     </section>
 
-    <!-- 3. SCHEDA B: GESTIONE WORKSHOP SU SUPABASE -->
+    <!-- 3. SCHEDA B: GESTIONE WORKSHOP E LOGHI DI COPERTINA SU SUPABASE -->
     <section id="screen-workshops" class="hidden space-y-6 no-print">
 
+      <!-- ===================================================================
+           SEZIONE 1: GESTIONE LOGHI DI COPERTINA (LOGO TECNIMONT + ELENCO LOGHI CLIENTI)
+           =================================================================== -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5 pb-4 border-b border-slate-100">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-900 text-xs font-extrabold">
+              Branding Copertina Report • Armonizzazione Automatica Proporzioni
+            </span>
+            <h2 class="text-lg md:text-xl font-extrabold text-slate-900 mt-1">
+              Gestione Loghi Copertina Report (Logo Tecnimont & Archivio Loghi Clienti)
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Carica il <strong>Logo Tecnimont</strong> aziendale e gestisci l'elenco dei <strong>Loghi Clienti</strong>. Il sistema rileva automaticamente le dimensioni in pixel (es. logo Tecnimont basso e lungo vs logo Cliente quadrato o verticale) e ne bilancia l'impatto visivo in stampa.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-6 items-stretch">
+          <!-- Box Sinistro (5 col): Logo Ufficiale Tecnimont -->
+          <div class="lg:col-span-5 rounded-2xl border-2 border-slate-200 bg-slate-50/70 p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+                  1. Logo Tecnimont Ufficiale
+                </span>
+                <span id="tecnimontLogoDimBadge" class="px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-mono text-[10px] font-bold">
+                  Default attivo
+                </span>
+              </div>
+
+              <!-- Preview Box Logo Tecnimont -->
+              <div id="tecnimontLogoPreviewBox" class="h-24 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-3 mb-3 overflow-hidden shadow-inner">
+              </div>
+              <p class="text-[11px] text-slate-500 leading-relaxed mb-3">
+                Puoi caricare il file PNG/SVG/JPG ufficiale Tecnimont. Per ogni Workshop potrai decidere tramite l'apposito <strong>tickbox</strong> se mostrarlo o meno sulla copertina del report.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200">
+              <button type="button" onclick="document.getElementById('fileInputTecnimontLogo').click()"
+                class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold transition flex items-center gap-1.5">
+                <span>📤</span> <span>Carica Logo Tecnimont...</span>
+              </button>
+              <input id="fileInputTecnimontLogo" type="file" accept="image/*" class="hidden" onchange="handleTecnimontLogoUpload(event)" />
+              <button type="button" onclick="resetTecnimontLogoToDefault()"
+                class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-white text-slate-600 text-xs font-bold transition">
+                Ripristina Default
+              </button>
+            </div>
+          </div>
+
+          <!-- Box Destro (7 col): Archivio Loghi Clienti -->
+          <div class="lg:col-span-7 rounded-2xl border-2 border-amber-200 bg-amber-50/30 p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-950">
+                  2. Elenco Loghi Clienti Disponibili (<span id="clientLogosCountBadge">0</span>)
+                </span>
+                <span class="text-[11px] text-slate-500 font-medium">
+                  Selezionabili durante la creazione o modifica di un Workshop
+                </span>
+              </div>
+
+              <!-- Lista Loghi Clienti -->
+              <div id="clientLogosGallery" class="grid sm:grid-cols-3 gap-2.5 max-h-40 overflow-y-auto pr-1 mb-4"></div>
+            </div>
+
+            <!-- Form Rapido Aggiunta Logo Cliente -->
+            <div class="pt-3 border-t border-amber-200/80 flex flex-wrap items-center gap-2.5">
+              <input id="inputQuickClientLogoName" type="text" placeholder="Nome Cliente (es. ADNOC, Eni, Sonatrach...)"
+                class="flex-grow min-w-[180px] px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
+              <button type="button" onclick="triggerQuickClientLogoFile()"
+                class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition flex items-center gap-1.5">
+                <span>➕</span> <span>Carica File Logo Cliente</span>
+              </button>
+              <input id="fileInputQuickClientLogo" type="file" accept="image/*" class="hidden" onchange="handleQuickClientLogoUpload(event)" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+           SEZIONE 2: CREAZIONE NUOVO WORKSHOP CON TICKBOX TECNIMONT E LOGO CLIENTE
+           =================================================================== -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
         <div class="mb-5">
           <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
@@ -207,12 +292,12 @@
             Crea e Gestisci i Workshop
           </h2>
           <p class="text-xs md:text-sm text-slate-500 mt-0.5">
-            Scegli se il Workshop è rivolto a personale di <strong>🏗️ Cantiere</strong> o di <strong>🏢 Ufficio / Sede (HQ)</strong>: i partecipanti riceveranno domande calibrate sul loro contesto ma con risultati 100% sovrapponibili.
+            Configura i parametri del Workshop, scegli se mostrare il <strong>Logo Tecnimont</strong> e seleziona (o carica al momento) il <strong>Logo del Cliente</strong> per la copertina di stampa.
           </p>
         </div>
 
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5">
-          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-4">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700">
             + Registra un Nuovo Workshop su Supabase
           </h3>
           <div class="grid sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
@@ -259,7 +344,55 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-end mt-4 pt-3 border-t border-slate-200">
+          <!-- Riga Configurazione Loghi Copertina del Workshop -->
+          <div class="pt-3 border-t border-slate-200 grid md:grid-cols-12 gap-4 items-start">
+            <!-- Tickbox Logo Tecnimont -->
+            <div class="md:col-span-4 bg-white p-3.5 rounded-xl border border-slate-200 flex items-center justify-between gap-3">
+              <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                <input id="chkWsShowTecnimont" type="checkbox" checked
+                  class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
+                <div>
+                  <div class="text-xs font-extrabold text-slate-900">Mostra Logo Tecnimont</div>
+                  <div class="text-[10px] text-slate-500">Includi nella copertina di stampa del report</div>
+                </div>
+              </label>
+              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold text-[10px]">1° Logo</span>
+            </div>
+
+            <!-- Selezione o Caricamento al momento Logo Cliente -->
+            <div class="md:col-span-8 bg-white p-3.5 rounded-xl border border-slate-200 space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex-grow min-w-[220px]">
+                  <label class="block text-xs font-extrabold text-slate-900 mb-1">
+                    Logo del Cliente in Copertina (2° Logo — Opzionale)
+                  </label>
+                  <select id="selectWsClientLogo" onchange="onWsClientLogoSelectChange()"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:bg-white focus:outline-none focus:border-amber-500">
+                    <option value="">🚫 Nessun logo cliente</option>
+                    <option value="__UPLOAD_NEW__">➕ Carica un nuovo logo cliente al momento...</option>
+                  </select>
+                </div>
+                <div id="selectedWsClientLogoPreview" class="hidden h-12 px-3 rounded-xl bg-slate-50 border border-slate-200 items-center justify-center">
+                </div>
+              </div>
+
+              <!-- Box Caricamento al momento (visibile se si sceglie "+ Carica un nuovo logo cliente al momento...") -->
+              <div id="inlineNewClientLogoBox" class="hidden p-3.5 rounded-xl bg-amber-50/70 border border-amber-300 space-y-2.5">
+                <div class="text-[11px] font-extrabold text-amber-950">
+                  ➕ Carica un nuovo Logo Cliente al momento (verrà salvato anche nell'elenco per i prossimi workshop):
+                </div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                  <input id="inputInlineClientName" type="text" placeholder="Nome Cliente (es. ADNOC, Eni...)"
+                    class="flex-grow min-w-[160px] px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white" />
+                  <input id="fileInputInlineClientLogo" type="file" accept="image/*" onchange="handleInlineClientLogoFileSelect(event)"
+                    class="text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-extrabold file:bg-slate-900 file:text-white hover:file:bg-slate-800 cursor-pointer" />
+                  <div id="inlineUploadedClientPreview" class="hidden h-10 px-2.5 rounded-lg bg-white border border-slate-200 items-center gap-2 text-[10px] font-mono text-slate-600"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end pt-2 border-t border-slate-200">
             <button onclick="createNewWorkshop()"
               class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs md:text-sm shadow-sm transition">
               + Crea Workshop su Supabase
@@ -275,7 +408,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
             <h3 class="font-bold text-slate-900 text-lg">Elenco Workshop Registrati</h3>
-            <p class="text-xs text-slate-500">Gestisci lo stato di apertura del link, la visibilità del report a fine test e la stampa del dossier completo.</p>
+            <p class="text-xs text-slate-500">Gestisci lo stato del link, il tickbox del <strong>Logo Tecnimont</strong>, il <strong>Logo Cliente</strong> associato e la stampa del dossier completo.</p>
           </div>
         </div>
         <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -283,9 +416,9 @@
             <thead>
               <tr class="border-b-2 border-slate-200 uppercase text-[11px] tracking-wider text-slate-500 bg-slate-50">
                 <th class="py-3.5 px-3.5">Workshop & Codice ID</th>
-                <th class="py-3.5 px-3 whitespace-nowrap">Profilo</th>
-                <th class="py-3.5 px-3 whitespace-nowrap">Livello</th>
+                <th class="py-3.5 px-3 whitespace-nowrap">Profilo & Livello</th>
                 <th class="py-3.5 px-3 whitespace-nowrap">Data & Sede</th>
+                <th class="py-3.5 px-3 whitespace-nowrap">Loghi Copertina Report</th>
                 <th class="py-3.5 px-3 text-center whitespace-nowrap">Stato Link</th>
                 <th class="py-3.5 px-3 text-center whitespace-nowrap">Esito Fine Test</th>
                 <th class="py-3.5 px-2.5 text-center whitespace-nowrap">Test</th>
@@ -339,6 +472,17 @@
     let filteredRecords = [];
     let selectedRecordIds = new Set();
     let currentModalRecordId = null;
+
+    const DEFAULT_TECNIMONT_LOGO = {
+      url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 110" width="480" height="110"><rect x="4" y="15" width="80" height="80" rx="16" fill="%230f172a"/><path d="M24 38 H64 V49 H49.5 V77 H38.5 V49 H24 Z" fill="%2338bdf8"/><circle cx="65" cy="72" r="5.5" fill="%23f59e0b"/><text x="102" y="64" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="44" fill="%230f172a" letter-spacing="2">TECNIMONT</text><text x="104" y="87" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="13" fill="%2364748b" letter-spacing="3.5">MAIRE GROUP • HSE LEADERSHIP</text></svg>',
+      w: 480,
+      h: 110,
+      isDefault: true
+    };
+
+    let tecnimontLogoConfig = { ...DEFAULT_TECNIMONT_LOGO };
+    let clientLogosDB = [];
+    let pendingInlineClientLogo = null; // { name, dataUrl, w, h }
 
     let workshopsDB = [];
     let currentQrModalUrl = "";
@@ -396,6 +540,8 @@
         setStoredVal("sl_cache_lists", JSON.stringify(editableLists));
         setStoredVal("sl_cache_workshops", JSON.stringify(workshopsDB));
         setStoredVal("sl_cache_records", JSON.stringify(allRecords));
+        setStoredVal("sl_tecnimont_logo", JSON.stringify(tecnimontLogoConfig));
+        setStoredVal("sl_client_logos", JSON.stringify(clientLogosDB));
         setStoredVal("sl_cache_time", nowTime);
       } catch (e) {}
 
@@ -436,6 +582,12 @@
         editableLists = JSON.parse(cLists);
         workshopsDB = JSON.parse(cWs);
         allRecords = JSON.parse(cRecs);
+        try {
+          const cTm = getStoredVal("sl_tecnimont_logo");
+          if (cTm) tecnimontLogoConfig = JSON.parse(cTm);
+          const cCl = getStoredVal("sl_client_logos");
+          if (cCl) clientLogosDB = JSON.parse(cCl);
+        } catch (e) {}
         const cTime = getStoredVal("sl_cache_time") || new Date().toLocaleTimeString("it-IT");
         const syncTxt = document.getElementById("lastSyncText");
         if (syncTxt) syncTxt.textContent = `Sync: ${cTime}`;
@@ -565,25 +717,74 @@
       editableLists.sites = (siteRes.data || []).map(formatRowFromListTable);
     }
 
+    async function fetchLogosFromSupabase() {
+      try {
+        const { data: cfgData } = await supabaseClient
+          .from("app_config")
+          .select("*")
+          .eq("id", 1)
+          .maybeSingle();
+        if (cfgData && cfgData.tecnimont_logo_url) {
+          tecnimontLogoConfig = {
+            url: cfgData.tecnimont_logo_url,
+            w: Number(cfgData.tecnimont_logo_w) || 480,
+            h: Number(cfgData.tecnimont_logo_h) || 110,
+            isDefault: false
+          };
+        } else {
+          const localTm = getStoredVal("sl_tecnimont_logo");
+          if (localTm) {
+            try { tecnimontLogoConfig = JSON.parse(localTm); } catch (e) {}
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const { data: clData, error: clErr } = await supabaseClient
+          .from("client_logos")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!clErr && Array.isArray(clData)) {
+          clientLogosDB = clData.map(c => ({
+            id: c.id,
+            name: c.name,
+            dataUrl: c.data_url,
+            w: Number(c.width_px) || 200,
+            h: Number(c.height_px) || 100
+          }));
+        }
+      } catch (e) {}
+    }
+
     async function fetchWorkshopsAndSubmissionsFromSupabase() {
       const [wsRes, subRes] = await Promise.all([
         supabaseClient.from("workshops").select("*").order("created_at", { ascending: false }),
-        supabaseClient.from("submissions").select("*").order("created_at", { ascending: false })
+        supabaseClient.from("submissions").select("*").order("created_at", { ascending: false }),
+        fetchLogosFromSupabase()
       ]);
 
       if (wsRes.error) throw new Error(wsRes.error.message);
       if (subRes.error) throw new Error(subRes.error.message);
 
-      workshopsDB = (wsRes.data || []).map(w => ({
-        id: w.id,
-        name: w.name,
-        date: w.date,
-        site: w.site,
-        level: w.level,
-        targetType: w.target_type || "site",
-        active: w.active !== false,
-        showReport: w.show_report !== false
-      }));
+      workshopsDB = (wsRes.data || []).map(w => {
+        const matchedClientLogo = clientLogosDB.find(c => c.id === w.client_logo_id);
+        return {
+          id: w.id,
+          name: w.name,
+          date: w.date,
+          site: w.site,
+          level: w.level,
+          targetType: w.target_type || "site",
+          active: w.active !== false,
+          showReport: w.show_report !== false,
+          showTecnimontLogo: w.show_tecnimont_logo !== false,
+          clientLogoId: w.client_logo_id || "",
+          clientLogoName: w.client_logo_name || matchedClientLogo?.name || "",
+          clientLogoUrl: w.client_logo_url || matchedClientLogo?.dataUrl || "",
+          clientLogoW: Number(w.client_logo_w) || matchedClientLogo?.w || 0,
+          clientLogoH: Number(w.client_logo_h) || matchedClientLogo?.h || 0
+        };
+      });
 
       allRecords = normalizeRows(subRes.data || []);
       const nowStr = new Date().toLocaleTimeString("it-IT");
@@ -613,6 +814,7 @@
           applyFilters();
         } else if (PAGE_MODE === "workshops") {
           populateWorkshopSiteDropdown();
+          renderLogosManagementUI();
           renderWorkshopsTable();
         } else if (PAGE_MODE === "lists" && !hasUnsavedListChanges) {
           renderEditableListsUI();
@@ -620,6 +822,303 @@
       } catch (e) {
         console.warn("Background sync warning:", e);
       }
+    }
+
+
+    // =========================================================================
+    // GESTIONE CARICAMENTO LOGHI E RILEVAMENTO PROPORZIONI IN PIXEL
+    // =========================================================================
+    function readAndMeasureLogoFile(file, maxDim = 900) {
+      return new Promise((resolve, reject) => {
+        if (!file) return reject(new Error("Nessun file selezionato"));
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const rawDataUrl = e.target.result;
+          const img = new Image();
+          img.onload = () => {
+            let origW = img.naturalWidth || img.width || 300;
+            let origH = img.naturalHeight || img.height || 100;
+
+            // Se è un SVG o già compatto sotto maxDim, preserva nitidezza e proporzioni reali
+            if (file.type === "image/svg+xml" || (origW <= maxDim && origH <= maxDim && rawDataUrl.length < 350000)) {
+              resolve({ dataUrl: rawDataUrl, w: origW, h: origH });
+              return;
+            }
+
+            const scale = Math.min(maxDim / origW, maxDim / origH, 1);
+            const targetW = Math.max(1, Math.round(origW * scale));
+            const targetH = Math.max(1, Math.round(origH * scale));
+            const canvas = document.createElement("canvas");
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, targetW, targetH);
+            const outUrl = canvas.toDataURL("image/png");
+            resolve({ dataUrl: outUrl, w: targetW, h: targetH });
+          };
+          img.onerror = () => reject(new Error("Impossibile leggere le dimensioni dell'immagine selezionata."));
+          img.src = rawDataUrl;
+        };
+        reader.onerror = () => reject(new Error("Errore lettura file."));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function computeHarmonizedLogoSizes(tmObj, clObj, baseHeightPx = 54) {
+      // Calcola l'altezza ottimale (in px) di ciascun logo in base al rapporto Larghezza/Altezza (aspect ratio R = W / H):
+      // Un logo basso e lungo (R elevato, come Tecnimont ~4.3:1) e un logo più quadrato/verticale (R ~1.0-1.5:1)
+      // vengono bilanciati tramite radice quarta del rapporto (R^-0.28) in modo da occupare un'area visiva armoniosa.
+      const calcOne = (w, h, baseH) => {
+        const safeW = Math.max(1, Number(w) || 240);
+        const safeH = Math.max(1, Number(h) || 80);
+        const ratio = safeW / safeH;
+        const optH = Math.round(Math.max(baseH * 0.62, Math.min(baseH * 1.30, baseH * Math.pow(1.8 / Math.max(0.4, ratio), 0.28))));
+        const optW = Math.round(optH * ratio);
+        return { w: optW, h: optH, ratio: Number(ratio.toFixed(2)) };
+      };
+
+      return {
+        tecnimont: tmObj && tmObj.url ? calcOne(tmObj.w, tmObj.h, baseHeightPx) : null,
+        client: clObj && clObj.url ? calcOne(clObj.w, clObj.h, baseHeightPx) : null
+      };
+    }
+
+    function renderLogosManagementUI() {
+      const tmBox = document.getElementById("tecnimontLogoPreviewBox");
+      const tmBadge = document.getElementById("tecnimontLogoDimBadge");
+      if (tmBox && tecnimontLogoConfig && tecnimontLogoConfig.url) {
+        const ratio = ((tecnimontLogoConfig.w || 480) / (tecnimontLogoConfig.h || 110)).toFixed(2);
+        tmBox.innerHTML = `<img src="${tecnimontLogoConfig.url}" alt="Logo Tecnimont" class="max-h-16 max-w-full object-contain" />`;
+        if (tmBadge) {
+          tmBadge.textContent = `${tecnimontLogoConfig.w}×${tecnimontLogoConfig.h} px (Ratio ${ratio}:1)`;
+        }
+      }
+
+      const countBadge = document.getElementById("clientLogosCountBadge");
+      if (countBadge) countBadge.textContent = clientLogosDB.length;
+
+      const gallery = document.getElementById("clientLogosGallery");
+      if (gallery) {
+        if (clientLogosDB.length === 0) {
+          gallery.innerHTML = `<div class="col-span-3 py-6 text-center text-xs text-slate-400 italic bg-white/80 rounded-xl border border-dashed border-slate-300">Nessun logo cliente salvato in elenco. Caricane uno qui sotto o direttamente mentre crei un workshop.</div>`;
+        } else {
+          gallery.innerHTML = clientLogosDB.map(c => {
+            const ratio = ((c.w || 200) / (c.h || 100)).toFixed(2);
+            return `
+              <div class="bg-white rounded-xl border border-slate-200 p-2.5 flex items-center justify-between gap-2 shadow-sm">
+                <div class="flex items-center gap-2 min-w-0">
+                  <div class="w-12 h-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center p-1 shrink-0">
+                    <img src="${c.dataUrl}" alt="${c.name}" class="max-h-full max-w-full object-contain" />
+                  </div>
+                  <div class="truncate">
+                    <div class="text-xs font-extrabold text-slate-800 truncate" title="${c.name}">${c.name}</div>
+                    <div class="text-[10px] font-mono text-slate-400">${c.w}×${c.h}px (${ratio}:1)</div>
+                  </div>
+                </div>
+                <button type="button" onclick="deleteClientLogo('${c.id}')" title="Rimuovi logo cliente dall'elenco"
+                  class="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold shrink-0 transition">
+                  ✕
+                </button>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+
+      populateWsClientLogoDropdown();
+    }
+
+    function populateWsClientLogoDropdown() {
+      const sel = document.getElementById("selectWsClientLogo");
+      if (!sel) return;
+      const prev = sel.value;
+      const optionsHtml =
+        `<option value="">🚫 Nessun logo cliente</option>` +
+        clientLogosDB.map(c => `<option value="${c.id}">🏢 ${c.name} (${c.w}×${c.h} px)</option>`).join("") +
+        `<option value="__UPLOAD_NEW__">➕ Carica un nuovo logo cliente al momento...</option>`;
+      sel.innerHTML = optionsHtml;
+      if (prev && (prev === "__UPLOAD_NEW__" || clientLogosDB.some(c => c.id === prev))) {
+        sel.value = prev;
+      }
+      onWsClientLogoSelectChange();
+    }
+
+    function onWsClientLogoSelectChange() {
+      const sel = document.getElementById("selectWsClientLogo");
+      const inlineBox = document.getElementById("inlineNewClientLogoBox");
+      const prevBox = document.getElementById("selectedWsClientLogoPreview");
+      if (!sel || !inlineBox || !prevBox) return;
+
+      const val = sel.value;
+      if (val === "__UPLOAD_NEW__") {
+        inlineBox.classList.remove("hidden");
+        prevBox.classList.add("hidden");
+        prevBox.classList.remove("flex");
+      } else {
+        inlineBox.classList.add("hidden");
+        const found = clientLogosDB.find(c => c.id === val);
+        if (found) {
+          prevBox.innerHTML = `<img src="${found.dataUrl}" alt="${found.name}" class="max-h-9 max-w-[120px] object-contain" /><span class="ml-2 text-[10px] font-mono text-slate-500">${found.w}×${found.h}px</span>`;
+          prevBox.classList.remove("hidden");
+          prevBox.classList.add("flex");
+        } else {
+          prevBox.classList.add("hidden");
+          prevBox.classList.remove("flex");
+        }
+      }
+    }
+
+    async function handleTecnimontLogoUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const measured = await readAndMeasureLogoFile(file, 900);
+        tecnimontLogoConfig = {
+          url: measured.dataUrl,
+          w: measured.w,
+          h: measured.h,
+          isDefault: false
+        };
+        saveStateToCache();
+
+        if (activeConnectionMode === "supabase" && supabaseClient) {
+          const { error } = await supabaseClient
+            .from("app_config")
+            .update({
+              tecnimont_logo_url: tecnimontLogoConfig.url,
+              tecnimont_logo_w: tecnimontLogoConfig.w,
+              tecnimont_logo_h: tecnimontLogoConfig.h
+            })
+            .eq("id", 1);
+          if (error && String(error.message).includes("tecnimont_logo")) {
+            console.warn("Colonna tecnimont_logo_url non ancora presente in app_config, salvato in cache locale.");
+          }
+        }
+        renderLogosManagementUI();
+        renderWorkshopsTable();
+      } catch (err) {
+        alert("Errore caricamento Logo Tecnimont: " + err.message);
+      } finally {
+        event.target.value = "";
+      }
+    }
+
+    async function resetTecnimontLogoToDefault() {
+      tecnimontLogoConfig = { ...DEFAULT_TECNIMONT_LOGO };
+      saveStateToCache();
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        await supabaseClient
+          .from("app_config")
+          .update({
+            tecnimont_logo_url: tecnimontLogoConfig.url,
+            tecnimont_logo_w: tecnimontLogoConfig.w,
+            tecnimont_logo_h: tecnimontLogoConfig.h
+          })
+          .eq("id", 1);
+      }
+      renderLogosManagementUI();
+      renderWorkshopsTable();
+    }
+
+    function triggerQuickClientLogoFile() {
+      const nameInput = document.getElementById("inputQuickClientLogoName");
+      if (!nameInput.value.trim()) {
+        nameInput.focus();
+        alert("Inserisci prima il nome del Cliente (es. ADNOC, Eni, Sonatrach...) e poi seleziona il file del logo.");
+        return;
+      }
+      document.getElementById("fileInputQuickClientLogo").click();
+    }
+
+    async function saveNewClientLogoObject(nameStr, measuredObj) {
+      const newLogo = {
+        id: "cl_" + Math.random().toString(36).substring(2, 8) + Date.now().toString(36).slice(-3),
+        name: nameStr.trim(),
+        dataUrl: measuredObj.dataUrl,
+        w: measuredObj.w,
+        h: measuredObj.h
+      };
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        const { error } = await supabaseClient.from("client_logos").insert([{
+          id: newLogo.id,
+          name: newLogo.name,
+          data_url: newLogo.dataUrl,
+          width_px: newLogo.w,
+          height_px: newLogo.h
+        }]);
+        if (error && String(error.message).includes("client_logos")) {
+          console.warn("Tabella client_logos non ancora creata su Supabase, logo mantenuto in cache locale e nel record workshop.");
+        }
+      }
+
+      clientLogosDB.unshift(newLogo);
+      saveStateToCache();
+      return newLogo;
+    }
+
+    async function handleQuickClientLogoUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const nameInput = document.getElementById("inputQuickClientLogoName");
+      const nameVal = (nameInput.value || file.name.replace(/\.[^.]+$/, "")).trim();
+      try {
+        const measured = await readAndMeasureLogoFile(file, 800);
+        const created = await saveNewClientLogoObject(nameVal, measured);
+        nameInput.value = "";
+        renderLogosManagementUI();
+        const sel = document.getElementById("selectWsClientLogo");
+        if (sel) {
+          sel.value = created.id;
+          onWsClientLogoSelectChange();
+        }
+      } catch (err) {
+        alert("Errore caricamento Logo Cliente: " + err.message);
+      } finally {
+        event.target.value = "";
+      }
+    }
+
+    async function handleInlineClientLogoFileSelect(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const nameInput = document.getElementById("inputInlineClientName");
+      if (!nameInput.value.trim()) {
+        nameInput.value = file.name.replace(/\.[^.]+$/, "");
+      }
+      try {
+        const measured = await readAndMeasureLogoFile(file, 800);
+        pendingInlineClientLogo = {
+          name: nameInput.value.trim() || "Cliente",
+          dataUrl: measured.dataUrl,
+          w: measured.w,
+          h: measured.h
+        };
+        const prev = document.getElementById("inlineUploadedClientPreview");
+        if (prev) {
+          prev.innerHTML = `<img src="${measured.dataUrl}" class="max-h-7 max-w-[90px] object-contain" /><span>${measured.w}×${measured.h}px pronto ✓</span>`;
+          prev.classList.remove("hidden");
+          prev.classList.add(" inline-flex");
+        }
+      } catch (err) {
+        alert("Errore lettura file logo: " + err.message);
+      }
+    }
+
+    async function deleteClientLogo(logoId) {
+      const target = clientLogosDB.find(c => c.id === logoId);
+      if (!target) return;
+      if (!window.confirm(`Vuoi rimuovere il logo "${target.name}" dall'elenco dei loghi clienti?`)) return;
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        try {
+          await supabaseClient.from("client_logos").delete().eq("id", logoId);
+        } catch (e) {}
+      }
+      clientLogosDB = clientLogosDB.filter(c => c.id !== logoId);
+      saveStateToCache();
+      renderLogosManagementUI();
+      renderWorkshopsTable();
     }
 
     function populateWorkshopSiteDropdown() {
@@ -651,6 +1150,8 @@
       const targetVal = document.getElementById("selectWsTarget").value;
       const showRepEl = document.getElementById("selectWsShowReport");
       const showReportVal = showRepEl ? (showRepEl.value === "true") : true;
+      const showTmLogoVal = document.getElementById("chkWsShowTecnimont") ? document.getElementById("chkWsShowTecnimont").checked : true;
+      const clientLogoChoice = document.getElementById("selectWsClientLogo")?.value || "";
       const banner = document.getElementById("wsFeedbackBanner");
 
       if (!nameVal || !dateVal || !siteVal) {
@@ -658,6 +1159,26 @@
         banner.textContent = "Compila tutti i campi obbligatori del Workshop: Nome, Data e Cantiere/Sede.";
         banner.classList.remove("hidden");
         return;
+      }
+
+      let chosenClientLogo = null;
+      if (clientLogoChoice === "__UPLOAD_NEW__") {
+        if (!pendingInlineClientLogo || !pendingInlineClientLogo.dataUrl) {
+          banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-red-50 border-red-200 text-red-700";
+          banner.textContent = "Hai scelto 'Carica un nuovo logo cliente al momento': seleziona il file immagine del logo prima di creare il Workshop.";
+          banner.classList.remove("hidden");
+          return;
+        }
+        const inlineName = (document.getElementById("inputInlineClientName")?.value || pendingInlineClientLogo.name || "Cliente").trim();
+        chosenClientLogo = await saveNewClientLogoObject(inlineName, pendingInlineClientLogo);
+        pendingInlineClientLogo = null;
+        if (document.getElementById("inputInlineClientName")) document.getElementById("inputInlineClientName").value = "";
+        if (document.getElementById("fileInputInlineClientLogo")) document.getElementById("fileInputInlineClientLogo").value = "";
+        const prev = document.getElementById("inlineUploadedClientPreview");
+        if (prev) prev.classList.add("hidden");
+        renderLogosManagementUI();
+      } else if (clientLogoChoice) {
+        chosenClientLogo = clientLogosDB.find(c => c.id === clientLogoChoice) || null;
       }
 
       const newWs = {
@@ -668,7 +1189,13 @@
         level: levelVal,
         targetType: targetVal,
         active: true,
-        showReport: showReportVal
+        showReport: showReportVal,
+        showTecnimontLogo: showTmLogoVal,
+        clientLogoId: chosenClientLogo ? chosenClientLogo.id : "",
+        clientLogoName: chosenClientLogo ? chosenClientLogo.name : "",
+        clientLogoUrl: chosenClientLogo ? chosenClientLogo.dataUrl : "",
+        clientLogoW: chosenClientLogo ? chosenClientLogo.w : 0,
+        clientLogoH: chosenClientLogo ? chosenClientLogo.h : 0
       };
 
       if (activeConnectionMode === "supabase" && supabaseClient) {
@@ -680,10 +1207,16 @@
           level: newWs.level,
           target_type: newWs.targetType,
           active: true,
-          show_report: newWs.showReport
+          show_report: newWs.showReport,
+          show_tecnimont_logo: newWs.showTecnimontLogo,
+          client_logo_id: newWs.clientLogoId || null,
+          client_logo_name: newWs.clientLogoName || null,
+          client_logo_url: newWs.clientLogoUrl || null,
+          client_logo_w: newWs.clientLogoW || null,
+          client_logo_h: newWs.clientLogoH || null
         }]);
-        // Fallback automatico se la colonna show_report non è ancora stata aggiunta sul DB
-        if (error && String(error.message).includes("show_report")) {
+        // Fallback automatico se le colonne opzionali non sono ancora state aggiunte sul DB
+        if (error && (String(error.message).includes("logo") || String(error.message).includes("show_report"))) {
           const retry = await supabaseClient.from("workshops").insert([{
             id: newWs.id,
             name: newWs.name,
@@ -704,11 +1237,16 @@
       workshopsDB.unshift(newWs);
       saveStateToCache();
       document.getElementById("inputWsName").value = "";
+      if (document.getElementById("selectWsClientLogo")) {
+        document.getElementById("selectWsClientLogo").value = "";
+        onWsClientLogoSelectChange();
+      }
 
       const typeLabel = targetVal === "office" ? "🏢 Ufficio / Sede (HQ)" : "🏗️ Cantiere / Site";
       const repLabel = showReportVal ? "📊 Mostra Report a fine test" : "🙏 Solo Ringraziamento a fine test";
+      const logoLabel = `${showTmLogoVal ? '✓ Logo Tecnimont' : '🚫 No Tecnimont'}${chosenClientLogo ? ' + 🏢 Logo ' + chosenClientLogo.name : ''}`;
       banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800";
-      banner.textContent = `✓ Workshop "${newWs.name}" (${typeLabel} • ${repLabel}) salvato! Copia il link qui sotto per i partecipanti.`;
+      banner.textContent = `✓ Workshop "${newWs.name}" (${typeLabel} • ${repLabel} • Copertina: ${logoLabel}) salvato!`;
       banner.classList.remove("hidden");
 
       renderWorkshopsTable();
@@ -741,6 +1279,74 @@
       renderWorkshopsTable();
     }
 
+    async function toggleWorkshopTecnimontLogo(wsId, isChecked) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+      ws.showTecnimontLogo = Boolean(isChecked);
+      saveStateToCache();
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        const { error } = await supabaseClient
+          .from("workshops")
+          .update({ show_tecnimont_logo: ws.showTecnimontLogo })
+          .eq("id", wsId);
+        if (error && String(error.message).includes("show_tecnimont_logo")) {
+          console.warn("Esegui aggiorna_loghi_workshop.sql per salvare show_tecnimont_logo sul DB.");
+        }
+      }
+      renderWorkshopsTable();
+    }
+
+    async function changeWorkshopClientLogo(wsId, newLogoId) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+
+      if (newLogoId === "__UPLOAD_FOR_WS__") {
+        const fileIn = document.createElement("input");
+        fileIn.type = "file";
+        fileIn.accept = "image/*";
+        fileIn.onchange = async (ev) => {
+          const f = ev.target.files?.[0];
+          if (!f) { renderWorkshopsTable(); return; }
+          const defaultName = f.name.replace(/\.[^.]+$/, "");
+          const cName = window.prompt("Nome del Cliente per questo logo:", defaultName) || defaultName;
+          try {
+            const measured = await readAndMeasureLogoFile(f, 800);
+            const created = await saveNewClientLogoObject(cName, measured);
+            renderLogosManagementUI();
+            await changeWorkshopClientLogo(wsId, created.id);
+          } catch (err) {
+            alert("Errore caricamento logo: " + err.message);
+            renderWorkshopsTable();
+          }
+        };
+        fileIn.click();
+        return;
+      }
+
+      const found = clientLogosDB.find(c => c.id === newLogoId) || null;
+      ws.clientLogoId = found ? found.id : "";
+      ws.clientLogoName = found ? found.name : "";
+      ws.clientLogoUrl = found ? found.dataUrl : "";
+      ws.clientLogoW = found ? found.w : 0;
+      ws.clientLogoH = found ? found.h : 0;
+      saveStateToCache();
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        await supabaseClient
+          .from("workshops")
+          .update({
+            client_logo_id: ws.clientLogoId || null,
+            client_logo_name: ws.clientLogoName || null,
+            client_logo_url: ws.clientLogoUrl || null,
+            client_logo_w: ws.clientLogoW || null,
+            client_logo_h: ws.clientLogoH || null
+          })
+          .eq("id", wsId);
+      }
+      renderWorkshopsTable();
+    }
+
     function openWorkshopBatchPrint(wsId, autoPrint = false) {
       const ws = workshopsDB.find(w => w.id === wsId);
       if (!ws) return;
@@ -754,6 +1360,15 @@
         wsSite: ws.site,
         wsLevel: ws.level,
         wsTarget: ws.targetType || "site",
+        showTecnimontLogo: ws.showTecnimontLogo !== false,
+        tecnimontLogo: tecnimontLogoConfig,
+        clientLogo: ws.clientLogoUrl ? {
+          id: ws.clientLogoId,
+          name: ws.clientLogoName,
+          url: ws.clientLogoUrl,
+          w: ws.clientLogoW,
+          h: ws.clientLogoH
+        } : null,
         autoPrint: Boolean(autoPrint),
         records: wsRecords
       };
@@ -808,6 +1423,7 @@
       tbody.innerHTML = workshopsDB.map(ws => {
         const isOpen = ws.active !== false;
         const showRep = ws.showReport !== false;
+        const showTm = ws.showTecnimontLogo !== false;
         const isOffice = ws.targetType === "office";
         const wsLink = `${baseUrl}?ws=${encodeURIComponent(ws.id)}`;
         const siteLabel = String(ws.site || "").split("|")[0].trim();
@@ -819,26 +1435,59 @@
           "bg-emerald-100 text-emerald-900 border-emerald-200";
 
         const targetBadge = isOffice
-          ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-900 border border-indigo-200 text-[11px] font-extrabold whitespace-nowrap"><span>🏢</span><span>Ufficio / HQ</span></span>`
-          : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-extrabold whitespace-nowrap"><span>🏗️</span><span>Cantiere</span></span>`;
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-900 border border-indigo-200 text-[10px] font-extrabold whitespace-nowrap"><span>🏢</span><span>Ufficio / HQ</span></span>`
+          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-extrabold whitespace-nowrap"><span>🏗️</span><span>Cantiere</span></span>`;
+
+        const clientOptionsHtml =
+          `<option value="">🚫 Nessun logo cliente</option>` +
+          clientLogosDB.map(c => `<option value="${c.id}" ${(ws.clientLogoId === c.id) ? 'selected' : ''}>🏢 ${c.name}</option>`).join("") +
+          `<option value="__UPLOAD_FOR_WS__">➕ Carica nuovo logo...</option>`;
+
+        const miniSizes = computeHarmonizedLogoSizes(
+          showTm ? tecnimontLogoConfig : null,
+          ws.clientLogoUrl ? { url: ws.clientLogoUrl, w: ws.clientLogoW, h: ws.clientLogoH } : null,
+          24
+        );
+
+        const miniPreviewsHtml = (showTm || ws.clientLogoUrl)
+          ? `<div class="mt-1.5 flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-slate-200 w-fit">
+              ${showTm && tecnimontLogoConfig?.url ? `<img src="${tecnimontLogoConfig.url}" style="height:${miniSizes.tecnimont?.h || 20}px;width:auto" class="object-contain" title="Logo Tecnimont (${tecnimontLogoConfig.w}×${tecnimontLogoConfig.h}px)" />` : ''}
+              ${showTm && ws.clientLogoUrl ? `<span class="w-px h-4 bg-slate-200"></span>` : ''}
+              ${ws.clientLogoUrl ? `<img src="${ws.clientLogoUrl}" style="height:${miniSizes.client?.h || 22}px;width:auto" class="object-contain" title="Logo Cliente: ${ws.clientLogoName} (${ws.clientLogoW}×${ws.clientLogoH}px)" />` : ''}
+            </div>`
+          : `<div class="mt-1 text-[10px] text-slate-400 italic">Nessun logo in copertina</div>`;
 
         return `
           <tr class="hover:bg-slate-50/90 transition align-middle ${!isOpen ? 'opacity-65 bg-slate-50/60' : ''}">
-            <td class="py-3.5 px-3.5 min-w-[190px]">
+            <td class="py-3.5 px-3.5 min-w-[180px]">
               <div class="font-extrabold text-slate-900 text-xs md:text-sm leading-snug">${ws.name}</div>
               <div class="font-mono text-[10px] font-semibold text-slate-400 mt-0.5">ID: ${ws.id}</div>
             </td>
             <td class="py-3.5 px-3 whitespace-nowrap">
-              ${targetBadge}
+              <div class="flex flex-col items-start gap-1">
+                ${targetBadge}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full border font-extrabold text-[10px] whitespace-nowrap ${levelBadgeColor}">
+                  ${ws.level}
+                </span>
+              </div>
             </td>
-            <td class="py-3.5 px-3 whitespace-nowrap">
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full border font-extrabold text-[11px] whitespace-nowrap ${levelBadgeColor}">
-                ${ws.level}
-              </span>
-            </td>
-            <td class="py-3.5 px-3 min-w-[155px]">
+            <td class="py-3.5 px-3 min-w-[145px]">
               <div class="font-bold text-slate-800 text-xs whitespace-nowrap">📅 ${ws.date}</div>
-              <div class="text-[11px] text-slate-500 font-medium truncate max-w-[190px]" title="${siteLabel}">📍 ${siteLabel}</div>
+              <div class="text-[11px] text-slate-500 font-medium truncate max-w-[180px]" title="${siteLabel}">📍 ${siteLabel}</div>
+            </td>
+            <td class="py-3.5 px-3 min-w-[215px]">
+              <label class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-slate-800 cursor-pointer select-none mb-1">
+                <input type="checkbox" ${showTm ? 'checked' : ''} onchange="toggleWorkshopTecnimontLogo('${ws.id}', this.checked)"
+                  class="w-3.5 h-3.5 accent-amber-600 rounded cursor-pointer" />
+                <span>Logo Tecnimont</span>
+              </label>
+              <div>
+                <select onchange="changeWorkshopClientLogo('${ws.id}', this.value)"
+                  class="w-full px-2 py-1 rounded-lg border border-slate-300 text-[11px] font-bold bg-white text-slate-800 focus:outline-none focus:border-amber-500">
+                  ${clientOptionsHtml}
+                </select>
+              </div>
+              ${miniPreviewsHtml}
             </td>
             <td class="py-3.5 px-3 text-center whitespace-nowrap">
               <button onclick="toggleWorkshopActive('${ws.id}')"
@@ -1402,6 +2051,7 @@
         const sec = document.getElementById("screen-workshops");
         if (sec) sec.classList.remove("hidden");
         populateWorkshopSiteDropdown();
+        renderLogosManagementUI();
         renderWorkshopsTable();
       } else if (PAGE_MODE === "lists") {
         const sec = document.getElementById("screen-lists");

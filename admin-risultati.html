@@ -624,7 +624,13 @@
         level: w.level,
         targetType: w.target_type || "site",
         active: w.active !== false,
-        showReport: w.show_report !== false
+        showReport: w.show_report !== false,
+        showTecnimontLogo: w.show_tecnimont_logo !== false,
+        clientLogoId: w.client_logo_id || "",
+        clientLogoName: w.client_logo_name || "",
+        clientLogoUrl: w.client_logo_url || "",
+        clientLogoW: Number(w.client_logo_w) || 0,
+        clientLogoH: Number(w.client_logo_h) || 0
       }));
 
       allRecords = normalizeRows(subRes.data || []);

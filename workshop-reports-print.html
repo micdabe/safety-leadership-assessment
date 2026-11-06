@@ -645,6 +645,138 @@
     let batchLangMode = "ORIG"; // 'ORIG' | 'IT' | 'EN'
     let activeChartInstances = [];
 
+    const DEFAULT_TECNIMONT_LOGO = {
+      url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 110" width="480" height="110"><rect x="4" y="15" width="80" height="80" rx="16" fill="%230f172a"/><path d="M24 38 H64 V49 H49.5 V77 H38.5 V49 H24 Z" fill="%2338bdf8"/><circle cx="65" cy="72" r="5.5" fill="%23f59e0b"/><text x="102" y="64" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="44" fill="%230f172a" letter-spacing="2">TECNIMONT</text><text x="104" y="87" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="13" fill="%2364748b" letter-spacing="3.5">MAIRE GROUP • HSE LEADERSHIP</text></svg>',
+      w: 480,
+      h: 110
+    };
+
+    let batchTecnimontLogo = { ...DEFAULT_TECNIMONT_LOGO };
+    let batchShowTecnimontLogo = true;
+    let batchClientLogo = null;
+
+    function computeHarmonizedLogoBox(w, h, baseHeightPx = 58) {
+      const safeW = Math.max(1, Number(w) || 260);
+      const safeH = Math.max(1, Number(h) || 90);
+      const ratio = safeW / safeH;
+      const optH = Math.round(Math.max(baseHeightPx * 0.62, Math.min(baseHeightPx * 1.28, baseHeightPx * Math.pow(1.8 / Math.max(0.4, ratio), 0.28))));
+      const optW = Math.round(optH * ratio);
+      return { w: optW, h: optH, ratio: Number(ratio.toFixed(2)) };
+    }
+
+    function buildHarmonizedCoverLogosHtml(showTm, tmLogo, clLogo) {
+      const hasTm = Boolean(showTm && tmLogo && tmLogo.url);
+      const hasCl = Boolean(clLogo && clLogo.url);
+
+      if (!hasTm && !hasCl) {
+        return `<div class="mb-4"></div>`;
+      }
+
+      if (hasTm && hasCl) {
+        const tmDim = computeHarmonizedLogoBox(tmLogo.w, tmLogo.h, 58);
+        const clDim = computeHarmonizedLogoBox(clLogo.w, clLogo.h, 58);
+        return `
+          <div class="inline-flex flex-wrap items-center justify-center gap-8 md:gap-10 px-8 py-5 mb-7 rounded-3xl bg-white border-2 border-slate-200/90 shadow-sm mx-auto">
+            <div class="flex items-center justify-center">
+              <img src="${tmLogo.url}" alt="Logo Tecnimont"
+                style="height:${tmDim.h}px; width:auto; max-width:260px;"
+                class="object-contain block" />
+            </div>
+            <div class="w-0.5 h-12 bg-slate-200 rounded-full shrink-0"></div>
+            <div class="flex items-center justify-center">
+              <img src="${clLogo.url}" alt="${clLogo.name || 'Logo Cliente'}"
+                style="height:${clDim.h}px; width:auto; max-width:240px;"
+                class="object-contain block" />
+            </div>
+          </div>
+        `;
+      }
+
+      if (hasTm) {
+        const tmDim = computeHarmonizedLogoBox(tmLogo.w, tmLogo.h, 64);
+        return `
+          <div class="inline-flex items-center justify-center px-8 py-4 mb-7 rounded-3xl bg-white border-2 border-slate-200/90 shadow-sm mx-auto">
+            <img src="${tmLogo.url}" alt="Logo Tecnimont"
+              style="height:${tmDim.h}px; width:auto; max-width:300px;"
+              class="object-contain block" />
+          </div>
+        `;
+      }
+
+      const clDim = computeHarmonizedLogoBox(clLogo.w, clLogo.h, 64);
+      return `
+        <div class="inline-flex items-center justify-center px-8 py-4 mb-7 rounded-3xl bg-white border-2 border-slate-200/90 shadow-sm mx-auto">
+          <img src="${clLogo.url}" alt="${clLogo.name || 'Logo Cliente'}"
+            style="height:${clDim.h}px; width:auto; max-width:280px;"
+            class="object-contain block" />
+        </div>
+      `;
+    }
+
+    async function fetchBatchLogosFromSupabase(sbClient, wsId, postData) {
+      try {
+        const cTm = sessionStorage.getItem("sl_tecnimont_logo") || localStorage.getItem("sl_tecnimont_logo");
+        if (cTm) batchTecnimontLogo = JSON.parse(cTm);
+      } catch (e) {}
+
+      if (postData && postData.tecnimontLogo && postData.tecnimontLogo.url) {
+        batchTecnimontLogo = postData.tecnimontLogo;
+      }
+      if (postData && postData.showTecnimontLogo !== undefined) {
+        batchShowTecnimontLogo = Boolean(postData.showTecnimontLogo);
+      }
+      if (postData && postData.clientLogo && postData.clientLogo.url) {
+        batchClientLogo = postData.clientLogo;
+      }
+
+      if (!sbClient) return;
+      try {
+        const tasks = [
+          sbClient.from("app_config").select("*").eq("id", 1).maybeSingle()
+        ];
+        if (wsId) {
+          tasks.push(sbClient.from("workshops").select("*").eq("id", wsId).maybeSingle());
+        }
+        const [cfgRes, wsRes] = await Promise.all(tasks);
+        if (cfgRes && cfgRes.data && cfgRes.data.tecnimont_logo_url) {
+          batchTecnimontLogo = {
+            url: cfgRes.data.tecnimont_logo_url,
+            w: Number(cfgRes.data.tecnimont_logo_w) || 480,
+            h: Number(cfgRes.data.tecnimont_logo_h) || 110
+          };
+        }
+        if (wsRes && wsRes.data) {
+          const wRow = wsRes.data;
+          if (wRow.show_tecnimont_logo !== undefined && wRow.show_tecnimont_logo !== null) {
+            batchShowTecnimontLogo = Boolean(wRow.show_tecnimont_logo);
+          }
+          if (wRow.client_logo_url) {
+            batchClientLogo = {
+              name: wRow.client_logo_name || "Cliente",
+              url: wRow.client_logo_url,
+              w: Number(wRow.client_logo_w) || 220,
+              h: Number(wRow.client_logo_h) || 100
+            };
+          } else if (wRow.client_logo_id) {
+            const { data: clRow } = await sbClient
+              .from("client_logos")
+              .select("*")
+              .eq("id", wRow.client_logo_id)
+              .maybeSingle();
+            if (clRow && clRow.data_url) {
+              batchClientLogo = {
+                name: clRow.name || "Cliente",
+                url: clRow.data_url,
+                w: Number(clRow.width_px) || 220,
+                h: Number(clRow.height_px) || 100
+              };
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+
     const METH_COMPACT_TRANSLATIONS = {
       it: {
         title: "Nota Metodologica — Calcolo del Punteggio (Ponderazione Adattiva e Ripescaggio)",
@@ -690,8 +822,8 @@
       const mapEn = {};
       rows.forEach(r => {
         if (!r || !r.key) return;
-        if (r.text_it !== undefined && r.text_it !== null) mapIt[r.key] = String(r.text_it);
-        if (r.text_en !== undefined && r.text_en !== null) mapEn[r.key] = String(r.text_en);
+        if (r.text_it !== undefined && r.text_it !== null) mapIt[r.key] = String(r.text_it).replace(/\r?\n/g, "<br>");
+        if (r.text_en !== undefined && r.text_en !== null) mapEn[r.key] = String(r.text_en).replace(/\r?\n/g, "<br>");
       });
 
       const coverKeyMap = {
@@ -992,9 +1124,9 @@
             <div class="w-24 h-1.5 rounded-full bg-amber-500 mx-auto"></div>
 
             <!-- Corpo centrale centrato verticalmente e orizzontalmente -->
-            <div class="my-auto py-8 text-center max-w-2xl mx-auto w-full">
-              <div class="w-20 h-20 rounded-3xl bg-slate-900 text-amber-400 flex items-center justify-center font-black text-3xl shadow-lg mx-auto mb-6 border-4 border-amber-500/30">
-                SL
+            <div class="my-auto py-6 text-center max-w-2xl mx-auto w-full">
+              <div class="flex justify-center">
+                ${buildHarmonizedCoverLogosHtml(batchShowTecnimontLogo, batchTecnimontLogo, batchClientLogo)}
               </div>
 
               <span class="inline-block px-4 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-extrabold uppercase tracking-widest mb-3">
@@ -1355,7 +1487,8 @@
       try {
         await Promise.all([
           fetchAssessmentContentFromSupabase(supabaseClient, true),
-          fetchUiTextsFromSupabase(supabaseClient, true)
+          fetchUiTextsFromSupabase(supabaseClient, true),
+          fetchBatchLogosFromSupabase(supabaseClient, postData.wsId, postData)
         ]);
       } catch (err) {
         document.getElementById("loadingTitle").textContent = "Errore caricamento contenuti dal Database";

@@ -685,7 +685,13 @@
         level: w.level,
         targetType: w.target_type || "site",
         active: w.active !== false,
-        showReport: w.show_report !== false
+        showReport: w.show_report !== false,
+        showTecnimontLogo: w.show_tecnimont_logo !== false,
+        clientLogoId: w.client_logo_id || "",
+        clientLogoName: w.client_logo_name || "",
+        clientLogoUrl: w.client_logo_url || "",
+        clientLogoW: Number(w.client_logo_w) || 0,
+        clientLogoH: Number(w.client_logo_h) || 0
       }));
 
       allRecords = normalizeRows(subRes.data || []);
@@ -1783,12 +1789,21 @@
         feedback_pct: r.pct.FEEDBACK,
         riepilogo_scelte: r.choicesLog || ""
       };
+      const wsObj = workshopsDB.find(w => w.id === r.workshopId || w.name === r.workshopName);
       return {
         id: r.id,
-        ws: r.workshopId || "",
+        ws: r.workshopId || (wsObj ? wsObj.id : ""),
         lang: (r.lang || "IT").toLowerCase(),
         print: Boolean(autoPrint),
         from: "admin",
+        showTecnimontLogo: wsObj ? (wsObj.showTecnimontLogo !== false) : true,
+        clientLogo: (wsObj && wsObj.clientLogoUrl) ? {
+          id: wsObj.clientLogoId,
+          name: wsObj.clientLogoName,
+          url: wsObj.clientLogoUrl,
+          w: wsObj.clientLogoW,
+          h: wsObj.clientLogoH
+        } : null,
         submissionRow
       };
     }
