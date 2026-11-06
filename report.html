@@ -938,13 +938,12 @@
         const tmDim = computeHarmonizedLogoBox(tmLogo.w, tmLogo.h, 58);
         const clDim = computeHarmonizedLogoBox(clLogo.w, clLogo.h, 58);
         return `
-          <div class="inline-flex flex-wrap items-center justify-center gap-8 md:gap-10 px-8 py-5 mb-7 rounded-3xl bg-white border-2 border-slate-200/90 shadow-sm mx-auto">
+          <div class="flex flex-col items-center justify-center gap-5 mb-7 mx-auto">
             <div class="flex items-center justify-center">
               <img src="${tmLogo.url}" alt="Logo Tecnimont"
-                style="height:${tmDim.h}px; width:auto; max-width:260px;"
+                style="height:${tmDim.h}px; width:auto; max-width:280px;"
                 class="object-contain block" />
             </div>
-            <div class="w-0.5 h-12 bg-slate-200 rounded-full shrink-0"></div>
             <div class="flex items-center justify-center">
               <img src="${clLogo.url}" alt="${clLogo.name || 'Logo Cliente'}"
                 style="height:${clDim.h}px; width:auto; max-width:240px;"
@@ -957,7 +956,7 @@
       if (hasTm) {
         const tmDim = computeHarmonizedLogoBox(tmLogo.w, tmLogo.h, 64);
         return `
-          <div class="inline-flex items-center justify-center px-8 py-4 mb-7 rounded-3xl bg-white border-2 border-slate-200/90 shadow-sm mx-auto">
+          <div class="flex items-center justify-center mb-7 mx-auto">
             <img src="${tmLogo.url}" alt="Logo Tecnimont"
               style="height:${tmDim.h}px; width:auto; max-width:300px;"
               class="object-contain block" />
@@ -967,7 +966,7 @@
 
       const clDim = computeHarmonizedLogoBox(clLogo.w, clLogo.h, 64);
       return `
-        <div class="inline-flex items-center justify-center px-8 py-4 mb-7 rounded-3xl bg-white border-2 border-slate-200/90 shadow-sm mx-auto">
+        <div class="flex items-center justify-center mb-7 mx-auto">
           <img src="${clLogo.url}" alt="${clLogo.name || 'Logo Cliente'}"
             style="height:${clDim.h}px; width:auto; max-width:280px;"
             class="object-contain block" />
