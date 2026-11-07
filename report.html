@@ -81,15 +81,15 @@
       }
 
       .cover-header-slot {
-        height: 44mm !important;
-        min-height: 44mm !important;
-        max-height: 44mm !important;
+        height: 56mm !important;
+        min-height: 56mm !important;
+        max-height: 56mm !important;
       }
 
       .cover-footer-slot {
-        height: 22mm !important;
-        min-height: 22mm !important;
-        max-height: 22mm !important;
+        height: 28mm !important;
+        min-height: 28mm !important;
+        max-height: 28mm !important;
       }
 
       .print-page-1 {
@@ -939,23 +939,23 @@
 
     function buildCoverFooterSafethinkHtml(showTm, stLogo) {
       if (!showTm || !stLogo || !stLogo.url) {
-        return `<div class="h-9 flex items-center justify-center"></div>`;
+        return `<div class="h-14 flex items-center justify-center"></div>`;
       }
-      const stDim = computeHarmonizedLogoBox(stLogo.w, stLogo.h, 34);
+      const stDim = computeHarmonizedLogoBox(stLogo.w, stLogo.h, 51);
       return `
-        <div class="h-9 flex items-center justify-center">
+        <div class="h-14 flex items-center justify-center">
           <img src="${stLogo.url}" alt="Logo Safethink"
-            style="height:${stDim.h}px; width:auto; max-width:210px;"
+            style="height:${stDim.h}px; width:auto; max-width:315px;"
             class="object-contain block" />
         </div>
       `;
     }
 
-    function computeHarmonizedLogoBox(w, h, baseHeightPx = 54) {
+    function computeHarmonizedLogoBox(w, h, baseHeightPx = 81) {
       const safeW = Math.max(1, Number(w) || 260);
       const safeH = Math.max(1, Number(h) || 90);
       const ratio = safeW / safeH;
-      // Bilanciamento ottico basato sulle dimensioni reali in pixel:
+      // Bilanciamento ottico basato sulle dimensioni reali in pixel (+50% scala):
       // compensa l'aspect ratio (R = W/H) così un logo largo e basso (Tecnimont) e un logo quadrato/verticale (Cliente)
       // hanno lo stesso peso visivo e rientrano sempre nello slot fisso di testata senza spostare il centro pagina.
       const optH = Math.round(Math.max(baseHeightPx * 0.58, Math.min(baseHeightPx * 1.22, baseHeightPx * Math.pow(1.8 / Math.max(0.4, ratio), 0.28))));
@@ -967,28 +967,27 @@
       const hasTm = Boolean(showTm && tmLogo && tmLogo.url);
       const hasCl = Boolean(clLogo && clLogo.url);
 
-      // Slot di testata ad altezza fissa (h-40 a schermo / 44mm in stampa A4):
+      // Slot di testata ad altezza fissa (h-52 a schermo / 56mm in stampa A4):
       // garantisce che la copertina rimanga perfettamente centrata e bilanciata a tutta pagina
       // indipendentemente dal fatto che ci siano 0, 1 o 2 loghi!
       if (!hasTm && !hasCl) {
-        return `<div class="cover-header-slot h-40 w-full flex flex-col items-center justify-center shrink-0"></div>`;
+        return `<div class="cover-header-slot h-52 w-full flex flex-col items-center justify-center shrink-0"></div>`;
       }
 
       if (hasTm && hasCl) {
-        // Con 2 loghi impilati verticalmente (Tecnimont sopra + Cliente sotto), usiamo baseHeightPx = 46
-        // così la somma delle due altezze + gap rientra sempre nei 44mm dello slot fisso
-        const tmDim = computeHarmonizedLogoBox(tmLogo.w, tmLogo.h, 46);
-        const clDim = computeHarmonizedLogoBox(clLogo.w, clLogo.h, 46);
+        // Con 2 loghi impilati verticalmente (+50% dimensione: baseHeightPx = 69)
+        const tmDim = computeHarmonizedLogoBox(tmLogo.w, tmLogo.h, 69);
+        const clDim = computeHarmonizedLogoBox(clLogo.w, clLogo.h, 69);
         return `
-          <div class="cover-header-slot h-40 w-full flex flex-col items-center justify-center gap-3.5 shrink-0">
+          <div class="cover-header-slot h-52 w-full flex flex-col items-center justify-center gap-4 shrink-0">
             <div class="flex items-center justify-center">
               <img src="${tmLogo.url}" alt="Logo Tecnimont"
-                style="height:${tmDim.h}px; width:auto; max-width:270px;"
+                style="height:${tmDim.h}px; width:auto; max-width:405px;"
                 class="object-contain block" />
             </div>
             <div class="flex items-center justify-center">
               <img src="${clLogo.url}" alt="${clLogo.name || 'Logo Cliente'}"
-                style="height:${clDim.h}px; width:auto; max-width:230px;"
+                style="height:${clDim.h}px; width:auto; max-width:345px;"
                 class="object-contain block" />
             </div>
           </div>
@@ -996,21 +995,21 @@
       }
 
       if (hasTm) {
-        const tmDim = computeHarmonizedLogoBox(tmLogo.w, tmLogo.h, 62);
+        const tmDim = computeHarmonizedLogoBox(tmLogo.w, tmLogo.h, 93);
         return `
-          <div class="cover-header-slot h-40 w-full flex flex-col items-center justify-center shrink-0">
+          <div class="cover-header-slot h-52 w-full flex flex-col items-center justify-center shrink-0">
             <img src="${tmLogo.url}" alt="Logo Tecnimont"
-              style="height:${tmDim.h}px; width:auto; max-width:300px;"
+              style="height:${tmDim.h}px; width:auto; max-width:450px;"
               class="object-contain block" />
           </div>
         `;
       }
 
-      const clDim = computeHarmonizedLogoBox(clLogo.w, clLogo.h, 62);
+      const clDim = computeHarmonizedLogoBox(clLogo.w, clLogo.h, 93);
       return `
-        <div class="cover-header-slot h-40 w-full flex flex-col items-center justify-center shrink-0">
+        <div class="cover-header-slot h-52 w-full flex flex-col items-center justify-center shrink-0">
           <img src="${clLogo.url}" alt="${clLogo.name || 'Logo Cliente'}"
-            style="height:${clDim.h}px; width:auto; max-width:280px;"
+            style="height:${clDim.h}px; width:auto; max-width:420px;"
             class="object-contain block" />
         </div>
       `;
@@ -1720,12 +1719,12 @@
             <p id="coverLiveSubEl" contenteditable="true" spellcheck="false"
               oninput="onInlineCoverContentEdit()"
               title="Clicca per modificare il sottotitolo della copertina"
-              class="text-sm text-slate-500 font-medium max-w-lg mx-auto mb-8 rounded-xl px-2 py-0.5 hover:ring-2 hover:ring-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
+              class="text-sm text-slate-500 font-medium max-w-lg mx-auto mb-5 rounded-xl px-2 py-0.5 hover:ring-2 hover:ring-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
               ${cv.coverSub}
             </p>
 
             <!-- Card Centrale Partecipante (Ogni dato scritto una sola volta, zero ridondanze) -->
-            <div class="w-full bg-slate-50 rounded-3xl p-8 md:p-9 border-2 border-slate-200 shadow-sm text-center relative overflow-hidden">
+            <div class="w-full bg-slate-50 rounded-3xl p-7 md:p-8 border-2 border-slate-200 shadow-sm text-center relative overflow-hidden">
               <div class="text-[11px] font-extrabold uppercase tracking-widest text-amber-600 mb-2">
                 ${cv.lblPreparedFor}
               </div>
@@ -1760,7 +1759,7 @@
           </div>
 
           <!-- ZONA 3 (PIÈ DI PAGINA AD ALTEZZA FISSA): Slot Safethink + 7 Aree -->
-          <div class="cover-footer-slot h-20 w-full shrink-0 flex flex-col items-center justify-end text-center pt-3 border-t border-slate-200">
+          <div class="cover-footer-slot h-24 w-full shrink-0 flex flex-col items-center justify-end text-center pt-3 border-t border-slate-200">
             ${buildCoverFooterSafethinkHtml(reportShowTecnimontLogo, reportSafethinkLogo)}
             <div class="flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mt-1.5">
               <span>Vision</span><span>•</span>
