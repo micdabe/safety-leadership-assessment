@@ -651,9 +651,28 @@
       h: 110
     };
 
+    const DEFAULT_SAFETHINK_LOGO = {
+      url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 90" width="380" height="90"><path d="M40 12 L68 23 V45 C68 63 55 75 40 81 C25 75 12 63 12 45 V23 Z" fill="%23059669"/><path d="M28 45 L36 53 L53 35" stroke="%23ffffff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><text x="84" y="54" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="36" fill="%230f172a" letter-spacing="1.5">SAFE<tspan fill="%23059669">THINK</tspan></text><text x="86" y="74" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="10.5" fill="%2364748b" letter-spacing="2.8">SAFETY LEADERSHIP CULTURE</text></svg>',
+      w: 380,
+      h: 90
+    };
+
     let batchTecnimontLogo = { ...DEFAULT_TECNIMONT_LOGO };
+    let batchSafethinkLogo = { ...DEFAULT_SAFETHINK_LOGO };
     let batchShowTecnimontLogo = true;
     let batchClientLogo = null;
+
+    function buildCoverFooterSafethinkHtml(showTm, stLogo) {
+      if (!showTm || !stLogo || !stLogo.url) return "";
+      const stDim = computeHarmonizedLogoBox(stLogo.w, stLogo.h, 38);
+      return `
+        <div class="flex items-center justify-center mb-3">
+          <img src="${stLogo.url}" alt="Logo Safethink"
+            style="height:${stDim.h}px; width:auto; max-width:220px;"
+            class="object-contain block" />
+        </div>
+      `;
+    }
 
     function computeHarmonizedLogoBox(w, h, baseHeightPx = 58) {
       const safeW = Math.max(1, Number(w) || 260);
@@ -716,10 +735,15 @@
       try {
         const cTm = sessionStorage.getItem("sl_tecnimont_logo") || localStorage.getItem("sl_tecnimont_logo");
         if (cTm) batchTecnimontLogo = JSON.parse(cTm);
+        const cSt = sessionStorage.getItem("sl_safethink_logo") || localStorage.getItem("sl_safethink_logo");
+        if (cSt) batchSafethinkLogo = JSON.parse(cSt);
       } catch (e) {}
 
       if (postData && postData.tecnimontLogo && postData.tecnimontLogo.url) {
         batchTecnimontLogo = postData.tecnimontLogo;
+      }
+      if (postData && postData.safethinkLogo && postData.safethinkLogo.url) {
+        batchSafethinkLogo = postData.safethinkLogo;
       }
       if (postData && postData.showTecnimontLogo !== undefined) {
         batchShowTecnimontLogo = Boolean(postData.showTecnimontLogo);
@@ -742,6 +766,13 @@
             url: cfgRes.data.tecnimont_logo_url,
             w: Number(cfgRes.data.tecnimont_logo_w) || 480,
             h: Number(cfgRes.data.tecnimont_logo_h) || 110
+          };
+        }
+        if (cfgRes && cfgRes.data && cfgRes.data.safethink_logo_url) {
+          batchSafethinkLogo = {
+            url: cfgRes.data.safethink_logo_url,
+            w: Number(cfgRes.data.safethink_logo_w) || 380,
+            h: Number(cfgRes.data.safethink_logo_h) || 90
           };
         }
         if (wsRes && wsRes.data) {
@@ -1174,8 +1205,9 @@
               </div>
             </div>
 
-            <!-- Footer minimale con le 7 Aree -->
+            <!-- Footer con Logo Safethink (collegato al controllo Tecnimont) e le 7 Aree -->
             <div class="text-center pt-4 border-t border-slate-200">
+              ${buildCoverFooterSafethinkHtml(batchShowTecnimontLogo, batchSafethinkLogo)}
               <div class="flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
                 <span>Vision</span><span>•</span>
                 <span>Focus</span><span>•</span>

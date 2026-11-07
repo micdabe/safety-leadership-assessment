@@ -95,7 +95,7 @@
       </div>
     </div>
 
-        <!-- Barra di Navigazione a 6 Pagine Separate -->
+                <!-- Barra di Navigazione a 7 Pagine Separate -->
     <div id="adminNavTabs" class="hidden bg-slate-800 border-t border-slate-700">
       <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-1.5 pt-2">
         <a href="admin-risultati.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
@@ -106,6 +106,9 @@
         </a>
         <a href="admin-workshop.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-100 text-slate-900 transition flex items-center gap-2">
           <span>🎯</span> <span>Gestione Workshop (Link & QR)</span>
+        </a>
+        <a href="admin-loghi.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+          <span>🖼️</span> <span>Gestione Loghi Copertina</span>
         </a>
         <a href="admin-liste.html" onclick="saveStateToCache()" class="px-4 py-2.5 rounded-t-xl font-bold text-xs md:text-sm bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
           <span>🗂️</span> <span>Gestione Liste</span>
@@ -198,86 +201,25 @@
     <!-- 3. SCHEDA B: GESTIONE WORKSHOP E LOGHI DI COPERTINA SU SUPABASE -->
     <section id="screen-workshops" class="hidden space-y-6 no-print">
 
-      <!-- ===================================================================
-           SEZIONE 1: GESTIONE LOGHI DI COPERTINA (LOGO TECNIMONT + ELENCO LOGHI CLIENTI)
-           =================================================================== -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-        <div class="flex flex-wrap items-start justify-between gap-4 mb-5 pb-4 border-b border-slate-100">
+      <!-- Banner Rapido Collegamento alla Scheda Dedicata Gestione Loghi -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-5 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center text-lg font-extrabold shrink-0">
+            🖼️
+          </div>
           <div>
-            <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-900 text-xs font-extrabold">
-              Branding Copertina Report • Armonizzazione Automatica Proporzioni
-            </span>
-            <h2 class="text-lg md:text-xl font-extrabold text-slate-900 mt-1">
-              Gestione Loghi Copertina Report (Logo Tecnimont & Archivio Loghi Clienti)
-            </h2>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Carica il <strong>Logo Tecnimont</strong> aziendale e gestisci l'elenco dei <strong>Loghi Clienti</strong>. Il sistema rileva automaticamente le dimensioni in pixel (es. logo Tecnimont basso e lungo vs logo Cliente quadrato o verticale) e ne bilancia l'impatto visivo in stampa.
+            <h3 class="text-xs md:text-sm font-extrabold text-slate-900">
+              Gestione Loghi Copertina Report (Logo Tecnimont in Testata + Logo Safethink a Piè di Pagina & Catalogo Loghi Clienti)
+            </h3>
+            <p class="text-[11px] text-slate-500">
+              Per caricare o sostituire il <strong>Logo Tecnimont</strong>, il <strong>Logo Safethink</strong> o gestire l'archivio dei <strong>Loghi Clienti</strong>, apri la scheda dedicata. Qui sotto puoi attivare/disattivare i loghi per singolo Workshop.
             </p>
           </div>
         </div>
-
-        <div class="grid lg:grid-cols-12 gap-6 items-stretch">
-          <!-- Box Sinistro (5 col): Logo Ufficiale Tecnimont -->
-          <div class="lg:col-span-5 rounded-2xl border-2 border-slate-200 bg-slate-50/70 p-5 flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-800">
-                  1. Logo Tecnimont Ufficiale
-                </span>
-                <span id="tecnimontLogoDimBadge" class="px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-mono text-[10px] font-bold">
-                  Default attivo
-                </span>
-              </div>
-
-              <!-- Preview Box Logo Tecnimont -->
-              <div id="tecnimontLogoPreviewBox" class="h-24 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-3 mb-3 overflow-hidden shadow-inner">
-              </div>
-              <p class="text-[11px] text-slate-500 leading-relaxed mb-3">
-                Puoi caricare il file PNG/SVG/JPG ufficiale Tecnimont. Per ogni Workshop potrai decidere tramite l'apposito <strong>tickbox</strong> se mostrarlo o meno sulla copertina del report.
-              </p>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200">
-              <button type="button" onclick="document.getElementById('fileInputTecnimontLogo').click()"
-                class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold transition flex items-center gap-1.5">
-                <span>📤</span> <span>Carica Logo Tecnimont...</span>
-              </button>
-              <input id="fileInputTecnimontLogo" type="file" accept="image/*" class="hidden" onchange="handleTecnimontLogoUpload(event)" />
-              <button type="button" onclick="resetTecnimontLogoToDefault()"
-                class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-white text-slate-600 text-xs font-bold transition">
-                Ripristina Default
-              </button>
-            </div>
-          </div>
-
-          <!-- Box Destro (7 col): Archivio Loghi Clienti -->
-          <div class="lg:col-span-7 rounded-2xl border-2 border-amber-200 bg-amber-50/30 p-5 flex flex-col justify-between">
-            <div>
-              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-950">
-                  2. Elenco Loghi Clienti Disponibili (<span id="clientLogosCountBadge">0</span>)
-                </span>
-                <span class="text-[11px] text-slate-500 font-medium">
-                  Selezionabili durante la creazione o modifica di un Workshop
-                </span>
-              </div>
-
-              <!-- Lista Loghi Clienti -->
-              <div id="clientLogosGallery" class="grid sm:grid-cols-3 gap-2.5 max-h-40 overflow-y-auto pr-1 mb-4"></div>
-            </div>
-
-            <!-- Form Rapido Aggiunta Logo Cliente -->
-            <div class="pt-3 border-t border-amber-200/80 flex flex-wrap items-center gap-2.5">
-              <input id="inputQuickClientLogoName" type="text" placeholder="Nome Cliente (es. ADNOC, Eni, Sonatrach...)"
-                class="flex-grow min-w-[180px] px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-amber-500" />
-              <button type="button" onclick="triggerQuickClientLogoFile()"
-                class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition flex items-center gap-1.5">
-                <span>➕</span> <span>Carica File Logo Cliente</span>
-              </button>
-              <input id="fileInputQuickClientLogo" type="file" accept="image/*" class="hidden" onchange="handleQuickClientLogoUpload(event)" />
-            </div>
-          </div>
-        </div>
+        <a href="admin-loghi.html" onclick="saveStateToCache()"
+          class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
+          <span>🖼️</span> <span>Apri Scheda Gestione Loghi →</span>
+        </a>
       </div>
 
       <!-- ===================================================================
@@ -352,8 +294,8 @@
                 <input id="chkWsShowTecnimont" type="checkbox" checked
                   class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
                 <div>
-                  <div class="text-xs font-extrabold text-slate-900">Mostra Logo Tecnimont</div>
-                  <div class="text-[10px] text-slate-500">Includi nella copertina di stampa del report</div>
+                  <div class="text-xs font-extrabold text-slate-900">Mostra Loghi Tecnimont + Safethink</div>
+                  <div class="text-[10px] text-slate-500">Tecnimont in testata + Safethink nel piè di pagina</div>
                 </div>
               </label>
               <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold text-[10px]">1° Logo</span>
@@ -480,7 +422,15 @@
       isDefault: true
     };
 
+    const DEFAULT_SAFETHINK_LOGO = {
+      url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 90" width="380" height="90"><path d="M40 12 L68 23 V45 C68 63 55 75 40 81 C25 75 12 63 12 45 V23 Z" fill="%23059669"/><path d="M28 45 L36 53 L53 35" stroke="%23ffffff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><text x="84" y="54" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="36" fill="%230f172a" letter-spacing="1.5">SAFE<tspan fill="%23059669">THINK</tspan></text><text x="86" y="74" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="10.5" fill="%2364748b" letter-spacing="2.8">SAFETY LEADERSHIP CULTURE</text></svg>',
+      w: 380,
+      h: 90,
+      isDefault: true
+    };
+
     let tecnimontLogoConfig = { ...DEFAULT_TECNIMONT_LOGO };
+    let safethinkLogoConfig = { ...DEFAULT_SAFETHINK_LOGO };
     let clientLogosDB = [];
     let pendingInlineClientLogo = null; // { name, dataUrl, w, h }
 
@@ -541,6 +491,7 @@
         setStoredVal("sl_cache_workshops", JSON.stringify(workshopsDB));
         setStoredVal("sl_cache_records", JSON.stringify(allRecords));
         setStoredVal("sl_tecnimont_logo", JSON.stringify(tecnimontLogoConfig));
+        setStoredVal("sl_safethink_logo", JSON.stringify(safethinkLogoConfig));
         setStoredVal("sl_client_logos", JSON.stringify(clientLogosDB));
         setStoredVal("sl_cache_time", nowTime);
       } catch (e) {}
@@ -585,6 +536,8 @@
         try {
           const cTm = getStoredVal("sl_tecnimont_logo");
           if (cTm) tecnimontLogoConfig = JSON.parse(cTm);
+          const cSt = getStoredVal("sl_safethink_logo");
+          if (cSt) safethinkLogoConfig = JSON.parse(cSt);
           const cCl = getStoredVal("sl_client_logos");
           if (cCl) clientLogosDB = JSON.parse(cCl);
         } catch (e) {}
@@ -737,6 +690,19 @@
             try { tecnimontLogoConfig = JSON.parse(localTm); } catch (e) {}
           }
         }
+        if (cfgData && cfgData.safethink_logo_url) {
+          safethinkLogoConfig = {
+            url: cfgData.safethink_logo_url,
+            w: Number(cfgData.safethink_logo_w) || 380,
+            h: Number(cfgData.safethink_logo_h) || 90,
+            isDefault: false
+          };
+        } else {
+          const localSt = getStoredVal("sl_safethink_logo");
+          if (localSt) {
+            try { safethinkLogoConfig = JSON.parse(localSt); } catch (e) {}
+          }
+        }
       } catch (e) {}
 
       try {
@@ -816,6 +782,8 @@
           populateWorkshopSiteDropdown();
           renderLogosManagementUI();
           renderWorkshopsTable();
+        } else if (PAGE_MODE === "logos") {
+          renderLogosManagementUI();
         } else if (PAGE_MODE === "lists" && !hasUnsavedListChanges) {
           renderEditableListsUI();
         }
@@ -883,6 +851,14 @@
       };
     }
 
+    function showLogosBanner(msg, isError = false) {
+      const b = document.getElementById("logosFeedbackBanner");
+      if (!b) return;
+      b.className = `mb-5 rounded-xl p-3.5 text-xs font-bold border ${isError ? 'bg-red-50 border-red-200 text-red-700' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`;
+      b.textContent = msg;
+      b.classList.remove("hidden");
+    }
+
     function renderLogosManagementUI() {
       const tmBox = document.getElementById("tecnimontLogoPreviewBox");
       const tmBadge = document.getElementById("tecnimontLogoDimBadge");
@@ -891,6 +867,16 @@
         tmBox.innerHTML = `<img src="${tecnimontLogoConfig.url}" alt="Logo Tecnimont" class="max-h-16 max-w-full object-contain" />`;
         if (tmBadge) {
           tmBadge.textContent = `${tecnimontLogoConfig.w}×${tecnimontLogoConfig.h} px (Ratio ${ratio}:1)`;
+        }
+      }
+
+      const stBox = document.getElementById("safethinkLogoPreviewBox");
+      const stBadge = document.getElementById("safethinkLogoDimBadge");
+      if (stBox && safethinkLogoConfig && safethinkLogoConfig.url) {
+        const ratioSt = ((safethinkLogoConfig.w || 380) / (safethinkLogoConfig.h || 90)).toFixed(2);
+        stBox.innerHTML = `<img src="${safethinkLogoConfig.url}" alt="Logo Safethink" class="max-h-16 max-w-full object-contain" />`;
+        if (stBadge) {
+          stBadge.textContent = `${safethinkLogoConfig.w}×${safethinkLogoConfig.h} px (Ratio ${ratioSt}:1)`;
         }
       }
 
@@ -926,6 +912,7 @@
       }
 
       populateWsClientLogoDropdown();
+      renderCoverSimulationPreview();
     }
 
     function populateWsClientLogoDropdown() {
@@ -1016,8 +1003,114 @@
           })
           .eq("id", 1);
       }
+      showLogosBanner("✓ Logo Tecnimont ripristinato al valore predefinito.");
       renderLogosManagementUI();
       renderWorkshopsTable();
+    }
+
+    async function handleSafethinkLogoUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const measured = await readAndMeasureLogoFile(file, 900);
+        safethinkLogoConfig = {
+          url: measured.dataUrl,
+          w: measured.w,
+          h: measured.h,
+          isDefault: false
+        };
+        saveStateToCache();
+
+        if (activeConnectionMode === "supabase" && supabaseClient) {
+          const { error } = await supabaseClient
+            .from("app_config")
+            .update({
+              safethink_logo_url: safethinkLogoConfig.url,
+              safethink_logo_w: safethinkLogoConfig.w,
+              safethink_logo_h: safethinkLogoConfig.h
+            })
+            .eq("id", 1);
+          if (error && String(error.message).includes("safethink_logo")) {
+            console.warn("Colonna safethink_logo_url non ancora presente in app_config, salvato in cache locale.");
+          }
+        }
+        showLogosBanner(`✓ Logo Safethink (${measured.w}×${measured.h} px) caricato e salvato per il piè di pagina della copertina!`);
+        renderLogosManagementUI();
+        renderWorkshopsTable();
+      } catch (err) {
+        alert("Errore caricamento Logo Safethink: " + err.message);
+      } finally {
+        event.target.value = "";
+      }
+    }
+
+    async function resetSafethinkLogoToDefault() {
+      safethinkLogoConfig = { ...DEFAULT_SAFETHINK_LOGO };
+      saveStateToCache();
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        await supabaseClient
+          .from("app_config")
+          .update({
+            safethink_logo_url: safethinkLogoConfig.url,
+            safethink_logo_w: safethinkLogoConfig.w,
+            safethink_logo_h: safethinkLogoConfig.h
+          })
+          .eq("id", 1);
+      }
+      showLogosBanner("✓ Logo Safethink ripristinato al valore predefinito.");
+      renderLogosManagementUI();
+      renderWorkshopsTable();
+    }
+
+    function renderCoverSimulationPreview() {
+      const simBox = document.getElementById("coverSimulationBox");
+      const simSel = document.getElementById("selectSimClientLogo");
+      const simChk = document.getElementById("chkSimShowTm");
+      if (!simBox) return;
+
+      if (simSel) {
+        const prev = simSel.value;
+        simSel.innerHTML = `<option value="">🚫 Nessun logo cliente</option>` +
+          clientLogosDB.map(c => `<option value="${c.id}">🏢 ${c.name} (${c.w}×${c.h} px)</option>`).join("");
+        if (prev && clientLogosDB.some(c => c.id === prev)) simSel.value = prev;
+        else if (!prev && clientLogosDB.length > 0) simSel.value = clientLogosDB[0].id;
+      }
+
+      const showTmAndSt = simChk ? simChk.checked : true;
+      const chosenCl = simSel ? clientLogosDB.find(c => c.id === simSel.value) : null;
+
+      const sizes = computeHarmonizedLogoSizes(
+        showTmAndSt ? tecnimontLogoConfig : null,
+        chosenCl ? { url: chosenCl.dataUrl, w: chosenCl.w, h: chosenCl.h } : null,
+        52
+      );
+      const stSize = computeHarmonizedLogoSizes(safethinkLogoConfig, null, 38).tecnimont;
+
+      simBox.innerHTML = `
+        <div class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Testata Copertina Report</div>
+        <div class="flex flex-col items-center justify-center gap-4 min-h-[90px]">
+          ${showTmAndSt && tecnimontLogoConfig?.url
+            ? `<img src="${tecnimontLogoConfig.url}" style="height:${sizes.tecnimont?.h || 44}px;width:auto;max-width:260px;" class="object-contain block" />`
+            : ''}
+          ${chosenCl
+            ? `<img src="${chosenCl.dataUrl}" style="height:${sizes.client?.h || 48}px;width:auto;max-width:220px;" class="object-contain block" />`
+            : ''}
+          ${(!showTmAndSt && !chosenCl) ? `<span class="text-xs text-slate-400 italic">Nessun logo attivo</span>` : ''}
+        </div>
+        <div class="py-4 px-6 rounded-2xl bg-white border border-slate-200 max-w-md mx-auto">
+          <div class="text-xs font-black text-slate-800">Profilo Individuale di Safety Leadership</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">[ Card Dati Partecipante al Centro della Pagina ]</div>
+        </div>
+        <div class="pt-4 border-t border-slate-200 flex flex-col items-center gap-2">
+          <div class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Piè di Pagina Copertina (Footer)</div>
+          ${showTmAndSt && safethinkLogoConfig?.url
+            ? `<img src="${safethinkLogoConfig.url}" style="height:${stSize?.h || 32}px;width:auto;max-width:200px;" class="object-contain block mb-1" />`
+            : `<span class="text-[11px] text-slate-400 italic">Logo Safethink nascosto (collegato al tickbox Tecnimont)</span>`}
+          <div class="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">
+            Vision • Focus • Influence • Credibility • Team • Communication • Feedback
+          </div>
+        </div>
+      `;
     }
 
     function triggerQuickClientLogoFile() {
@@ -1138,7 +1231,7 @@
 
     function getParticipantTestBaseUrl() {
       const loc = window.location;
-      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-dettaglio|admin-workshop|admin-liste|admin-contenuti|admin-testi).*$/i, "");
+      const basePath = loc.pathname.replace(/(dashboard-admin|admin-risultati|admin-dettaglio|admin-workshop|admin-loghi|admin-liste|admin-contenuti|admin-testi).*$/i, "");
       return `${loc.origin}${basePath.endsWith("/") ? basePath : basePath + "/"}index.html`;
     }
 
@@ -1362,6 +1455,7 @@
         wsTarget: ws.targetType || "site",
         showTecnimontLogo: ws.showTecnimontLogo !== false,
         tecnimontLogo: tecnimontLogoConfig,
+        safethinkLogo: safethinkLogoConfig,
         clientLogo: ws.clientLogoUrl ? {
           id: ws.clientLogoId,
           name: ws.clientLogoName,
@@ -1450,10 +1544,11 @@
         );
 
         const miniPreviewsHtml = (showTm || ws.clientLogoUrl)
-          ? `<div class="mt-1.5 flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-slate-200 w-fit">
-              ${showTm && tecnimontLogoConfig?.url ? `<img src="${tecnimontLogoConfig.url}" style="height:${miniSizes.tecnimont?.h || 20}px;width:auto" class="object-contain" title="Logo Tecnimont (${tecnimontLogoConfig.w}×${tecnimontLogoConfig.h}px)" />` : ''}
+          ? `<div class="mt-1.5 flex flex-wrap items-center gap-2 bg-white px-2 py-1 rounded-lg border border-slate-200 w-fit">
+              ${showTm && tecnimontLogoConfig?.url ? `<img src="${tecnimontLogoConfig.url}" style="height:16px;width:auto" class="object-contain" title="Testata: Logo Tecnimont (${tecnimontLogoConfig.w}×${tecnimontLogoConfig.h}px)" />` : ''}
+              ${showTm && safethinkLogoConfig?.url ? `<img src="${safethinkLogoConfig.url}" style="height:15px;width:auto" class="object-contain" title="Piè di pagina: Logo Safethink (${safethinkLogoConfig.w}×${safethinkLogoConfig.h}px)" />` : ''}
               ${showTm && ws.clientLogoUrl ? `<span class="w-px h-4 bg-slate-200"></span>` : ''}
-              ${ws.clientLogoUrl ? `<img src="${ws.clientLogoUrl}" style="height:${miniSizes.client?.h || 22}px;width:auto" class="object-contain" title="Logo Cliente: ${ws.clientLogoName} (${ws.clientLogoW}×${ws.clientLogoH}px)" />` : ''}
+              ${ws.clientLogoUrl ? `<img src="${ws.clientLogoUrl}" style="height:${miniSizes.client?.h || 20}px;width:auto" class="object-contain" title="Sotto Tecnimont: Logo Cliente ${ws.clientLogoName} (${ws.clientLogoW}×${ws.clientLogoH}px)" />` : ''}
             </div>`
           : `<div class="mt-1 text-[10px] text-slate-400 italic">Nessun logo in copertina</div>`;
 
@@ -1479,7 +1574,7 @@
               <label class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-slate-800 cursor-pointer select-none mb-1">
                 <input type="checkbox" ${showTm ? 'checked' : ''} onchange="toggleWorkshopTecnimontLogo('${ws.id}', this.checked)"
                   class="w-3.5 h-3.5 accent-amber-600 rounded cursor-pointer" />
-                <span>Logo Tecnimont</span>
+                <span>Tecnimont + Safethink</span>
               </label>
               <div>
                 <select onchange="changeWorkshopClientLogo('${ws.id}', this.value)"
@@ -2053,6 +2148,10 @@
         populateWorkshopSiteDropdown();
         renderLogosManagementUI();
         renderWorkshopsTable();
+      } else if (PAGE_MODE === "logos") {
+        const sec = document.getElementById("screen-logos");
+        if (sec) sec.classList.remove("hidden");
+        renderLogosManagementUI();
       } else if (PAGE_MODE === "lists") {
         const sec = document.getElementById("screen-lists");
         if (sec) sec.classList.remove("hidden");
@@ -2073,7 +2172,7 @@
       const liveCtrl = document.getElementById("liveControls");
       if (liveCtrl) liveCtrl.classList.add("hidden");
       document.getElementById("adminNavTabs").classList.add("hidden");
-      ["screen-dashboard", "screen-details", "screen-workshops", "screen-lists"].forEach(id => {
+      ["screen-dashboard", "screen-details", "screen-workshops", "screen-logos", "screen-lists"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add("hidden");
       });
