@@ -1497,6 +1497,108 @@
       window.location.href = `admin-risultati.html?ws_name=${encodeURIComponent(ws.name)}`;
     }
 
+    function ensureWsLogosPopoverEl() {
+      let pop = document.getElementById("wsLogosHoverPopover");
+      if (!pop) {
+        pop = document.createElement("div");
+        pop.id = "wsLogosHoverPopover";
+        pop.className = "fixed z-[9999] hidden pointer-events-none bg-white rounded-2xl shadow-2xl border-2 border-slate-800 p-4 w-72 text-center transition-opacity duration-150";
+        document.body.appendChild(pop);
+      }
+      return pop;
+    }
+
+    function showWsLogosPopover(event, wsId) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+      const pop = ensureWsLogosPopoverEl();
+
+      const showTm = ws.showTecnimontLogo !== false;
+      const hasCl = Boolean(ws.clientLogoUrl);
+
+      const sizes = computeHarmonizedLogoSizes(
+        showTm ? tecnimontLogoConfig : null,
+        hasCl ? { url: ws.clientLogoUrl, w: ws.clientLogoW, h: ws.clientLogoH } : null,
+        42
+      );
+      const stSize = computeHarmonizedLogoSizes(safethinkLogoConfig, null, 30).tecnimont;
+
+      if (!showTm && !hasCl) {
+        pop.innerHTML = `
+          <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">${ws.name}</div>
+          <div class="py-6 px-3 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-400 italic">
+            🚫 Nessun logo attivo sulla copertina di questo Workshop
+          </div>
+        `;
+      } else {
+        pop.innerHTML = `
+          <div class="flex items-center justify-between gap-2 pb-2 mb-2.5 border-b border-slate-100">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">Anteprima Copertina</span>
+            <span class="text-[10px] font-bold text-slate-400 truncate max-w-[140px]">${ws.name}</span>
+          </div>
+
+          <!-- Slot Testata Mini-Copertina -->
+          <div class="rounded-xl bg-slate-50 border border-slate-200/80 p-3 mb-2.5 flex flex-col items-center justify-center gap-2.5 min-h-[78px]">
+            <div class="w-10 h-1 rounded-full bg-amber-500 mx-auto mb-0.5"></div>
+            ${showTm && tecnimontLogoConfig?.url
+              ? `<div class="flex flex-col items-center">
+                   <img src="${tecnimontLogoConfig.url}" style="height:${sizes.tecnimont?.h || 32}px;width:auto;max-width:210px;" class="object-contain block" />
+                   <span class="text-[9px] font-mono text-slate-400 mt-0.5">Testata: Tecnimont (${tecnimontLogoConfig.w}×${tecnimontLogoConfig.h}px)</span>
+                 </div>`
+              : ''}
+            ${hasCl
+              ? `<div class="flex flex-col items-center ${showTm ? 'pt-1.5 border-t border-slate-200/60 w-full' : ''}">
+                   <img src="${ws.clientLogoUrl}" style="height:${sizes.client?.h || 34}px;width:auto;max-width:190px;" class="object-contain block" />
+                   <span class="text-[9px] font-mono text-slate-500 mt-0.5">Cliente: ${ws.clientLogoName || 'Logo'} (${ws.clientLogoW}×${ws.clientLogoH}px)</span>
+                 </div>`
+              : ''}
+          </div>
+
+          <!-- Centro Simbolico Mini-Copertina -->
+          <div class="py-1.5 px-3 rounded-lg bg-slate-100/80 border border-slate-200/70 text-[9px] font-bold text-slate-500 mb-2.5">
+            [ Titolo Report & Card Partecipante ]
+          </div>
+
+          <!-- Slot Piè di Pagina Mini-Copertina -->
+          <div class="rounded-xl bg-slate-50 border border-slate-200/80 p-2.5 flex flex-col items-center justify-center min-h-[44px]">
+            ${showTm && safethinkLogoConfig?.url
+              ? `<img src="${safethinkLogoConfig.url}" style="height:${stSize?.h || 24}px;width:auto;max-width:170px;" class="object-contain block" />
+                 <span class="text-[9px] font-mono text-slate-400 mt-0.5">Footer: Safethink (${safethinkLogoConfig.w}×${safethinkLogoConfig.h}px)</span>`
+              : `<span class="text-[9px] text-slate-400 italic">Footer senza logo Safethink</span>`}
+          </div>
+        `;
+      }
+
+      pop.classList.remove("hidden");
+      moveWsLogosPopover(event);
+    }
+
+    function moveWsLogosPopover(event) {
+      const pop = document.getElementById("wsLogosHoverPopover");
+      if (!pop || pop.classList.contains("hidden")) return;
+      const pad = 16;
+      const popW = pop.offsetWidth || 288;
+      const popH = pop.offsetHeight || 260;
+      let left = event.clientX + pad;
+      let top = event.clientY - Math.round(popH / 2);
+
+      if (left + popW + 12 > window.innerWidth) {
+        left = Math.max(12, event.clientX - popW - pad);
+      }
+      if (top < 12) top = 12;
+      if (top + popH + 12 > window.innerHeight) {
+        top = Math.max(12, window.innerHeight - popH - 12);
+      }
+
+      pop.style.left = left + "px";
+      pop.style.top = top + "px";
+    }
+
+    function hideWsLogosPopover() {
+      const pop = document.getElementById("wsLogosHoverPopover");
+      if (pop) pop.classList.add("hidden");
+    }
+
     function renderWorkshopsTable() {
       const tbody = document.getElementById("workshopsTableBody");
       if (!tbody) return;
@@ -1531,19 +1633,26 @@
           clientLogosDB.map(c => `<option value="${c.id}" ${(ws.clientLogoId === c.id) ? 'selected' : ''}>🏢 ${c.name}</option>`).join("") +
           `<option value="__UPLOAD_FOR_WS__">➕ Carica nuovo logo...</option>`;
 
-        const miniSizes = computeHarmonizedLogoSizes(
-          showTm ? tecnimontLogoConfig : null,
-          ws.clientLogoUrl ? { url: ws.clientLogoUrl, w: ws.clientLogoW, h: ws.clientLogoH } : null,
-          24
-        );
+        const activeLogosSummary = (showTm && ws.clientLogoUrl)
+          ? `👁️ Anteprima Loghi (Tecnimont + ${ws.clientLogoName || 'Cliente'})`
+          : (showTm
+              ? `👁️ Anteprima Loghi (Tecnimont + Safethink)`
+              : (ws.clientLogoUrl
+                  ? `👁️ Anteprima Logo (${ws.clientLogoName || 'Cliente'})`
+                  : `🚫 Nessun logo attivo`));
 
-        const miniPreviewsHtml = (showTm || ws.clientLogoUrl)
-          ? `<div class="mt-1.5 flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-slate-200 w-fit">
-              ${showTm && tecnimontLogoConfig?.url ? `<img src="${tecnimontLogoConfig.url}" style="height:${miniSizes.tecnimont?.h || 20}px;width:auto" class="object-contain" title="Logo Tecnimont (${tecnimontLogoConfig.w}×${tecnimontLogoConfig.h}px)" />` : ''}
-              ${showTm && ws.clientLogoUrl ? `<span class="w-px h-4 bg-slate-200"></span>` : ''}
-              ${ws.clientLogoUrl ? `<img src="${ws.clientLogoUrl}" style="height:${miniSizes.client?.h || 22}px;width:auto" class="object-contain" title="Logo Cliente: ${ws.clientLogoName} (${ws.clientLogoW}×${ws.clientLogoH}px)" />` : ''}
-            </div>`
-          : `<div class="mt-1 text-[10px] text-slate-400 italic">Nessun logo in copertina</div>`;
+        const miniPreviewsHtml = `
+          <div onmouseenter="showWsLogosPopover(event, '${ws.id}')"
+               onmousemove="moveWsLogosPopover(event)"
+               onmouseleave="hideWsLogosPopover()"
+               class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-extrabold cursor-pointer select-none transition ${
+                 (showTm || ws.clientLogoUrl)
+                   ? 'bg-amber-50/80 hover:bg-amber-100 text-amber-900 border-amber-300 shadow-2xs'
+                   : 'bg-slate-100 hover:bg-slate-200 text-slate-500 border-slate-200'
+               }">
+            <span>${activeLogosSummary}</span>
+          </div>
+        `;
 
         return `
           <tr class="hover:bg-slate-50/90 transition align-middle ${!isOpen ? 'opacity-65 bg-slate-50/60' : ''}">
