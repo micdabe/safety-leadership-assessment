@@ -1633,19 +1633,15 @@
           clientLogosDB.map(c => `<option value="${c.id}" ${(ws.clientLogoId === c.id) ? 'selected' : ''}>🏢 ${c.name}</option>`).join("") +
           `<option value="__UPLOAD_FOR_WS__">➕ Carica nuovo logo...</option>`;
 
-        const activeLogosSummary = (showTm && ws.clientLogoUrl)
-          ? `👁️ Anteprima Loghi (Tecnimont + ${ws.clientLogoName || 'Cliente'})`
-          : (showTm
-              ? `👁️ Anteprima Loghi (Tecnimont + Safethink)`
-              : (ws.clientLogoUrl
-                  ? `👁️ Anteprima Logo (${ws.clientLogoName || 'Cliente'})`
-                  : `🚫 Nessun logo attivo`));
+        const activeLogosSummary = (showTm || ws.clientLogoUrl)
+          ? `👁️ Anteprima loghi`
+          : `🚫 Nessun logo attivo`;
 
         const miniPreviewsHtml = `
           <div onmouseenter="showWsLogosPopover(event, '${ws.id}')"
                onmousemove="moveWsLogosPopover(event)"
                onmouseleave="hideWsLogosPopover()"
-               class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-extrabold cursor-pointer select-none transition ${
+               class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-extrabold whitespace-nowrap cursor-pointer select-none transition ${
                  (showTm || ws.clientLogoUrl)
                    ? 'bg-amber-50/80 hover:bg-amber-100 text-amber-900 border-amber-300 shadow-2xs'
                    : 'bg-slate-100 hover:bg-slate-200 text-slate-500 border-slate-200'
