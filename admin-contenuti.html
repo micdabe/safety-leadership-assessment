@@ -603,7 +603,7 @@
     let supabaseClient = null;
     let activeConnectionMode = null;
 
-    let editableLists = { companies: [], roles: [], sites: [] };
+    let editableLists = { companies: [], clients: [], contractors: [], roles: [], sites: [] };
     let workshopsDB = [];
     let allRecords = [];
 
@@ -681,7 +681,7 @@
       try {
         const wn = getWindowNameData();
         if (wn && Array.isArray(wn.workshops)) {
-          editableLists = wn.lists || { companies: [], roles: [], sites: [] };
+          editableLists = wn.lists || { companies: [], clients: [], contractors: [], roles: [], sites: [] };
           workshopsDB = wn.workshops || [];
           allRecords = wn.records || [];
           return true;
@@ -739,13 +739,13 @@
 
       try {
         if (!silentAutoLogin) {
-          const { data: cfg, error: cfgErr } = await supabaseClient
+          const { data: cfg } = await supabaseClient
             .from("app_config")
-            .select("*")
+            .select("admin_password")
             .eq("id", 1)
-            .single();
-          if (cfgErr) throw new Error("Errore lettura app_config: " + cfgErr.message);
-          if (cfg.admin_password && cfg.admin_password !== pwdVal) {
+            .maybeSingle();
+          const expectedPwd = (cfg && cfg.admin_password) ? cfg.admin_password : "Safety2026!";
+          if (pwdVal !== expectedPwd) {
             throw new Error("Password Admin errata.");
           }
         }

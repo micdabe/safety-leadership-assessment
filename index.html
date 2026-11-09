@@ -1025,17 +1025,34 @@
 
         activeWorkshop = foundWs;
 
+        const cleanCompanyTypePrefix = (str) =>
+          String(str || "").replace(/^\[(AZIENDA|CLIENTE|CONTRATTISTA)\]\s*/i, "").trim();
+
+        const getCompanyTypeRank = (row) => {
+          const rawType = String(row.company_type || "").trim().toLowerCase();
+          if (rawType === "cliente" || rawType === "client" || rawType === "clients") return 2;
+          if (rawType === "contrattista" || rawType === "contractor" || rawType === "contractors") return 3;
+          const rawIt = String(row.name_it || "").trim();
+          if (/^\[CLIENTE\]/i.test(rawIt)) return 2;
+          if (/^\[CONTRATTISTA\]/i.test(rawIt)) return 3;
+          return 1; // 1 = Azienda (1° blocco), 2 = Cliente (2° blocco), 3 = Contrattista (3° blocco)
+        };
+
         const mapTableRowToItem = (row) => {
-          const it = String(row.name_it || "").trim();
-          const en = String(row.name_en || row.name_it || "").trim();
+          const it = cleanCompanyTypePrefix(row.name_it);
+          const en = cleanCompanyTypePrefix(row.name_en || row.name_it);
           const raw = (en && en !== it) ? `${it} | ${en}` : it;
-          return { id: row.id, raw, it, en };
+          return { id: row.id, raw, it, en, typeRank: getCompanyTypeRank(row), sortOrder: Number(row.sort_order) || 0 };
         };
 
         if (!compRes.error && !roleRes.error && !siteRes.error) {
-          parsedCompaniesList = (compRes.data || []).map(mapTableRowToItem);
-          parsedRolesList = (roleRes.data || []).map(mapTableRowToItem);
-          parsedSitesList = (siteRes.data || []).map(mapTableRowToItem);
+          // Ordina per tipo (1° Aziende -> 2° Clienti -> 3° Contrattisti) e poi per sort_order in un'unica lista continua per il candidato
+          parsedCompaniesList = (compRes.data || [])
+            .map(mapTableRowToItem)
+            .filter(item => item.it.length > 0)
+            .sort((a, b) => (a.typeRank - b.typeRank) || (a.sortOrder - b.sortOrder));
+          parsedRolesList = (roleRes.data || []).map(mapTableRowToItem).filter(item => item.it.length > 0);
+          parsedSitesList = (siteRes.data || []).map(mapTableRowToItem).filter(item => item.it.length > 0);
           listsSourceState = "loaded";
         } else {
           listsSourceState = "error";
