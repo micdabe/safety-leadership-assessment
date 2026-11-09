@@ -286,40 +286,50 @@
             </div>
           </div>
 
-          <!-- Riga Configurazione Loghi Copertina del Workshop -->
-          <div class="pt-3 border-t border-slate-200 grid md:grid-cols-12 gap-4 items-start">
-            <!-- Tickbox Logo Tecnimont -->
-            <div class="md:col-span-4 bg-white p-3.5 rounded-xl border border-slate-200 flex items-center justify-between gap-3">
-              <label class="flex items-center gap-2.5 cursor-pointer select-none">
-                <input id="chkWsShowTecnimont" type="checkbox" checked
-                  class="w-4 h-4 accent-amber-600 rounded cursor-pointer" />
-                <div>
-                  <div class="text-xs font-extrabold text-slate-900">Mostra Loghi Tecnimont + Safethink</div>
-                  <div class="text-[10px] text-slate-500">Tecnimont in testata + Safethink nel piè di pagina</div>
+          <!-- Riga Configurazione Loghi Copertina del Workshop (2 Box Gemelli 50% / 50% con stessa altezza e larghezza) -->
+          <div class="pt-3 border-t border-slate-200 grid md:grid-cols-2 gap-4 items-stretch">
+            <!-- Box 1 (50% larghezza): Loghi Istituzionali Tecnimont + Safethink -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between h-full">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="text-xs font-extrabold text-slate-900">
+                  Loghi Istituzionali in Copertina (1° Logo)
+                </span>
+                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold text-[10px] shrink-0">1° Logo</span>
+              </div>
+
+              <label class="h-10 px-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/80 flex items-center justify-between gap-3 cursor-pointer select-none transition">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <input id="chkWsShowTecnimont" type="checkbox" checked
+                    class="w-4 h-4 accent-amber-600 rounded cursor-pointer shrink-0" />
+                  <span class="text-xs font-bold text-slate-900 truncate">Mostra Loghi Tecnimont + Safethink</span>
                 </div>
+                <span class="text-[10px] font-semibold text-slate-400 hidden sm:inline shrink-0">Testata + Footer</span>
               </label>
-              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold text-[10px]">1° Logo</span>
             </div>
 
-            <!-- Selezione o Caricamento al momento Logo Cliente -->
-            <div class="md:col-span-8 bg-white p-3.5 rounded-xl border border-slate-200 space-y-3">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="flex-grow min-w-[220px]">
-                  <label class="block text-xs font-extrabold text-slate-900 mb-1">
+            <!-- Box 2 (50% larghezza): Selezione o Caricamento al momento Logo Cliente -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between h-full">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <label for="selectWsClientLogo" class="text-xs font-extrabold text-slate-900">
                     Logo del Cliente in Copertina (2° Logo — Opzionale)
                   </label>
+                  <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-bold text-[10px] shrink-0">2° Logo</span>
+                </div>
+
+                <div class="flex items-center gap-2.5">
                   <select id="selectWsClientLogo" onchange="onWsClientLogoSelectChange()"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:bg-white focus:outline-none focus:border-amber-500">
+                    class="h-10 flex-grow px-3.5 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:bg-white focus:outline-none focus:border-amber-500">
                     <option value="">🚫 Nessun logo cliente</option>
                     <option value="__UPLOAD_NEW__">➕ Carica un nuovo logo cliente al momento...</option>
                   </select>
-                </div>
-                <div id="selectedWsClientLogoPreview" class="hidden h-12 px-3 rounded-xl bg-slate-50 border border-slate-200 items-center justify-center">
+                  <div id="selectedWsClientLogoPreview" class="hidden h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 items-center justify-center shrink-0">
+                  </div>
                 </div>
               </div>
 
               <!-- Box Caricamento al momento (visibile se si sceglie "+ Carica un nuovo logo cliente al momento...") -->
-              <div id="inlineNewClientLogoBox" class="hidden p-3.5 rounded-xl bg-amber-50/70 border border-amber-300 space-y-2.5">
+              <div id="inlineNewClientLogoBox" class="hidden mt-3 p-3.5 rounded-xl bg-amber-50/70 border border-amber-300 space-y-2.5">
                 <div class="text-[11px] font-extrabold text-amber-950">
                   ➕ Carica un nuovo Logo Cliente al momento (verrà salvato anche nell'elenco per i prossimi workshop):
                 </div>
