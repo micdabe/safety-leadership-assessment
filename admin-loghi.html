@@ -783,7 +783,8 @@
           clientLogoName: w.client_logo_name || matchedClientLogo?.name || "",
           clientLogoUrl: w.client_logo_url || matchedClientLogo?.dataUrl || "",
           clientLogoW: Number(w.client_logo_w) || matchedClientLogo?.w || 0,
-          clientLogoH: Number(w.client_logo_h) || matchedClientLogo?.h || 0
+          clientLogoH: Number(w.client_logo_h) || matchedClientLogo?.h || 0,
+          allowedCompanies: Array.isArray(w.allowed_companies) ? w.allowed_companies : null
         };
       });
 

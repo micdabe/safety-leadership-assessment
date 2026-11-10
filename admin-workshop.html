@@ -344,6 +344,37 @@
             </div>
           </div>
 
+          <!-- Riga Configurazione Sottoinsieme Aziende Abilitate per questo Workshop -->
+          <div class="pt-3 border-t border-slate-200">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span class="text-xs font-extrabold text-slate-900">
+                    🏢 Aziende Abilitate nel Test per questo Workshop (Filtro Candidato)
+                  </span>
+                  <p class="text-[11px] text-slate-500">
+                    Seleziona quali aziende (tra Aziende, Clienti e Contrattisti presenti a sistema) saranno visibili nel menu a tendina di chi compila il test per questo specifico Workshop.
+                  </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span id="newWsCompaniesCounterBadge" class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-extrabold">
+                    Tutte selezionate
+                  </span>
+                  <button type="button" onclick="setAllNewWsCompanies(true)"
+                    class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition">
+                    ✓ Tutte
+                  </button>
+                  <button type="button" onclick="setAllNewWsCompanies(false)"
+                    class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition">
+                    ✕ Nessuna
+                  </button>
+                </div>
+              </div>
+
+              <div id="newWsAllowedCompaniesContainer" class="grid md:grid-cols-3 gap-3"></div>
+            </div>
+          </div>
+
           <div class="flex items-center justify-end pt-2 border-t border-slate-200">
             <button onclick="createNewWorkshop()"
               class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs md:text-sm shadow-sm transition">
@@ -369,7 +400,7 @@
               <tr class="border-b-2 border-slate-200 uppercase text-[11px] tracking-wider text-slate-500 bg-slate-50">
                 <th class="py-3.5 px-3.5">Workshop & Codice ID</th>
                 <th class="py-3.5 px-3 whitespace-nowrap">Profilo & Livello</th>
-                <th class="py-3.5 px-3 whitespace-nowrap">Data & Sede</th>
+                <th class="py-3.5 px-3 whitespace-nowrap">Data, Sede & Aziende Test</th>
                 <th class="py-3.5 px-3 whitespace-nowrap">Loghi Copertina Report</th>
                 <th class="py-3.5 px-3 text-center whitespace-nowrap">Stato Link</th>
                 <th class="py-3.5 px-3 text-center whitespace-nowrap">Esito Fine Test</th>
@@ -399,6 +430,51 @@
       <button onclick="copyModalWsLink()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs">
         📋 Copia Link Workshop
       </button>
+    </div>
+  </div>
+
+  <!-- MODALE SELEZIONE AZIENDE ABILITATE PER UN WORKSHOP ESISTENTE -->
+  <div id="workshopCompaniesModal" onclick="if(event.target===this) closeWorkshopCompaniesModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-6 border border-slate-200 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+        <div>
+          <span class="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[11px] font-extrabold uppercase">Filtro Aziende Workshop</span>
+          <h3 id="compModalWsTitle" class="text-lg font-extrabold text-slate-900 mt-1">Nome Workshop</h3>
+        </div>
+        <button onclick="closeWorkshopCompaniesModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm">✕</button>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <p class="text-xs text-slate-500">
+          Spunta le aziende che vuoi rendere selezionabili dai candidati che aprono il link di questo Workshop:
+        </p>
+        <div class="flex items-center gap-1.5">
+          <span id="modalWsCompaniesCounterBadge" class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-extrabold">
+            0 selezionate
+          </span>
+          <button type="button" onclick="setAllModalWsCompanies(true)"
+            class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition">
+            ✓ Seleziona Tutte
+          </button>
+          <button type="button" onclick="setAllModalWsCompanies(false)"
+            class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition">
+            ✕ Deseleziona Tutte
+          </button>
+        </div>
+      </div>
+
+      <div id="modalWsAllowedCompaniesContainer" class="grid md:grid-cols-3 gap-3 overflow-y-auto py-1 flex-grow"></div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-4 mt-4 border-t border-slate-100">
+        <button type="button" onclick="closeWorkshopCompaniesModal()"
+          class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs transition">
+          Annulla
+        </button>
+        <button type="button" id="btnSaveModalWsCompanies" onclick="saveModalWsAllowedCompanies()"
+          class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition">
+          💾 Salva Aziende Abilitate per il Workshop
+        </button>
+      </div>
     </div>
   </div>
 
@@ -785,6 +861,16 @@
 
       workshopsDB = (wsRes.data || []).map(w => {
         const matchedClientLogo = clientLogosDB.find(c => c.id === w.client_logo_id);
+        let allowedComp = Array.isArray(w.allowed_companies) ? w.allowed_companies : null;
+        if (!allowedComp) {
+          const fb = getStoredVal(`sl_ws_comp_${w.id}`);
+          if (fb) {
+            try {
+              const p = JSON.parse(fb);
+              if (Array.isArray(p)) allowedComp = p;
+            } catch (e) {}
+          }
+        }
         return {
           id: w.id,
           name: w.name,
@@ -799,7 +885,8 @@
           clientLogoName: w.client_logo_name || matchedClientLogo?.name || "",
           clientLogoUrl: w.client_logo_url || matchedClientLogo?.dataUrl || "",
           clientLogoW: Number(w.client_logo_w) || matchedClientLogo?.w || 0,
-          clientLogoH: Number(w.client_logo_h) || matchedClientLogo?.h || 0
+          clientLogoH: Number(w.client_logo_h) || matchedClientLogo?.h || 0,
+          allowedCompanies: allowedComp
         };
       });
 
@@ -1265,6 +1352,230 @@
       renderWorkshopsTable();
     }
 
+    let currentEditingCompaniesWsId = null;
+
+    function getAllAvailableCompaniesFlat() {
+      ensureEditableListsStructure();
+      return [
+        ...(editableLists.companies || []),
+        ...(editableLists.clients || []),
+        ...(editableLists.contractors || [])
+      ];
+    }
+
+    function normalizeCompKey(str) {
+      return cleanCompanyTypePrefix(String(str || "").split("|")[0]).toLowerCase();
+    }
+
+    function buildThreeColumnsCompaniesCheckboxesHtml(prefixId, allowedArrayOrNull, onChangeFnName) {
+      ensureEditableListsStructure();
+      const allFlat = getAllAvailableCompaniesFlat();
+      const isAllSelected = !Array.isArray(allowedArrayOrNull);
+      const allowedSet = isAllSelected
+        ? new Set(allFlat.map(normalizeCompKey))
+        : new Set(allowedArrayOrNull.map(normalizeCompKey));
+
+      const groups = [
+        { key: "companies", title: "1A. Aziende", badgeCls: "bg-amber-100 text-amber-900 border-amber-200", items: editableLists.companies || [] },
+        { key: "clients", title: "1B. Clienti", badgeCls: "bg-blue-100 text-blue-900 border-blue-200", items: editableLists.clients || [] },
+        { key: "contractors", title: "1C. Contrattisti", badgeCls: "bg-emerald-100 text-emerald-900 border-emerald-200", items: editableLists.contractors || [] }
+      ];
+
+      return groups.map(g => {
+        const itemsHtml = g.items.length === 0
+          ? `<div class="text-[11px] text-slate-400 italic py-2">Nessuna voce in ${g.title}</div>`
+          : g.items.map((rawItem, idx) => {
+              const labelIt = cleanCompanyTypePrefix(String(rawItem).split("|")[0]);
+              const isChecked = allowedSet.has(normalizeCompKey(rawItem));
+              const safeVal = String(rawItem).replace(/"/g, "&quot;");
+              return `
+                <label class="flex items-center gap-2 py-1 px-1.5 rounded-lg hover:bg-white cursor-pointer select-none text-xs">
+                  <input type="checkbox" data-ws-comp-group="${prefixId}" data-ws-comp-cat="${g.key}" value="${safeVal}"
+                    ${isChecked ? "checked" : ""} onchange="${onChangeFnName}()"
+                    class="w-3.5 h-3.5 accent-amber-600 rounded cursor-pointer shrink-0" />
+                  <span class="font-semibold text-slate-800 truncate" title="${labelIt}">${labelIt}</span>
+                </label>
+              `;
+            }).join("");
+
+        return `
+          <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-slate-200">
+                <span class="px-2 py-0.5 rounded border text-[10px] font-extrabold uppercase ${g.badgeCls}">${g.title}</span>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="toggleCategoryWsCompanies('${prefixId}', '${g.key}', true, '${onChangeFnName}')"
+                    class="text-[10px] font-bold text-slate-500 hover:text-slate-900 px-1">Tutte</button>
+                  <span class="text-slate-300">•</span>
+                  <button type="button" onclick="toggleCategoryWsCompanies('${prefixId}', '${g.key}', false, '${onChangeFnName}')"
+                    class="text-[10px] font-bold text-slate-500 hover:text-slate-900 px-1">Nessuna</button>
+                </div>
+              </div>
+              <div class="space-y-0.5 max-h-40 overflow-y-auto pr-1">
+                ${itemsHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function toggleCategoryWsCompanies(prefixId, catKey, checkState, onChangeFnName) {
+      document.querySelectorAll(`input[data-ws-comp-group="${prefixId}"][data-ws-comp-cat="${catKey}"]`).forEach(chk => {
+        chk.checked = Boolean(checkState);
+      });
+      if (typeof window[onChangeFnName] === "function") window[onChangeFnName]();
+    }
+
+    function getCheckedCompaniesForGroup(prefixId) {
+      const boxes = Array.from(document.querySelectorAll(`input[data-ws-comp-group="${prefixId}"]`));
+      const checked = boxes.filter(b => b.checked).map(b => b.value);
+      return { total: boxes.length, checked };
+    }
+
+    function updateNewWsCompaniesCounter() {
+      const badge = document.getElementById("newWsCompaniesCounterBadge");
+      if (!badge) return;
+      const { total, checked } = getCheckedCompaniesForGroup("newWs");
+      if (total === 0) {
+        badge.className = "px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold";
+        badge.textContent = "Nessuna azienda in archivio";
+      } else if (checked.length === total) {
+        badge.className = "px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-extrabold";
+        badge.textContent = `Tutte abilitate (${total}/${total})`;
+      } else if (checked.length === 0) {
+        badge.className = "px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 text-[11px] font-extrabold";
+        badge.textContent = `0 di ${total} selezionate (selezionane almeno 1)`;
+      } else {
+        badge.className = "px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-extrabold";
+        badge.textContent = `${checked.length} di ${total} aziende abilitate`;
+      }
+    }
+
+    function setAllNewWsCompanies(checkState) {
+      document.querySelectorAll(`input[data-ws-comp-group="newWs"]`).forEach(chk => {
+        chk.checked = Boolean(checkState);
+      });
+      updateNewWsCompaniesCounter();
+    }
+
+    function renderNewWsCompaniesSelector() {
+      const container = document.getElementById("newWsAllowedCompaniesContainer");
+      if (!container) return;
+      container.innerHTML = buildThreeColumnsCompaniesCheckboxesHtml("newWs", null, "updateNewWsCompaniesCounter");
+      updateNewWsCompaniesCounter();
+    }
+
+    function updateModalWsCompaniesCounter() {
+      const badge = document.getElementById("modalWsCompaniesCounterBadge");
+      if (!badge) return;
+      const { total, checked } = getCheckedCompaniesForGroup("modalWs");
+      if (checked.length === total && total > 0) {
+        badge.className = "px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-extrabold";
+        badge.textContent = `Tutte abilitate (${total}/${total})`;
+      } else if (checked.length === 0) {
+        badge.className = "px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 text-[11px] font-extrabold";
+        badge.textContent = `0 di ${total} selezionate`;
+      } else {
+        badge.className = "px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-extrabold";
+        badge.textContent = `${checked.length} di ${total} aziende abilitate`;
+      }
+    }
+
+    function setAllModalWsCompanies(checkState) {
+      document.querySelectorAll(`input[data-ws-comp-group="modalWs"]`).forEach(chk => {
+        chk.checked = Boolean(checkState);
+      });
+      updateModalWsCompaniesCounter();
+    }
+
+    function openWorkshopCompaniesModal(wsId) {
+      const ws = workshopsDB.find(w => w.id === wsId);
+      if (!ws) return;
+      currentEditingCompaniesWsId = wsId;
+      document.getElementById("compModalWsTitle").textContent = ws.name;
+      const container = document.getElementById("modalWsAllowedCompaniesContainer");
+      container.innerHTML = buildThreeColumnsCompaniesCheckboxesHtml("modalWs", ws.allowedCompanies, "updateModalWsCompaniesCounter");
+      updateModalWsCompaniesCounter();
+
+      const modal = document.getElementById("workshopCompaniesModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeWorkshopCompaniesModal() {
+      currentEditingCompaniesWsId = null;
+      const modal = document.getElementById("workshopCompaniesModal");
+      if (!modal) return;
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    async function persistWsAllowedCompaniesToSupabase(wsId, allowedListOrNull) {
+      if (allowedListOrNull === null) {
+        removeStoredVal(`sl_ws_comp_${wsId}`);
+      } else {
+        setStoredVal(`sl_ws_comp_${wsId}`, JSON.stringify(allowedListOrNull));
+      }
+
+      if (activeConnectionMode === "supabase" && supabaseClient) {
+        const { error } = await supabaseClient
+          .from("workshops")
+          .update({ allowed_companies: allowedListOrNull })
+          .eq("id", wsId);
+
+        // Salva anche un record di sincronizzazione in assessment_ui_texts per garantire il funzionamento anche senza ALTER TABLE
+        try {
+          if (allowedListOrNull === null) {
+            await supabaseClient.from("assessment_ui_texts").delete().eq("key", `ws_companies_${wsId}`);
+          } else {
+            const jsonStr = JSON.stringify(allowedListOrNull);
+            await supabaseClient.from("assessment_ui_texts").upsert([{
+              key: `ws_companies_${wsId}`,
+              section: "ws_config",
+              sort_order: 999,
+              label_it: `Aziende abilitate workshop ${wsId}`,
+              text_it: jsonStr,
+              text_en: jsonStr,
+              updated_at: new Date().toISOString()
+            }], { onConflict: "key" });
+          }
+        } catch (e) {}
+
+        if (error && String(error.message).includes("allowed_companies")) {
+          console.warn("Colonna allowed_companies non ancora aggiunta a public.workshops: usato fallback automatico su Supabase.");
+        }
+      }
+    }
+
+    async function saveModalWsAllowedCompanies() {
+      if (!currentEditingCompaniesWsId) return;
+      const ws = workshopsDB.find(w => w.id === currentEditingCompaniesWsId);
+      if (!ws) return;
+
+      const { total, checked } = getCheckedCompaniesForGroup("modalWs");
+      if (total > 0 && checked.length === 0) {
+        alert("Seleziona almeno un'azienda abilitata per questo Workshop.");
+        return;
+      }
+
+      const btn = document.getElementById("btnSaveModalWsCompanies");
+      if (btn) { btn.disabled = true; btn.textContent = "Salvataggio..."; }
+
+      // Se sono tutte selezionate salviamo null (= tutte le aziende abilitate), altrimenti il sottoinsieme scelto
+      const newAllowed = (total > 0 && checked.length < total) ? checked : null;
+      ws.allowedCompanies = newAllowed;
+      saveStateToCache();
+
+      try {
+        await persistWsAllowedCompaniesToSupabase(ws.id, newAllowed);
+        closeWorkshopCompaniesModal();
+        renderWorkshopsTable();
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "💾 Salva Aziende Abilitate per il Workshop"; }
+      }
+    }
+
     function populateWorkshopSiteDropdown() {
       const sel = document.getElementById("selectWsSite");
       if (!sel) return;
@@ -1278,6 +1589,7 @@
         return `<option value="${s}">${label}</option>`;
       }).join("");
       if (prev && editableLists.sites.includes(prev)) sel.value = prev;
+      renderNewWsCompaniesSelector();
     }
 
     function getParticipantTestBaseUrl() {
@@ -1304,6 +1616,17 @@
         banner.classList.remove("hidden");
         return;
       }
+
+      const compSelection = getCheckedCompaniesForGroup("newWs");
+      if (compSelection.total > 0 && compSelection.checked.length === 0) {
+        banner.className = "mt-4 rounded-xl p-3.5 text-xs font-bold border bg-red-50 border-red-200 text-red-700";
+        banner.textContent = "Seleziona almeno un'azienda abilitata per questo Workshop.";
+        banner.classList.remove("hidden");
+        return;
+      }
+      const allowedCompaniesVal = (compSelection.total > 0 && compSelection.checked.length < compSelection.total)
+        ? compSelection.checked
+        : null;
 
       let chosenClientLogo = null;
       if (clientLogoChoice === "__UPLOAD_NEW__") {
@@ -1339,7 +1662,8 @@
         clientLogoName: chosenClientLogo ? chosenClientLogo.name : "",
         clientLogoUrl: chosenClientLogo ? chosenClientLogo.dataUrl : "",
         clientLogoW: chosenClientLogo ? chosenClientLogo.w : 0,
-        clientLogoH: chosenClientLogo ? chosenClientLogo.h : 0
+        clientLogoH: chosenClientLogo ? chosenClientLogo.h : 0,
+        allowedCompanies: allowedCompaniesVal
       };
 
       if (activeConnectionMode === "supabase" && supabaseClient) {
@@ -1357,10 +1681,11 @@
           client_logo_name: newWs.clientLogoName || null,
           client_logo_url: newWs.clientLogoUrl || null,
           client_logo_w: newWs.clientLogoW || null,
-          client_logo_h: newWs.clientLogoH || null
+          client_logo_h: newWs.clientLogoH || null,
+          allowed_companies: newWs.allowedCompanies
         }]);
         // Fallback automatico se le colonne opzionali non sono ancora state aggiunte sul DB
-        if (error && (String(error.message).includes("logo") || String(error.message).includes("show_report"))) {
+        if (error && (String(error.message).includes("logo") || String(error.message).includes("show_report") || String(error.message).includes("allowed_companies"))) {
           const retry = await supabaseClient.from("workshops").insert([{
             id: newWs.id,
             name: newWs.name,
@@ -1378,8 +1703,12 @@
         }
       }
 
+      if (newWs.allowedCompanies) {
+        await persistWsAllowedCompaniesToSupabase(newWs.id, newWs.allowedCompanies);
+      }
       workshopsDB.unshift(newWs);
       saveStateToCache();
+      renderNewWsCompaniesSelector();
       document.getElementById("inputWsName").value = "";
       if (document.getElementById("selectWsClientLogo")) {
         document.getElementById("selectWsClientLogo").value = "";
@@ -1721,9 +2050,32 @@
                 </span>
               </div>
             </td>
-            <td class="py-3.5 px-3 min-w-[145px]">
+            <td class="py-3.5 px-3 min-w-[175px]">
               <div class="font-bold text-slate-800 text-xs whitespace-nowrap">📅 ${ws.date}</div>
-              <div class="text-[11px] text-slate-500 font-medium truncate max-w-[180px]" title="${siteLabel}">📍 ${siteLabel}</div>
+              <div class="text-[11px] text-slate-500 font-medium truncate max-w-[190px]" title="${siteLabel}">📍 ${siteLabel}</div>
+              <div class="mt-1.5">
+                ${(() => {
+                  const totalAvail = getAllAvailableCompaniesFlat().length;
+                  const hasSubset = Array.isArray(ws.allowedCompanies);
+                  const countAllowed = hasSubset ? ws.allowedCompanies.length : totalAvail;
+                  const tooltipList = hasSubset
+                    ? ws.allowedCompanies.map(c => cleanCompanyTypePrefix(String(c).split("|")[0])).join(", ")
+                    : "Tutte le aziende abilitate";
+                  return `
+                    <button type="button" onclick="openWorkshopCompaniesModal('${ws.id}')"
+                      title="Clicca per scegliere quali aziende abilitare nel test (${tooltipList})"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-extrabold whitespace-nowrap transition ${
+                        hasSubset
+                          ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                      }">
+                      <span>🏢</span>
+                      <span>${hasSubset ? `${countAllowed} di ${totalAvail} aziende` : `Tutte le aziende (${totalAvail})`}</span>
+                      <span class="text-slate-400">✎</span>
+                    </button>
+                  `;
+                })()}
+              </div>
             </td>
             <td class="py-3.5 px-3 min-w-[215px]">
               <label class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-slate-800 cursor-pointer select-none mb-1">

@@ -1007,6 +1007,22 @@
           return;
         }
 
+        let wsAllowedCompanies = Array.isArray(wsRes.data.allowed_companies)
+          ? wsRes.data.allowed_companies
+          : null;
+
+        // Fallback automatico se la colonna allowed_companies non è ancora stata creata su workshops:
+        // controlla se è presente una chiave 'ws_companies_<wsId>' in UI_TEXT o localStorage
+        if (!wsAllowedCompanies) {
+          const fallbackRaw = UI_TEXT.it[`ws_companies_${wsRes.data.id}`] || localStorage.getItem(`sl_ws_comp_${wsRes.data.id}`);
+          if (fallbackRaw) {
+            try {
+              const parsedFb = JSON.parse(fallbackRaw);
+              if (Array.isArray(parsedFb)) wsAllowedCompanies = parsedFb;
+            } catch (e) {}
+          }
+        }
+
         const foundWs = {
           id: wsRes.data.id,
           name: wsRes.data.name,
@@ -1015,7 +1031,8 @@
           level: wsRes.data.level,
           targetType: wsRes.data.target_type || "site",
           active: wsRes.data.active !== false,
-          showReport: wsRes.data.show_report !== false
+          showReport: wsRes.data.show_report !== false,
+          allowedCompanies: wsAllowedCompanies
         };
 
         if (!foundWs.active) {
@@ -1047,10 +1064,22 @@
 
         if (!compRes.error && !roleRes.error && !siteRes.error) {
           // Ordina per tipo (1° Aziende -> 2° Clienti -> 3° Contrattisti) e poi per sort_order in un'unica lista continua per il candidato
-          parsedCompaniesList = (compRes.data || [])
+          let allSortedCompanies = (compRes.data || [])
             .map(mapTableRowToItem)
             .filter(item => item.it.length > 0)
             .sort((a, b) => (a.typeRank - b.typeRank) || (a.sortOrder - b.sortOrder));
+
+          // Se per questo Workshop è stato configurato un sottoinsieme specifico di aziende abilitate, filtra solo quelle
+          if (Array.isArray(activeWorkshop.allowedCompanies)) {
+            const allowedSet = new Set(
+              activeWorkshop.allowedCompanies.map(c => cleanCompanyTypePrefix(String(c).split("|")[0]).toLowerCase())
+            );
+            allSortedCompanies = allSortedCompanies.filter(item =>
+              allowedSet.has(item.it.toLowerCase()) || allowedSet.has(item.raw.toLowerCase())
+            );
+          }
+
+          parsedCompaniesList = allSortedCompanies;
           parsedRolesList = (roleRes.data || []).map(mapTableRowToItem).filter(item => item.it.length > 0);
           parsedSitesList = (siteRes.data || []).map(mapTableRowToItem).filter(item => item.it.length > 0);
           listsSourceState = "loaded";

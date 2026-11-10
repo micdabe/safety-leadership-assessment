@@ -735,7 +735,8 @@
         clientLogoName: w.client_logo_name || "",
         clientLogoUrl: w.client_logo_url || "",
         clientLogoW: Number(w.client_logo_w) || 0,
-        clientLogoH: Number(w.client_logo_h) || 0
+        clientLogoH: Number(w.client_logo_h) || 0,
+        allowedCompanies: Array.isArray(w.allowed_companies) ? w.allowed_companies : null
       }));
 
       allRecords = normalizeRows(subRes.data || []);
