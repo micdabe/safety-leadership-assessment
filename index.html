@@ -194,6 +194,14 @@
             </div>
           </div>
 
+          <!-- Nota avviso Nome Vuoto quando il risultato viene consegnato al Workshop (showReport === false) -->
+          <div id="emptyNameWorkshopNoteBox" class="hidden mt-3.5 p-3.5 rounded-xl border border-amber-300 bg-amber-50/80 text-xs text-amber-950 flex items-start gap-2.5 transition-all">
+            <span class="text-base leading-none mt-0.5 shrink-0">ℹ️</span>
+            <p id="emptyNameWorkshopNoteText" class="leading-relaxed font-medium">
+              <strong>Nota:</strong> Lasciando vuoto il campo Nome e Cognome, il completamento del test contribuirà a formare il risultato aggregato globale, ma <strong>non sarà possibile ricevere il proprio risultato personale</strong> durante il workshop.
+            </p>
+          </div>
+
           <!-- Casella Privacy -->
           <div id="privacyContainer" class="mt-4 p-3.5 rounded-xl border border-slate-200 bg-slate-50 transition-all">
             <div class="flex items-start gap-3">
@@ -418,6 +426,7 @@
         lblUserName: "Nome e Cognome (Opzionale)",
         phUserName: "Lascia vuoto per test anonimo",
         anonymousLabel: "Anonimo",
+        emptyNameWorkshopNote: "<strong>Nota:</strong> Lasciando vuoto il campo Nome e Cognome, il completamento del test contribuirà a formare il risultato aggregato globale, ma <strong>non sarà possibile ricevere il proprio risultato personale</strong> durante il workshop.",
         lblPrivacyText: "Acconsento al trattamento del mio nominativo ai sensi del GDPR (Reg. UE 2016/679) per la generazione e archiviazione del report di valutazione.",
         privacyRequiredBadge: "Obbligatorio se inserisci il nome *",
         privacyOptionalBadge: "Non richiesto per test anonimo",
@@ -570,6 +579,7 @@
         lblUserName: "Full Name (Optional)",
         phUserName: "Leave blank for anonymous assessment",
         anonymousLabel: "Anonymous",
+        emptyNameWorkshopNote: "<strong>Note:</strong> If you leave the Full Name field blank, completing the assessment will contribute to the global aggregated result, but <strong>it will not be possible to receive your personal result</strong> during the workshop.",
         lblPrivacyText: "I consent to the processing of my personal name under the GDPR (EU Reg. 2016/679) for generating and archiving my assessment report.",
         privacyRequiredBadge: "Required when name is entered *",
         privacyOptionalBadge: "Not required for anonymous test",
@@ -1188,15 +1198,22 @@
       const privContainer = document.getElementById("privacyContainer");
       const reqBadge = document.getElementById("privacyRequiredBadge");
       const optBadge = document.getElementById("privacyOptionalBadge");
+      const emptyNameNoteBox = document.getElementById("emptyNameWorkshopNoteBox");
+      const isNoReport = Boolean(activeWorkshop && activeWorkshop.showReport === false);
 
       if (nameVal.length > 0) {
         privContainer.className = "mt-4 p-3.5 rounded-xl border-2 border-amber-400 bg-amber-50/50 transition-all";
         reqBadge.classList.remove("hidden");
         optBadge.classList.add("hidden");
+        if (emptyNameNoteBox) emptyNameNoteBox.classList.add("hidden");
       } else {
         privContainer.className = "mt-4 p-3.5 rounded-xl border border-slate-200 bg-slate-50 transition-all";
         reqBadge.classList.add("hidden");
         optBadge.classList.remove("hidden");
+        if (emptyNameNoteBox) {
+          if (isNoReport) emptyNameNoteBox.classList.remove("hidden");
+          else emptyNameNoteBox.classList.add("hidden");
+        }
       }
     }
 
@@ -1288,6 +1305,10 @@
       document.getElementById("lblUserSite").innerHTML = t.lblUserSite;
       document.getElementById("lblUserName").innerHTML = t.lblUserName;
       document.getElementById("inputUserName").placeholder = t.phUserName;
+      if (document.getElementById("emptyNameWorkshopNoteText") && t.emptyNameWorkshopNote) {
+        document.getElementById("emptyNameWorkshopNoteText").innerHTML = t.emptyNameWorkshopNote;
+      }
+      handleNameInput();
 
       document.getElementById("lblPrivacyText").innerHTML = t.lblPrivacyText;
       document.getElementById("privacyRequiredBadge").innerHTML = t.privacyRequiredBadge;
